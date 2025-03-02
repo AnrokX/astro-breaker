@@ -173,3 +173,7 @@ dist
 
 # Finder (MacOS) folder config
 .DS_Store    
+
+# Third-party models - removed from project
+assets/models/projectiles/bomb.gltf
+assets/models/projectiles/textures/Stylized_Bomb_mat_*    
