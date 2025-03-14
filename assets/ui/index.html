@@ -248,10 +248,7 @@
     .waiting-message {
       font-family: var(--display-font);
       font-size: 16px;
-      color: var(--blood-red);
-      text-align: center;
-      margin: 10px 0;
-      animation: pulse 2s infinite;
+      letter-spacing: 2px;
     }
 
     .player-count {
@@ -343,56 +340,6 @@
       color: var(--matrix-green);
       text-shadow: 0 0 8px var(--terminal-green);
       letter-spacing: 2px;
-    }
-
-    .countdown-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(13, 2, 8, 0.95) 0%, rgba(13, 2, 8, 0.98) 100%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-
-    .countdown-overlay.visible {
-      opacity: 1;
-    }
-
-    .countdown-number {
-      font-family: var(--display-font);
-      font-size: 96px;
-      color: var(--blood-red);
-      text-shadow: 0 0 30px var(--glow-red);
-      animation: countdown-pulse 0.5s ease-out;
-      letter-spacing: 4px;
-    }
-
-    .countdown-go {
-      font-family: var(--display-font);
-      font-size: 120px;
-      color: var(--matrix-green);
-      text-shadow: 0 0 40px var(--terminal-green);
-      animation: countdown-zoom 0.5s ease-out;
-      transform: none;
-    }
-
-    @keyframes countdown-pulse {
-      0% { transform: scale(1.5); opacity: 0; }
-      50% { transform: scale(0.9); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    @keyframes countdown-zoom {
-      0% { transform: scale(0.5); opacity: 0; }
-      50% { transform: scale(1.2); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
     }
 
     .crosshair {
@@ -769,172 +716,6 @@
       text-align: center;
     }
 
-    /* Countdown Guide Styles (made even bigger) */
-    .round-scoring-guide {
-      position: fixed;
-      left: 50%;
-      top: 60%;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, var(--matrix-dark) 0%, rgba(13, 2, 8, 0.95) 100%);
-      padding: 35px; /* More padding */
-      border-radius: 20px;
-      color: #ffffff;
-      font-family: var(--text-font);
-      border: 3px solid var(--blood-red);
-      box-shadow: 0 0 40px rgba(255, 0, 0, 0.25);
-      min-width: 500px; /* Even wider */
-    }
-
-    .round-scoring-guide .guide-header {
-      font-family: var(--title-font);
-      font-size: 32px; /* Much bigger header */
-      color: var(--blood-red);
-      margin-bottom: 25px;
-      letter-spacing: 3px;
-      text-align: center;
-      text-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
-      font-weight: bold;
-    }
-
-    .round-scoring-guide .guide-items {
-      display: flex;
-      flex-direction: column;
-      gap: 20px; /* More spacing between items */
-    }
-
-    .round-scoring-guide .guide-item {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      font-size: 26px; /* Much bigger text */
-      letter-spacing: 1.5px;
-      font-weight: 500; /* Slightly bolder */
-    }
-
-    .round-scoring-guide .guide-icon {
-      font-size: 32px; /* Much bigger icons */
-      min-width: 60px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 0, 0, 0.15);
-      border-radius: 50%;
-      text-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
-    }
-
-    .round-scoring-guide .guide-text {
-      color: rgba(255, 255, 255, 0.95); /* Slightly more opaque */
-      text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-      font-weight: 500; /* Slightly bolder */
-    }
-
-    .help-menu {
-      position: fixed;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: linear-gradient(135deg, var(--matrix-dark) 0%, rgba(13, 2, 8, 0.95) 100%);
-      border: 2px solid var(--blood-red);
-      border-radius: 15px;
-      color: #ffffff;
-      padding: 25px;
-      display: none;
-      z-index: 1000;
-      min-width: 400px;
-      box-shadow: 0 0 30px rgba(255, 0, 0, 0.2);
-    }
-
-    .help-menu.visible {
-      display: block;
-      animation: slideIn 0.3s ease-out;
-    }
-
-    @keyframes slideIn {
-      from { transform: translateY(-50%) translateX(50px); opacity: 0; }
-      to { transform: translateY(-50%) translateX(0); opacity: 1; }
-    }
-
-    .help-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid var(--blood-red);
-    }
-
-    .help-title {
-      font-family: var(--title-font);
-      font-size: 28px;
-      color: var(--blood-red);
-      letter-spacing: 2px;
-    }
-
-    .help-key {
-      background: rgba(255, 0, 0, 0.2);
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 16px;
-      color: var(--blood-red);
-    }
-
-    .help-section {
-      margin-bottom: 25px;
-    }
-
-    .help-section h3 {
-      font-size: 20px;
-      color: var(--blood-red);
-      margin-bottom: 15px;
-      letter-spacing: 1px;
-    }
-
-    .guide-items {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .guide-item {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      font-size: 18px;
-    }
-
-    .guide-icon {
-      font-size: 24px;
-      min-width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 0, 0, 0.1);
-      border-radius: 50%;
-    }
-
-    .control-item {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 10px;
-    }
-
-    .control-item .key {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 16px;
-      min-width: 60px;
-      text-align: center;
-    }
-
-    .control-item .action {
-      font-size: 16px;
-      color: rgba(255, 255, 255, 0.9);
-    }
-
     /* Subtle HUD Hotkey Hints */
     .hotkey-hints {
       position: fixed;
@@ -960,89 +741,6 @@
       color: var(--matrix-green);
       text-shadow: 0 0 8px var(--terminal-green);
       letter-spacing: 0.5px;
-    }
-
-    /* Countdown Hotkey Reminder */
-    .hotkey-reminder {
-      position: absolute;
-      bottom: 10%;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 40px; /* Increased gap for bigger text */
-      font-family: var(--display-font);
-      opacity: 0;
-      animation: fadeInGuide 0.5s ease-out 1.5s forwards;
-    }
-
-    .hotkey-item {
-      color: var(--matrix-green);
-      text-shadow: 0 0 12px var(--terminal-green); /* Increased glow for bigger text */
-      font-size: 32px; /* Much bigger text */
-      letter-spacing: 2px; /* Increased letter spacing */
-      font-weight: 500; /* Slightly bolder */
-    }
-
-    /* Updated Help Menu Styles */
-    .help-menu {
-      font-family: var(--display-font);
-    }
-
-    .help-title {
-      font-family: var(--title-font);
-      font-size: 32px;
-      color: var(--blood-red);
-      letter-spacing: 3px;
-      text-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
-    }
-
-    .help-key {
-      font-family: var(--display-font);
-      font-size: 20px;
-      padding: 8px 15px;
-      border: 1px solid var(--blood-red);
-      text-shadow: 0 0 8px var(--glow-red);
-    }
-
-    .help-section h3 {
-      font-family: var(--title-font);
-      font-size: 24px;
-      color: var(--blood-red);
-      margin-bottom: 20px;
-      letter-spacing: 2px;
-      text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
-    }
-
-    .guide-item {
-      font-family: var(--display-font);
-      font-size: 22px;
-      letter-spacing: 1.5px;
-    }
-
-    .guide-text {
-      text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-    }
-
-    .control-item {
-      font-family: var(--display-font);
-      font-size: 20px;
-      letter-spacing: 1px;
-    }
-
-    .control-item .key {
-      font-family: var(--display-font);
-      font-size: 18px;
-      border: 1px solid rgba(255, 0, 0, 0.3);
-      text-shadow: 0 0 5px var(--glow-red);
-    }
-
-    .control-item .action {
-      text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-    }
-
-    @keyframes fadeInGuide {
-      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-      to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
     /* Add combo notification styles directly here */
@@ -1125,25 +823,6 @@
     .mega-combo .combo-hits { 
       color: rgba(255, 0, 0, 0.9);
       text-shadow: 0 0 4px rgba(255, 0, 0, 0.4);
-    }
-
-    .countdown {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-family: var(--title-font);
-      font-size: 72px;
-      color: var(--blood-red);
-      text-shadow: 0 0 20px var(--glow-red);
-      z-index: 1000;
-      animation: countdownPulse 1s ease-in-out;
-    }
-
-    @keyframes countdownPulse {
-      0% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
-      50% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-      100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
     }
 
     .system-message {
@@ -1438,6 +1117,130 @@
         50% { text-shadow: 0 0 40px var(--glow-red); }
         100% { text-shadow: 0 0 20px var(--glow-red); }
     }
+
+    .scoring-guide-hud .guide-icon {
+      font-size: 18px; /* Bigger icons */
+      min-width: 25px;
+      text-align: center;
+    }
+
+    /* Help Menu Styles */
+    .help-menu {
+      position: fixed;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: linear-gradient(135deg, var(--matrix-dark) 0%, rgba(13, 2, 8, 0.95) 100%);
+      border: 2px solid var(--blood-red);
+      border-radius: 15px;
+      color: #ffffff;
+      padding: 25px;
+      display: none;
+      z-index: 1000;
+      min-width: 400px;
+      box-shadow: 0 0 30px rgba(255, 0, 0, 0.2);
+    }
+
+    .help-menu.visible {
+      display: block;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(-50%) translateX(50px); opacity: 0; }
+      to { transform: translateY(-50%) translateX(0); opacity: 1; }
+    }
+
+    .help-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--blood-red);
+    }
+
+    .help-title {
+      font-family: var(--title-font);
+      font-size: 28px;
+      color: var(--blood-red);
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+    }
+
+    .help-key {
+      background: rgba(255, 0, 0, 0.2);
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 16px;
+      color: var(--blood-red);
+      border: 1px solid var(--blood-red);
+      text-shadow: 0 0 8px var(--glow-red);
+    }
+
+    .help-section {
+      margin-bottom: 25px;
+    }
+
+    .help-section h3 {
+      font-family: var(--title-font);
+      font-size: 20px;
+      color: var(--blood-red);
+      margin-bottom: 15px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+    }
+
+    .guide-items {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .guide-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-size: 18px;
+    }
+
+    .guide-icon {
+      font-size: 24px;
+      min-width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 0, 0, 0.1);
+      border-radius: 50%;
+    }
+
+    .control-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+
+    .control-item .key {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 16px;
+      min-width: 60px;
+      text-align: center;
+      font-family: var(--display-font);
+      border: 1px solid rgba(255, 0, 0, 0.3);
+      text-shadow: 0 0 5px var(--glow-red);
+    }
+
+    .control-item .action {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    }
+
+    /* Subtle HUD Hotkey Hints */
   </style>
 </head>
 <body>
@@ -1553,36 +1356,6 @@
     return clone;
   });
 </script>
-
-<div class="countdown-overlay">
-  <div class="countdown-display"></div>
-  <div class="round-scoring-guide">
-    <div class="guide-header">HOW TO SCORE</div>
-    <div class="guide-items">
-      <div class="guide-item">
-        <span class="guide-icon">🎯</span>
-        <span class="guide-text">DISTANCE = MORE POINTS</span>
-      </div>
-      <div class="guide-item">
-        <span class="guide-icon">⚡</span>
-        <span class="guide-text">FASTER BLOCKS = BIGGER SCORE</span>
-      </div>
-      <div class="guide-item">
-        <span class="guide-icon">⏱️</span>
-        <span class="guide-text">QUICK SHOTS COUNT</span>
-      </div>
-      <div class="guide-item">
-        <span class="guide-icon">🔥</span>
-        <span class="guide-text">CHAIN HITS FOR COMBOS</span>
-      </div>
-    </div>
-  </div>
-  <div class="hotkey-reminder">
-    <div class="hotkey-item">[H] Game Guide</div>
-    <div class="hotkey-item">[P] Settings</div>
-    <div class="hotkey-item">[ESC] Show Cursor</div>
-  </div>
-</div>
 
 <div class="scoreboard">
   <div class="scores-wrapper">
@@ -1707,6 +1480,7 @@
   </div>
 </div>
 
+<!-- Help Menu -->
 <div class="help-menu">
     <div class="help-header">
         <span class="help-title">GAME GUIDE</span>
@@ -1811,8 +1585,6 @@ hytopia.onData(data => {
     }
   } else if (data.type === 'waitingForPlayers') {
     showWaitingForPlayers(data.data);
-  } else if (data.type === 'countdown') {
-    showCountdown(data.count);
   } else if (data.type === 'updateLeaderboard') {
     updateLeaderboard(data.leaderboard);
   } else if (data.type === 'showCombo') {
@@ -1945,7 +1717,7 @@ function startLocalTimer(initialTimeMs) {
   updateTimer();
   
   // Start interval for updates
-  timerInterval = setInterval(updateTimer, 100); // Update more frequently for smoother countdown
+  timerInterval = setInterval(updateTimer, 100); // Update round timer frequently for smoother display
 }
 
 function updateRoundInfo(roundData) {
@@ -2024,29 +1796,6 @@ function updateScoreboard(scores) {
     `;
     scoresContainer.appendChild(playerDiv);
   });
-}
-
-function showCountdown(count) {
-  const overlay = document.querySelector('.countdown-overlay');
-  const display = document.querySelector('.countdown-display');
-  
-  // Show overlay
-  overlay.classList.add('visible');
-  
-  // Update display
-  if (count === 'GO!') {
-    display.className = 'countdown-display countdown-go';
-  } else {
-    display.className = 'countdown-display countdown-number';
-  }
-  display.textContent = count;
-  
-  // Remove overlay after GO!
-  if (count === 'GO!') {
-    setTimeout(() => {
-      overlay.classList.remove('visible');
-    }, 1000);
-  }
 }
 
 function updateLeaderboard(leaderboardData) {
@@ -2381,7 +2130,7 @@ function showGameEnd(data) {
         standingsContainer.appendChild(entry);
     });
     
-    // Show next game countdown
+    // Show next game timer
     let timeLeft = Math.floor(data.nextGameIn / 1000);
     nextGameTimer.textContent = `Next Game in ${timeLeft}s`;
     
