@@ -51,7 +51,7 @@ export class RoundManager {
     };
     private gameInProgress: boolean = false;
     private roundTransitionPending: boolean = false;
-    private readonly TRANSITION_DURATION: number = 2000; // Default 5 seconds
+    private readonly TRANSITION_DURATION: number = 1000; // Reduced to 1 second
 
     // Helper function to get a random Y position within a range
     private getRandomY(min: number, max: number): number {
@@ -287,31 +287,9 @@ export class RoundManager {
         // Don't start countdown if in transition
         if (this.roundTransitionPending) return;
 
-        let count = 3;
-        
-        const sendCount = () => {
-            this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
-                playerEntity.player.ui.sendData({
-                    type: 'countdown',
-                    count: count === 0 ? 'GO!' : count
-                });
-            });
-        };
-
-        // Send initial count
-        sendCount();
-
-        // Set up countdown interval
-        const countdownInterval = setInterval(() => {
-            count--;
-            
-            if (count < 0) {
-                clearInterval(countdownInterval);
-                this.actuallyStartRound();
-                return;
-            }
-            
-            sendCount();
+        // Simplified transition - just wait a short time then start
+        setTimeout(() => {
+            this.actuallyStartRound();
         }, 1000);
     }
 
@@ -710,7 +688,7 @@ export class RoundManager {
         // Play victory sound if there's a winner
         if (winnerId && this.world) {
             const audioManager = AudioManager.getInstance(this.world);
-            audioManager.playSoundEffect('audio/sfx/damage/blop1.mp3', 0.6);  // Slightly louder for round victory
+            audioManager.playSoundEffect('audio/sfx/damage/blop1.mp3', 0.6);
         }
         
         // Broadcast updated scores and leaderboard
@@ -725,10 +703,23 @@ export class RoundManager {
             return;
         }
 
+        // Prevent multiple transitions
+        if (this.roundTransitionPending) {
+            console.log('Round transition already pending, skipping');
+            return;
+        }
+
         // Set transition flag and schedule next round
         this.roundTransitionPending = true;
         console.log('Starting round transition period');
-        setTimeout(() => {
+        
+        // Clear any existing transition timer
+        if (this.roundTimer) {
+            clearTimeout(this.roundTimer);
+        }
+        
+        // Schedule next round after transition
+        this.roundTimer = setTimeout(() => {
             console.log('Round transition complete');
             this.roundTransitionPending = false;
             this.startRound();
