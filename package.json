@@ -1,5 +1,5 @@
 {
-  "name": "block-breaking-game",
+  "name": "astro-breaker",
   "version": "1.0.0",
   "description": "A game where you throw things at blocks to break them",
   "license": "MIT",
@@ -9,12 +9,11 @@
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "jest": "^29.7.0",
-    "ts-jest": "^29.2.5",
-    "typescript": "^5.7.3"
+    "ts-jest": "^29.2.6",
+    "typescript": "^5.8.2"
   },
   "dependencies": {
-    "block-breaking-game": ".",
-    "hytopia": "^0.1.98"
+    "hytopia": "^0.1.99"
   },
   "jest": {
     "preset": "ts-jest",
