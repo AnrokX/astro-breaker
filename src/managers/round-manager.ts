@@ -77,7 +77,7 @@ export class RoundManager {
         // Tutorial round (Round 1) - Static targets only
         if (round === 1) {
             return {
-                duration: 60000,  // 60 seconds
+                duration: 10000,  // 10 seconds (was 60000)
                 minBlockCount: 8,
                 maxBlockCount: 12,
                 blockSpawnInterval: 500,
@@ -98,7 +98,7 @@ export class RoundManager {
         // Round 2 - 100% Normal Blocks
         if (round === 2) {
             return {
-                duration: 30000,
+                duration: 10000,  // 10 seconds (was 30000)
                 minBlockCount: 2,
                 maxBlockCount: 4,
                 blockSpawnInterval: 500,
@@ -119,7 +119,7 @@ export class RoundManager {
         // Round 3 - 100% Sine Wave
         if (round === 3) {
             return {
-                duration: 30000,
+                duration: 10000,  // 10 seconds (was 30000)
                 minBlockCount: 3,
                 maxBlockCount: 6,
                 blockSpawnInterval: 500,
@@ -140,7 +140,7 @@ export class RoundManager {
         // Round 4 - 100% Vertical Wave
         if (round === 4) {
             return {
-                duration: 25000,
+                duration: 10000,  // 10 seconds (was 25000)
                 minBlockCount: 2,
                 maxBlockCount: 6,
                 blockSpawnInterval: 500,
@@ -161,7 +161,7 @@ export class RoundManager {
         // Round 5 - 100% Pop-up
         if (round === 5) {
             return {
-                duration: 25000,
+                duration: 10000,  // 10 seconds (was 25000)
                 minBlockCount: 2,
                 maxBlockCount: 4,
                 blockSpawnInterval: 500,
@@ -182,7 +182,7 @@ export class RoundManager {
         // Round 6 - 100% Rising
         if (round === 6) {
             return {
-                duration: 25000,
+                duration: 10000,  // 10 seconds (was 25000)
                 minBlockCount: 2,
                 maxBlockCount: 4,
                 blockSpawnInterval: 500,
@@ -203,7 +203,7 @@ export class RoundManager {
         // Round 7 - 100% Parabolic
         if (round === 7) {
             return {
-                duration: 30000,
+                duration: 10000,  // 10 seconds (was 30000)
                 minBlockCount: 2,
                 maxBlockCount: 4,
                 blockSpawnInterval: 500,
@@ -224,7 +224,7 @@ export class RoundManager {
         // Round 8 - 100% Pendulum
         if (round === 8) {
             return {
-                duration: 30000,
+                duration: 10000,  // 10 seconds (was 30000)
                 minBlockCount: 2,
                 maxBlockCount: 4,
                 blockSpawnInterval: 500,
@@ -245,7 +245,7 @@ export class RoundManager {
         // Round 9 - "Up and Down" Mix (Vertical Wave, Rising, and Popup)
         if (round === 9) {
             return {
-                duration: 30000,
+                duration: 10000,  // 10 seconds (was 30000)
                 minBlockCount: 2,
                 maxBlockCount: 6,
                 blockSpawnInterval: 500,
@@ -265,7 +265,7 @@ export class RoundManager {
 
         // Round 10 - "Chaos" Mix (Pendulum, Parabolic, and Sine Wave)
         return {
-            duration: 30000,
+            duration: 10000,  // 10 seconds (was 30000)
             minBlockCount: 4,
             maxBlockCount: 6,
             blockSpawnInterval: 500,
