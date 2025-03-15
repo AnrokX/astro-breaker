@@ -197,45 +197,56 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: linear-gradient(90deg, rgba(139, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
-      margin: 8px 0;
-      padding: 10px 15px;
-      border-radius: 5px;
-      border: 1px solid rgba(255, 0, 0, 0.1);
+      background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
+      margin: 10px 0;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       transition: all 0.3s ease;
     }
 
     .leaderboard-entry:hover {
       transform: translateX(-5px);
-      border-color: var(--blood-red);
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.2) 100%);
     }
 
     .leaderboard-entry.winner {
-      background: linear-gradient(90deg, rgba(255, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 100%);
-      border-color: var(--blood-red);
-      color: var(--blood-red);
-      text-shadow: 0 0 5px var(--glow-red);
+      background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
+      border-color: #ffd700;
+    }
+    
+    .leaderboard-entry.current-player {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
+      border-width: 2px;
     }
 
     .player-name {
       font-family: var(--text-font);
-      font-size: 14px;
+      font-size: 16px;
       letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .player-rank {
       font-family: var(--number-font);
-      font-size: 20px;
-      opacity: 0.8;
+      font-size: 24px;
       min-width: 30px;
       text-align: center;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
     }
 
     .player-wins {
       font-family: var(--number-font);
-      font-size: 24px;
-      color: var(--matrix-green);
-      text-shadow: 0 0 5px var(--terminal-green);
+      font-size: 28px;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
       letter-spacing: 1px;
     }
 
@@ -322,24 +333,89 @@
 
     .player-score {
       font-family: var(--text-font);
-      background: linear-gradient(90deg, rgba(255, 0, 0, 0.1) 0%, transparent 100%);
-      padding: 8px 12px;
-      border-radius: 5px;
-      border: 1px solid rgba(255, 0, 0, 0.2);
-      margin: 5px 0;
+      background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
     }
-
+    
+    .player-score.current-player {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
+      border-width: 2px;
+      transform: translateX(5px);
+    }
+    
+    .player-score:hover {
+      transform: translateX(5px);
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.2) 100%);
+    }
+    
+    .player-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .player-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+    }
+    
+    .player-avatar.large {
+      width: 32px;
+      height: 32px;
+      margin-right: 10px;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+    }
+    
     .player-label {
-      color: var(--blood-red);
-      text-shadow: 0 0 5px var(--glow-red);
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
+    }
+    
+    .player-you-tag {
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 5px;
+      color: white;
+      text-shadow: none;
+    }
+    
+    .score-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
     }
 
     .score-value {
       font-family: var(--number-font);
       font-size: 32px;
-      color: var(--matrix-green);
-      text-shadow: 0 0 8px var(--terminal-green);
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
       letter-spacing: 2px;
+    }
+    
+    .round-score {
+      font-size: 18px;
+      opacity: 0.8;
+      animation: pulseScore 1.5s ease-out;
+    }
+    
+    @keyframes pulseScore {
+      0% { opacity: 1; transform: scale(1.2); }
+      70% { opacity: 0.9; }
+      100% { opacity: 0.8; transform: scale(1); }
     }
 
     .crosshair {
@@ -883,28 +959,59 @@
       justify-content: space-between;
       align-items: center;
       margin: 10px 0;
-      padding: 10px 20px;
-      background: linear-gradient(90deg, rgba(139, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 100%);
+      padding: 15px 20px;
+      background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
       border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       transition: all 0.3s ease;
     }
 
     .round-end-placement.first {
-      background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, rgba(0, 0, 0, 0) 100%);
+      background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
       border: 1px solid #ffd700;
+    }
+    
+    .round-end-placement.current-player {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
+      border-width: 2px;
+    }
+    
+    .round-end-placement .player-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .round-end-placement .player-name {
+      font-family: var(--text-font);
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+    
+    .round-end-placement .player-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
     }
 
     .placement-rank {
       font-family: var(--number-font);
       font-size: 28px;
-      color: var(--matrix-green);
       min-width: 40px;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
     }
 
     .placement-points {
       font-family: var(--number-font);
-      font-size: 24px;
-      color: var(--terminal-green);
+      font-size: 28px;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
+      letter-spacing: 1px;
+    }
+    
+    .round-end-placements {
+      margin: 20px 0;
     }
 
     .next-round-timer {
@@ -1049,11 +1156,29 @@
         color: #ffd700;
         text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
         margin-bottom: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .final-standings {
         margin: 30px 0;
         width: 100%;
+    }
+    
+    .standing-player-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 150px;
+    }
+    
+    .standing-stats {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .standing-entry {
@@ -1779,6 +1904,78 @@ function handleRoundEnd(data) {
     // Add to body instead of roundInfo
     document.body.appendChild(statusMessage);
 
+    // Create and show round standings dialog
+    if (data.placements && data.placements.length > 0) {
+      // Create round end dialog
+      const roundEndDialog = document.createElement('div');
+      roundEndDialog.className = 'round-end';
+      
+      // Create title
+      const title = document.createElement('div');
+      title.className = 'round-end-title';
+      title.textContent = `Round ${data.round} Results`;
+      roundEndDialog.appendChild(title);
+      
+      // Add placements
+      const placementsContainer = document.createElement('div');
+      placementsContainer.className = 'round-end-placements';
+      
+      data.placements.forEach((placement, index) => {
+        const placementDiv = document.createElement('div');
+        const isCurrentPlayer = placement.playerId === data.currentPlayerId;
+        placementDiv.className = `round-end-placement ${index === 0 ? 'first' : ''} ${isCurrentPlayer ? 'current-player' : ''}`;
+        
+        // Get player color
+        const playerColor = placement.playerColor || '#FFFFFF';
+        
+        // Highlight current player's entry
+        if (isCurrentPlayer) {
+          placementDiv.style.borderColor = playerColor;
+          placementDiv.style.boxShadow = `0 0 8px ${playerColor}`;
+        }
+        
+        // Add content with player identifier
+        placementDiv.innerHTML = `
+          <div class="player-info">
+            <span class="placement-rank" style="color: ${playerColor}">#${index + 1}</span>
+            <span class="player-avatar" style="background-color: ${playerColor}"></span>
+            <span class="player-name" style="color: ${playerColor}">Player ${placement.playerNumber}</span>
+            ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
+          </div>
+          <span class="placement-points" style="color: ${playerColor}">+${placement.points} pts</span>
+        `;
+        
+        placementsContainer.appendChild(placementDiv);
+      });
+      
+      roundEndDialog.appendChild(placementsContainer);
+      
+      // Add timer for next round
+      const timerDiv = document.createElement('div');
+      timerDiv.className = 'next-round-timer';
+      timerDiv.textContent = `Next round starting in ${Math.ceil(data.nextRoundIn / 1000)} seconds...`;
+      roundEndDialog.appendChild(timerDiv);
+      
+      // Add to body
+      document.body.appendChild(roundEndDialog);
+      
+      // Remove dialog after transition to next round
+      setTimeout(() => {
+        roundEndDialog.remove();
+      }, data.nextRoundIn - 100);
+      
+      // Update timer countdown
+      let secondsLeft = Math.ceil(data.nextRoundIn / 1000);
+      const timerInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft > 0) {
+          timerDiv.textContent = `Next round starting in ${secondsLeft} seconds...`;
+        } else {
+          clearInterval(timerInterval);
+        }
+      }, 1000);
+    }
+
     // Remove status message after transition to next round
     setTimeout(() => {
       statusMessage.remove();
@@ -1791,12 +1988,12 @@ function handleRoundEnd(data) {
     const scores = document.querySelectorAll('.player-score');
     scores.forEach(score => {
       const totalScore = score.querySelector('.score-value');
-      const roundScore = score.querySelector('.round-score');
+      const lastScore = score.querySelector('.round-score');
       if (totalScore) {
         totalScore.textContent = '0';
       }
-      if (roundScore) {
-        roundScore.textContent = '(+0)';
+      if (lastScore) {
+        lastScore.textContent = '';  // Hide completely instead of showing +0
       }
     });
   }, data.nextRoundIn - 100); // Reset 100ms before next round starts
@@ -1804,38 +2001,84 @@ function handleRoundEnd(data) {
 
 function updateScoreboard(scores) {
   scoresContainer.innerHTML = '';
-  scores.forEach((score, index) => {
+  const currentPlayerId = scores.currentPlayerId;
+  
+  // Sort scores to put current player first, then by player number
+  const sortedScores = [...scores];
+  sortedScores.sort((a, b) => {
+    // Always put current player first
+    if (a.playerId === currentPlayerId) return -1;
+    if (b.playerId === currentPlayerId) return 1;
+    // Then sort by player number
+    return a.playerNumber - b.playerNumber;
+  });
+  
+  sortedScores.forEach((score) => {
     const playerDiv = document.createElement('div');
-    playerDiv.className = 'player-score';
+    const isCurrentPlayer = score.playerId === currentPlayerId;
+    playerDiv.className = `player-score ${isCurrentPlayer ? 'current-player' : ''}`;
     
     // Use leaderboardPoints for game end, otherwise use round scoring
     const points = score.isGameEnd ? score.leaderboardPoints : score.totalPoints;
-    const roundScore = Number(score.roundScore || 0);
+    const lastScore = Number(score.lastScore || 0);
     
+    // Player icon/avatar with player color
+    const playerColor = score.playerColor || '#FFFFFF';
+    
+    // Highlight current player's score with a border
+    if (isCurrentPlayer) {
+      playerDiv.style.borderColor = playerColor;
+      playerDiv.style.boxShadow = `0 0 8px ${playerColor}`;
+    }
+    
+    // Build score display - total score and last earned score
     playerDiv.innerHTML = `
-      <span class="player-label">P${index + 1}</span>
-      <span class="score-value">${points}</span>
-      ${!score.isGameEnd ? `<span class="round-score">(+${roundScore})</span>` : ''}
+      <div class="player-indicator">
+        <span class="player-avatar" style="background-color: ${playerColor}"></span>
+        <span class="player-label" style="color: ${playerColor}">Player ${score.playerNumber}</span>
+        ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
+      </div>
+      <div class="score-info">
+        <span class="score-value" style="color: ${playerColor}">${points}</span>
+        ${!score.isGameEnd && lastScore > 0 ? `<span class="round-score" style="color: ${playerColor}">(+${lastScore})</span>` : ''}
+      </div>
     `;
     scoresContainer.appendChild(playerDiv);
   });
 }
 
-function updateLeaderboard(leaderboardData) {
+function updateLeaderboard(data) {
   const container = document.getElementById('leaderboard-container');
   container.innerHTML = '';
   
+  const leaderboardData = data.leaderboard || data;
+  const currentPlayerId = data.currentPlayerId;
+  
   leaderboardData.forEach((entry, index) => {
+    const isCurrentPlayer = entry.playerId === currentPlayerId;
     const entryDiv = document.createElement('div');
-    entryDiv.className = `leaderboard-entry ${entry.isLeading ? 'winner' : ''}`;
+    entryDiv.className = `leaderboard-entry ${entry.isLeading ? 'winner' : ''} ${isCurrentPlayer ? 'current-player' : ''}`;
     
-    // Update the display to show placement points
+    // Get player color
+    const playerColor = entry.playerColor || '#FFFFFF';
+    
+    // Highlight current player's entry with a border
+    if (isCurrentPlayer) {
+      entryDiv.style.borderColor = playerColor;
+      entryDiv.style.boxShadow = `0 0 8px ${playerColor}`;
+    }
+    
+    // Update the display to show placement points with player color
     entryDiv.innerHTML = `
       <div class="player-name">
-        <span class="player-rank">#${index + 1}</span>
-        <span>P${entry.playerNumber}</span>
+        <span class="player-rank" style="color: ${playerColor}">#${index + 1}</span>
+        <div class="player-info">
+          <span class="player-avatar" style="background-color: ${playerColor}"></span>
+          <span>Player ${entry.playerNumber}</span>
+          ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
+        </div>
       </div>
-      <span class="player-wins">${entry.points} points</span>
+      <span class="player-wins" style="color: ${playerColor}">${entry.points} pts</span>
     `;
     
     container.appendChild(entryDiv);
@@ -2143,21 +2386,52 @@ function showGameEnd(data) {
     const standingsContainer = document.querySelector('.final-standings');
     const nextGameTimer = document.querySelector('.next-game-timer');
     
-    // Show winner
-    winnerAnnouncement.textContent = `🏆 Player ${data.winner.playerId} Wins! 🏆`;
+    // Get winner details
+    const winnerPlayerNumber = data.winner.playerNumber || 1;
+    const winnerColor = data.winner.playerColor || '#FFD700';
+    
+    // Style winner announcement with winner's color
+    winnerAnnouncement.innerHTML = `
+        <span class="player-avatar large" style="background-color: ${winnerColor}"></span>
+        <span style="color: ${winnerColor}">Player ${winnerPlayerNumber}</span> Wins!
+    `;
+    winnerAnnouncement.style.textShadow = `0 0 15px ${winnerColor}`;
     
     // Show standings
     standingsContainer.innerHTML = '';
     data.standings.forEach((standing, index) => {
+        const isCurrentPlayer = standing.playerId === data.currentPlayerId;
         const entry = document.createElement('div');
-        entry.className = `standing-entry ${index === 0 ? 'winner' : ''}`;
+        entry.className = `standing-entry ${index === 0 ? 'winner' : ''} ${isCurrentPlayer ? 'current-player' : ''}`;
+        
+        // Use player color for styling
+        const playerColor = standing.playerColor || '#FFFFFF';
+        
+        // Highlight current player's entry
+        if (isCurrentPlayer) {
+            entry.style.borderColor = playerColor;
+            entry.style.boxShadow = `0 0 8px ${playerColor}`;
+        }
         
         entry.innerHTML = `
-            <div class="standing-position">#${index + 1}</div>
+            <div class="player-info standing-player-info">
+                <span class="standing-position" style="color: ${playerColor}">#${index + 1}</span>
+                <span class="player-avatar" style="background-color: ${playerColor}"></span>
+                <span class="player-name" style="color: ${playerColor}">Player ${standing.playerNumber}</span>
+                ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
+            </div>
             <div class="standing-stats">
                 <div class="standing-stat">
                     <div class="stat-label">POINTS</div>
-                    <div class="stat-value">${standing.placementPoints}</div>
+                    <div class="stat-value" style="color: ${playerColor}">${standing.placementPoints}</div>
+                </div>
+                <div class="standing-stat">
+                    <div class="stat-label">WINS</div>
+                    <div class="stat-value" style="color: ${playerColor}">${standing.wins || 0}</div>
+                </div>
+                <div class="standing-stat">
+                    <div class="stat-label">SCORE</div>
+                    <div class="stat-value" style="color: ${playerColor}">${standing.totalScore || 0}</div>
                 </div>
             </div>
         `;

@@ -31,6 +31,8 @@ export interface GameConfig {
 
 interface GameEndStanding {
     playerId: string;
+    playerNumber?: number;
+    playerColor?: string;
     placementPoints: number;
     wins: number;
     totalScore: number;
@@ -809,18 +811,38 @@ export class RoundManager {
     }
 
     private broadcastRoundEnd(winnerId: string | null, placements: Array<{ playerId: string, points: number }>): void {
-        const message = {
-            type: 'roundEnd',
-            data: {
-                round: this.currentRound,
-                nextRoundIn: this.TRANSITION_DURATION,
-                winnerId: winnerId,
-                placements: placements
-            }
-        };
-
-        for (const player of this.world.entityManager.getAllPlayerEntities()) {
-            player.player.ui.sendData(message);
+        // Get player stats for enhanced placements with player info
+        const enhancedPlacements = placements.map(placement => {
+            // Get player stats from score manager
+            const playerStats = (this.scoreManager as any).playerStats.get(placement.playerId);
+            const playerNumber = playerStats?.playerNumber || 0;
+            
+            // Get color from the player colors array
+            const playerColors = (this.scoreManager as any).constructor.PLAYER_COLORS || [];
+            const playerColor = playerColors[playerNumber - 1] || '#FFFFFF';
+            
+            return {
+                ...placement,
+                playerNumber,
+                playerColor
+            };
+        });
+        
+        // Send enhanced data to each player
+        for (const playerEntity of this.world.entityManager.getAllPlayerEntities()) {
+            const currentPlayerId = playerEntity.player.id;
+            
+            playerEntity.player.ui.sendData({
+                type: 'roundEnd',
+                data: {
+                    round: this.currentRound,
+                    totalRounds: this.GAME_CONFIG.maxRounds,
+                    nextRoundIn: this.TRANSITION_DURATION,
+                    winnerId: winnerId,
+                    placements: enhancedPlacements,
+                    currentPlayerId // Send current player ID for highlighting
+                }
+            });
         }
     }
 
@@ -878,8 +900,17 @@ export class RoundManager {
         
         this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
             const playerId = playerEntity.player.id;
+            const playerStats = (this.scoreManager as any).playerStats.get(playerId);
+            const playerNumber = playerStats?.playerNumber || 0;
+            
+            // Get color from player colors array
+            const playerColors = (this.scoreManager as any).constructor.PLAYER_COLORS || [];
+            const playerColor = playerColors[playerNumber - 1] || '#FFFFFF';
+            
             finalStandings.push({
                 playerId,
+                playerNumber,
+                playerColor,
                 placementPoints: this.scoreManager.getLeaderboardPoints(playerId),
                 wins: this.scoreManager.getWins(playerId),
                 totalScore: this.scoreManager.getScore(playerId)
@@ -896,27 +927,27 @@ export class RoundManager {
             .forEach(entity => entity.despawn());
 
         if (gameWinner) {
-            // Broadcast game end to all players
-            const message = {
-                type: 'gameEnd',
-                data: {
-                    winner: gameWinner,
-                    standings: finalStandings,
-                    nextGameIn: 10000, // 10 seconds until next game
-                    stats: {
-                        totalRounds: this.GAME_CONFIG.maxRounds,
-                        completedRounds: this.currentRound
-                    }
-                }
-            };
-
-            // Send game end message to all players
+            // Send game end message to all players with current player ID
             this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
-                // Send game end data
-                playerEntity.player.ui.sendData(message);
+                const currentPlayerId = playerEntity.player.id;
+                
+                // Send game end data with currentPlayerId
+                playerEntity.player.ui.sendData({
+                    type: 'gameEnd',
+                    data: {
+                        winner: gameWinner,
+                        standings: finalStandings,
+                        currentPlayerId,
+                        nextGameIn: 10000, // 10 seconds until next game
+                        stats: {
+                            totalRounds: this.GAME_CONFIG.maxRounds,
+                            completedRounds: this.currentRound
+                        }
+                    }
+                });
                 
                 // Send congratulatory message to winner
-                if (playerEntity.player.id === gameWinner.playerId) {
+                if (currentPlayerId === gameWinner.playerId) {
                     playerEntity.player.ui.sendData({
                         type: 'systemMessage',
                         message: `🏆 Congratulations! You won the game with ${gameWinner.placementPoints} placement points!`,
@@ -925,11 +956,11 @@ export class RoundManager {
                 }
             });
 
-            // Send game end message to all players
+            // Use player number for clearer winner announcement
             this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
                 playerEntity.player.ui.sendData({
                     type: 'systemMessage',
-                    message: `Game Over! Player ${gameWinner.playerId} wins!`,
+                    message: `Game Over! Player ${gameWinner.playerNumber} wins!`,
                     color: 'FFD700'
                 });
             });

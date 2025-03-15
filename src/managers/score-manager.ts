@@ -11,9 +11,10 @@ export interface ScoreOptions {
 }
 
 interface PlayerStats {
-  totalScore: number;
-  roundScore: number;
-  placementPoints: number;  // Add new field to track points from placements
+  totalScore: number;     // Overall game total score
+  roundScore: number;     // Current round's accumulated score
+  lastScore: number;      // Last individual score received
+  placementPoints: number;  // Points from placements at end of rounds
   wins: number;
   playerNumber: number;
   consecutiveHits: number;  
@@ -67,6 +68,7 @@ export class ScoreManager extends Entity {
       this.playerStats.set(playerId, {
         totalScore: 0,
         roundScore: 0,
+        lastScore: 0,      // Initialize last score
         placementPoints: 0,  // Initialize placement points
         wins: 0,
         playerNumber: this.playerCount,
@@ -90,6 +92,7 @@ export class ScoreManager extends Entity {
     for (const [playerId, stats] of this.playerStats.entries()) {
       stats.totalScore = 0;  // Reset total score at start of round
       stats.roundScore = 0;  // Reset round score
+      stats.lastScore = 0;   // Reset last score
       stats.consecutiveHits = 0;
       stats.multiHitCount = 0;
       stats.lastHitTime = 0;
@@ -145,6 +148,7 @@ export class ScoreManager extends Entity {
     if (stats) {
       stats.totalScore += score;
       stats.roundScore += score;
+      stats.lastScore = score; // Store the last individual score separately
       this.playerStats.set(playerId, stats);
 
       // Play the score sound effect
@@ -164,6 +168,11 @@ export class ScoreManager extends Entity {
   public getRoundScore(playerId: string): number {
     return this.playerStats.get(playerId)?.roundScore ?? 0;
   }
+  
+  // Get the last individual score received for a player
+  public getLastScore(playerId: string): number {
+    return this.playerStats.get(playerId)?.lastScore ?? 0;
+  }
 
   // Get wins for a player
   public getWins(playerId: string): number {
@@ -176,6 +185,7 @@ export class ScoreManager extends Entity {
     if (stats) {
       stats.totalScore = 0;
       stats.roundScore = 0;
+      stats.lastScore = 0;
       this.playerStats.set(playerId, stats);
     }
   }
@@ -192,6 +202,7 @@ export class ScoreManager extends Entity {
     for (const [playerId, stats] of this.playerStats.entries()) {
       stats.totalScore = 0;
       stats.roundScore = 0;
+      stats.lastScore = 0;
       stats.placementPoints = 0;  // Reset placement points
       stats.wins = 0;
       stats.consecutiveHits = 0;
@@ -201,32 +212,57 @@ export class ScoreManager extends Entity {
     }
   }
 
+  // Colors for player identification
+  private static readonly PLAYER_COLORS = [
+    '#4CAF50', // Green
+    '#2196F3', // Blue
+    '#FFC107', // Amber
+    '#E91E63', // Pink
+    '#9C27B0', // Purple
+    '#FF5722', // Deep Orange
+    '#00BCD4', // Cyan
+    '#FFEB3B'  // Yellow
+  ];
+
   // Add this method to broadcast scores and leaderboard
   public broadcastScores(world: World) {
-    const scores = Array.from(world.entityManager.getAllPlayerEntities()).map(playerEntity => ({
+    const playerEntities = Array.from(world.entityManager.getAllPlayerEntities());
+    
+    // Build scores with player details
+    const scores = playerEntities.map(playerEntity => ({
         playerId: playerEntity.player.id,
+        playerNumber: this.playerStats.get(playerEntity.player.id)?.playerNumber || 0,
+        playerColor: ScoreManager.PLAYER_COLORS[(this.playerStats.get(playerEntity.player.id)?.playerNumber || 1) - 1],
         totalPoints: this.getScore(playerEntity.player.id),
-        roundScore: this.getRoundScore(playerEntity.player.id)
+        roundScore: this.getRoundScore(playerEntity.player.id),
+        lastScore: this.getLastScore(playerEntity.player.id)
     }));
 
     // Create leaderboard data sorted by placement points
     const leaderboard = Array.from(this.playerStats.entries())
         .map(([playerId, stats]) => ({
+            playerId,
             playerNumber: stats.playerNumber,
+            playerColor: ScoreManager.PLAYER_COLORS[stats.playerNumber - 1],
             points: stats.placementPoints, // Use placement points for leaderboard
             isLeading: this.isLeadingByPlacements(playerId) // New method for placement-based leading
         }))
         .sort((a, b) => b.points - a.points);
 
     world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
+        // Get player's own ID to highlight their scores in UI
+        const currentPlayerId = playerEntity.player.id;
+
         playerEntity.player.ui.sendData({
             type: 'updateScores',
-            scores
+            scores,
+            currentPlayerId
         });
         
         playerEntity.player.ui.sendData({
             type: 'updateLeaderboard',
-            leaderboard
+            leaderboard,
+            currentPlayerId
         });
     });
   }
