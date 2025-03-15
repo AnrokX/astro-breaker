@@ -12,8 +12,9 @@
     "ts-jest": "^29.2.6",
     "typescript": "^5.8.2"
   },
-  "dependencies": {
-    "hytopia": "^0.1.99"
+ "dependencies": {
+    "@hytopia.com/assets": "latest",
+    "hytopia": "latest"
   },
   "jest": {
     "preset": "ts-jest",
