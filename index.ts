@@ -5,7 +5,10 @@ import {
   RaycastOptions,
   PlayerCameraMode,
   PlayerUI,
-  Vector3Like
+  Vector3Like,
+  PlayerEvent,
+  BaseEntityControllerEvent,
+  PlayerUIEvent
 } from 'hytopia';
 
 import worldMap from './assets/map.json';
@@ -231,7 +234,8 @@ startServer(world => {
     });
   }, 100); // Check every 100ms
 
-  world.onPlayerJoin = player => {
+  // Replace direct assignment with proper event listener for player join
+  world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
     console.log('New player joined the game');
     
     // Initialize player states
@@ -309,7 +313,7 @@ startServer(world => {
     playerEntity.player.camera.setFov(70);
   
     // Wire up raycast handler and projectile system to the SDK's input system
-    playerEntity.controller!.onTickWithPlayerInput = (entity, input, cameraOrientation, deltaTimeMs) => {
+    playerEntity.controller!.on(BaseEntityControllerEvent.TICK_WITH_PLAYER_INPUT, ({ entity, input, cameraOrientation, deltaTimeMs }) => {
       // Create a clean copy of the input state to avoid recursive references
       const cleanInput = {
         ml: input.ml || false,
@@ -353,10 +357,11 @@ startServer(world => {
 
       // Return the original orientation
       return cameraOrientation;
-    };
+    });
 
     // Handle settings updates from UI
-    player.ui.onData = (_playerUI: PlayerUI, data: any) => {
+    player.ui.on(PlayerUIEvent.DATA, (payload) => {
+      const data = payload.data;
       if (data && data.type === 'updateSettings') {
         settingsManager.updateSetting(player.id, data.setting, data.value);
         
@@ -366,7 +371,7 @@ startServer(world => {
           audioManager.setBgmVolume(volume);
         }
       }
-    };
+    });
 
     // Start the round or spawn test blocks based on mode
     if (IS_TEST_MODE && testSpawner) {
@@ -397,12 +402,13 @@ startServer(world => {
     if (IS_TEST_MODE) {
       world.chatManager.sendPlayerMessage(player, 'Type /testhelp to see available test commands', 'FFFF00');
     }
-  };
+  });
 
   /**
    * Handles the event when a player leaves the game.
    */
-  world.onPlayerLeave = player => {
+  // Replace direct assignment with proper event listener for player leave
+  world.on(PlayerEvent.LEFT_WORLD, ({ player }) => {
     console.log('Player left the game');
     
     // Clean up player states
@@ -419,7 +425,7 @@ startServer(world => {
     playerSpawnPositions.delete(player.id);
     
     world.entityManager.getPlayerEntitiesByPlayer(player).forEach(entity => entity.despawn());
-  };
+  });
 
   // Cleanup managers when the scene changes or the game shuts down
   BlockParticleEffects.getInstance(world).cleanup();
