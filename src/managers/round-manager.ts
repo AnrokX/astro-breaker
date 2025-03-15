@@ -53,7 +53,7 @@ export class RoundManager {
     };
     private gameInProgress: boolean = false;
     private roundTransitionPending: boolean = false;
-    private readonly TRANSITION_DURATION: number = 1000; // Reduced to 1 second
+    private readonly TRANSITION_DURATION: number = 3000; // Increased to 3 seconds
 
     // Helper function to get a random Y position within a range
     private getRandomY(min: number, max: number): number {

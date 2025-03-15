@@ -931,27 +931,39 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: linear-gradient(135deg, var(--matrix-dark) 0%, rgba(13, 2, 8, 0.95) 100%);
-      padding: 30px;
-      border-radius: 16px;
+      padding: 40px;
+      border-radius: 20px;
       color: #ffffff;
       font-family: var(--text-font);
       backdrop-filter: blur(10px);
-      border: 2px solid var(--blood-red);
-      box-shadow: 0 0 40px rgba(255, 0, 0, 0.3),
-                  inset 0 0 20px rgba(255, 0, 0, 0.2);
+      border: 3px solid var(--blood-red);
+      box-shadow: 0 0 60px rgba(255, 0, 0, 0.4),
+                  inset 0 0 30px rgba(255, 0, 0, 0.2);
       z-index: 1000;
-      min-width: 400px;
+      min-width: 450px;
       text-align: center;
+      animation: pulseDialog 2s infinite alternate;
+    }
+    
+    @keyframes pulseDialog {
+      0% { box-shadow: 0 0 40px rgba(255, 0, 0, 0.3), inset 0 0 20px rgba(255, 0, 0, 0.2); }
+      100% { box-shadow: 0 0 60px rgba(255, 0, 0, 0.5), inset 0 0 30px rgba(255, 0, 0, 0.3); }
     }
 
     .round-end-title {
       font-family: var(--title-font);
-      font-size: 24px;
+      font-size: 32px;
       color: var(--blood-red);
-      margin-bottom: 20px;
+      margin-bottom: 30px;
       text-transform: uppercase;
       letter-spacing: 3px;
-      text-shadow: 0 0 15px var(--glow-red);
+      text-shadow: 0 0 20px var(--glow-red);
+      animation: titleGlow 1.5s infinite alternate;
+    }
+    
+    @keyframes titleGlow {
+      0% { text-shadow: 0 0 15px var(--glow-red); }
+      100% { text-shadow: 0 0 25px var(--glow-red); }
     }
 
     .round-end-placement {
@@ -1016,10 +1028,13 @@
 
     .next-round-timer {
       font-family: var(--display-font);
-      font-size: 18px;
-      color: #ffffff;
-      margin-top: 20px;
-      opacity: 0.8;
+      font-size: 22px;
+      color: var(--matrix-green);
+      margin-top: 30px;
+      padding: 10px;
+      border-radius: 5px;
+      background: rgba(0, 0, 0, 0.3);
+      text-shadow: 0 0 10px var(--terminal-green);
     }
 
     .round-complete-message {
@@ -1894,16 +1909,8 @@ function updateRoundInfo(roundData) {
 }
 
 function handleRoundEnd(data) {
-  // Only show round complete message if it's not the final round
+  // Only show results if it's not the final round
   if (data.round < data.totalRounds) {
-    // Create round complete message with new styling
-    const statusMessage = document.createElement('div');
-    statusMessage.className = 'round-complete-message';
-    statusMessage.textContent = 'Round Complete!';
-    
-    // Add to body instead of roundInfo
-    document.body.appendChild(statusMessage);
-
     // Create and show round standings dialog
     if (data.placements && data.placements.length > 0) {
       // Create round end dialog
@@ -1959,10 +1966,10 @@ function handleRoundEnd(data) {
       // Add to body
       document.body.appendChild(roundEndDialog);
       
-      // Remove dialog after transition to next round
+      // Remove dialog just before the next round starts
       setTimeout(() => {
         roundEndDialog.remove();
-      }, data.nextRoundIn - 100);
+      }, data.nextRoundIn - 200); // Remove 200ms before next round starts
       
       // Update timer countdown
       let secondsLeft = Math.ceil(data.nextRoundIn / 1000);
@@ -1976,10 +1983,6 @@ function handleRoundEnd(data) {
       }, 1000);
     }
 
-    // Remove status message after transition to next round
-    setTimeout(() => {
-      statusMessage.remove();
-    }, data.nextRoundIn);
   }
 
   // Reset scores just before the next round starts
