@@ -284,12 +284,18 @@ export class RoundManager {
     }
 
     private startCountdown(): void {
-        // Don't start countdown if in transition
-        if (this.roundTransitionPending) return;
-
+        // Don't start countdown if in transition or a round is active
+        if (this.roundTransitionPending || this.isRoundActive) return;
+        
+        // IMPORTANT: Don't set roundTransitionPending flag until countdown is complete
+        // This allows shooting to continue during countdown
+        
         // Simplified transition - just wait a short time then start
         setTimeout(() => {
-            this.actuallyStartRound();
+            // Double-check that we still want to start the round
+            if (!this.isRoundActive) {
+                this.actuallyStartRound();
+            }
         }, 1000);
     }
 
@@ -301,6 +307,8 @@ export class RoundManager {
         }
 
         this.currentRound++;
+        
+        // Make sure to set this flag first to allow shooting
         this.isRoundActive = true;
         this.gameInProgress = true;
         this.roundStartTime = Date.now();
@@ -348,17 +356,32 @@ export class RoundManager {
         
         // Only check for minimum players when starting a new game (not in progress)
         if (!this.gameInProgress && playerCount < this.REQUIRED_PLAYERS) {
-            this.waitingForPlayers = true;
-            this.broadcastWaitingForPlayers(playerCount);
-            
-            if (!this.checkPlayersInterval) {
+            // If we're already waiting for players, don't reset the state
+            if (!this.waitingForPlayers) {
+                this.waitingForPlayers = true;
+                this.broadcastWaitingForPlayers(playerCount);
+                
+                // Clear any existing interval before setting a new one
+                if (this.checkPlayersInterval) {
+                    clearInterval(this.checkPlayersInterval);
+                    this.checkPlayersInterval = null;
+                }
+                
                 this.checkPlayersInterval = setInterval(() => {
                     const currentPlayers = this.getPlayerCount();
+                    
                     if (currentPlayers >= this.REQUIRED_PLAYERS) {
-                        this.waitingForPlayers = false;
-                        clearInterval(this.checkPlayersInterval!);
-                        this.checkPlayersInterval = null;
-                        this.startCountdown();
+                        // Only proceed if we haven't already started the round/countdown
+                        if (this.waitingForPlayers && !this.isRoundActive && !this.roundTransitionPending) {
+                            this.waitingForPlayers = false;
+                            clearInterval(this.checkPlayersInterval!);
+                            this.checkPlayersInterval = null;
+                            this.startCountdown();
+                        } else {
+                            // We already started or are transitioning, just clear the interval
+                            clearInterval(this.checkPlayersInterval!);
+                            this.checkPlayersInterval = null;
+                        }
                     } else {
                         this.broadcastWaitingForPlayers(currentPlayers);
                     }
@@ -666,8 +689,7 @@ export class RoundManager {
     }
 
     public endRound(): void {
-        console.log('Ending round:', this.currentRound);
-        
+        // Don't end if no round is active
         if (!this.isRoundActive) return;
 
         // Clear any existing timers first
@@ -680,6 +702,7 @@ export class RoundManager {
             this.blockSpawnTimer = null;
         }
 
+        // Set round as inactive immediately to prevent double-ending
         this.isRoundActive = false;
 
         // Get round results with placements
@@ -704,14 +727,10 @@ export class RoundManager {
         }
 
         // Prevent multiple transitions
-        if (this.roundTransitionPending) {
-            console.log('Round transition already pending, skipping');
-            return;
-        }
+        if (this.roundTransitionPending) return;
 
         // Set transition flag and schedule next round
         this.roundTransitionPending = true;
-        console.log('Starting round transition period');
         
         // Clear any existing transition timer
         if (this.roundTimer) {
@@ -720,7 +739,7 @@ export class RoundManager {
         
         // Schedule next round after transition
         this.roundTimer = setTimeout(() => {
-            console.log('Round transition complete');
+            // Set transitioning to false first BEFORE starting the next round
             this.roundTransitionPending = false;
             this.startRound();
         }, this.TRANSITION_DURATION);
@@ -829,6 +848,7 @@ export class RoundManager {
     }
 
     public isShootingAllowed(): boolean {
+        // Should return true when round is active and not waiting for players
         return this.isRoundActive && !this.waitingForPlayers;
     }
 
