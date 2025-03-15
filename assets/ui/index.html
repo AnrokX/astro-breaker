@@ -1139,6 +1139,7 @@
       z-index: 1000;
       min-width: 400px;
       box-shadow: 0 0 30px rgba(255, 0, 0, 0.2);
+      font-family: var(--text-font);
     }
 
     .help-menu.visible {
@@ -1146,9 +1147,23 @@
       animation: slideIn 0.3s ease-out;
     }
 
+    .help-menu.closing {
+      animation: slideOut 0.3s ease-in;
+    }
+
     @keyframes slideIn {
       from { transform: translateY(-50%) translateX(50px); opacity: 0; }
       to { transform: translateY(-50%) translateX(0); opacity: 1; }
+    }
+
+    @keyframes slideOut {
+      from { transform: translateY(-50%) translateX(0); opacity: 1; }
+      to { transform: translateY(-50%) translateX(50px); opacity: 0; }
+    }
+
+    .help-content {
+      font-family: var(--text-font);
+      font-size: 18px;
     }
 
     .help-header {
@@ -1176,6 +1191,7 @@
       color: var(--blood-red);
       border: 1px solid var(--blood-red);
       text-shadow: 0 0 8px var(--glow-red);
+      font-family: var(--display-font);
     }
 
     .help-section {
@@ -1201,7 +1217,13 @@
       display: flex;
       align-items: center;
       gap: 15px;
-      font-size: 18px;
+      font-size: 20px;
+      font-family: var(--text-font);
+    }
+
+    .guide-text {
+      font-family: var(--text-font);
+      font-size: 20px;
     }
 
     .guide-icon {
@@ -1235,9 +1257,10 @@
     }
 
     .control-item .action {
-      font-size: 16px;
+      font-size: 20px;
       color: rgba(255, 255, 255, 0.9);
       text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+      font-family: var(--text-font);
     }
 
     /* Subtle HUD Hotkey Hints */
@@ -2023,12 +2046,24 @@ document.addEventListener('keydown', (e) => {
 
 function toggleHelp(show) {
     const menu = document.querySelector('.help-menu');
-    isHelpOpen = show;
     
     if (show) {
+        menu.classList.remove('closing');
         menu.classList.add('visible');
+        isHelpOpen = true;
     } else {
-        menu.classList.remove('visible');
+        if (!menu.classList.contains('visible')) return;
+        
+        menu.classList.add('closing');
+        isHelpOpen = false;
+        
+        // Wait for animation to complete before hiding
+        setTimeout(() => {
+            if (!isHelpOpen) { // Check again in case it was reopened
+                menu.classList.remove('visible');
+                menu.classList.remove('closing');
+            }
+        }, 300); // Match the animation duration
     }
 }
 
