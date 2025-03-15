@@ -1,4 +1,4 @@
-import { Entity, EntityOptions, Vector3Like, ColliderShape, CollisionGroup, BlockType, World, PlayerEntity } from 'hytopia';
+import { Entity, EntityOptions, Vector3Like, ColliderShape, CollisionGroup, BlockType, World, PlayerEntity, EntityEvent } from 'hytopia';
 import { MovingBlockEntity } from '../moving_blocks/moving-block-entity';
 import { RaycastHandler } from '../raycast/raycast-handler';
 import { BlockParticleEffects } from '../effects/block-particle-effects';
@@ -83,6 +83,14 @@ export class ProjectileEntity extends Entity {
         this.raycastHandler = options.raycastHandler;
         this.enablePreview = options.enablePreview ?? true;
         this.playerId = options.playerId;
+        
+        // Register for tick events using the event system
+        this.on(EntityEvent.TICK, ({ tickDeltaMs }) => {
+            if (Date.now() - this.spawnTime > this.lifetime) {
+                this.explode();
+                this.despawn();
+            }
+        });
     }
 
     private validateTrajectory(direction: Vector3Like): boolean {
@@ -150,6 +158,8 @@ export class ProjectileEntity extends Entity {
             throw new Error('ProjectileEntity.spawn(): Entity failed to spawn!');
         }
 
+        // Lifetime checks are handled automatically by the onTick method from the engine's tick system
+
         // Configure collider for solid physics interaction
         this.createAndAddChildCollider({
             shape: ColliderShape.BALL,
@@ -207,12 +217,7 @@ export class ProjectileEntity extends Entity {
         }
     }
 
-    override onTick = (entity: Entity, deltaTimeMs: number): void => {
-        if (Date.now() - this.spawnTime > this.lifetime) {
-            this.explode();
-            this.despawn();
-        }
-    }
+    // This is a special property that Hytopia's Entity class recognizes
 
     throw(direction: Vector3Like): void {
         if (!this.rawRigidBody) return;

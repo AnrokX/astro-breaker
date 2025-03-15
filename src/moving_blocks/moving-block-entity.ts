@@ -1,4 +1,4 @@
-import { Entity, EntityOptions, Vector3Like, ColliderShape, CollisionGroup, World, RigidBodyType, BlockType, PlayerEntity } from 'hytopia';
+import { Entity, EntityOptions, Vector3Like, ColliderShape, CollisionGroup, World, RigidBodyType, BlockType, PlayerEntity, EntityEvent } from 'hytopia';
 import { ScoreManager } from '../managers/score-manager';
 import { BlockMovementBehavior, DefaultBlockMovement, SineWaveMovement, StaticMovement, PopUpMovement, RisingMovement, ParabolicMovement, PendulumMovement } from './block-movement';
 import { DESTRUCTION_PARTICLE_CONFIG } from '../config/particle-config';
@@ -199,6 +199,12 @@ export class MovingBlockEntity extends Entity {
     this.movementBehavior = options.movementBehavior || new DefaultBlockMovement();
     this.particleEffects = null;
     this.spawnTime = Date.now();
+    
+    // Register for tick events using the event system
+    this.on(EntityEvent.TICK, ({ tickDeltaMs }) => {
+      // Delegate movement update to injected behavior
+      this.movementBehavior.update(this, tickDeltaMs);
+    });
 
     // Set up despawn timer if specified
     if (options.despawnTime) {
@@ -224,6 +230,8 @@ export class MovingBlockEntity extends Entity {
     super.spawn(world, position);
     this.initialPosition = { ...position };
     this.particleEffects = BlockParticleEffects.getInstance(world);
+    
+    // Movement is now handled by the onTick event registered in the constructor
   }
 
   private isWithinBounds(position: Vector3Like): boolean {
@@ -255,11 +263,6 @@ export class MovingBlockEntity extends Entity {
     this.direction.y *= -1;
     this.direction.z *= -1;
     this.isReversed = !this.isReversed;
-  }
-
-  override onTick = (entity: Entity, deltaTimeMs: number): void => {
-    // Delegate movement update to injected behavior
-    this.movementBehavior.update(this, deltaTimeMs);
   }
 
 
@@ -940,6 +943,9 @@ export class MovingBlockManager {
     
     block.spawn(this.world, finalSpawnPosition);
     this.blocks.push(block);
+    
+    // Movement is now handled by the onTick method
+    
     return block;
   }
 

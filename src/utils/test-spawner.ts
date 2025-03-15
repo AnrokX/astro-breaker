@@ -334,7 +334,25 @@ export class TestBlockSpawner {
         }
 
         // Create regular block with default texture
-        this.blockManager.createZAxisBlock(pos);
+        const block = this.blockManager.createZAxisBlock(pos);
+        
+        // Try to manually force a movement to test if the block can move
+        if (block && block.position) {
+            console.log("Initial block position:", block.position);
+            
+            // Force a position update to verify the block can be moved
+            setTimeout(() => {
+                if (block.isSpawned) {
+                    const newPos = {
+                        x: block.position.x + 1,
+                        y: block.position.y + 1,
+                        z: block.position.z + 1
+                    };
+                    block.setPosition(newPos);
+                    console.log("Forced new block position:", newPos);
+                }
+            }, 1000);
+        }
     }
 
     public spawnPopUpTarget(speedMultiplier: number = 1): void {
