@@ -167,63 +167,67 @@
       position: fixed;
       top: 100px;
       right: 40px;
-      background: linear-gradient(135deg, var(--matrix-dark) 0%, rgba(13, 2, 8, 0.95) 100%);
-      padding: 20px;
-      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 8px;
       color: #ffffff;
       font-family: var(--text-font);
       backdrop-filter: blur(10px);
-      border: 1px solid var(--blood-red);
-      box-shadow: 0 0 20px rgba(255, 0, 0, 0.2),
-                  inset 0 0 10px rgba(255, 0, 0, 0.1);
-      min-width: 240px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      min-width: 260px;
       z-index: 100;
+      will-change: transform; /* Optimize for performance */
     }
 
     .leaderboard-title {
       font-family: var(--title-font);
-      font-size: 18px;
-      color: var(--blood-red);
+      font-size: 16px;
+      color: #ffffff;
       margin-bottom: 15px;
+      padding-bottom: 8px;
       text-align: center;
       text-transform: uppercase;
-      letter-spacing: 2px;
-      text-shadow: 0 0 10px var(--glow-red),
-                   0 0 20px var(--glow-red);
-      transform: none;
+      letter-spacing: 1px;
+      position: relative;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #leaderboard-container {
+      transition: opacity 0.2s ease;
     }
 
     .leaderboard-entry {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
-      margin: 10px 0;
-      padding: 12px 15px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
+      background: rgba(0, 0, 0, 0.3);
+      margin: 6px 0;
+      padding: 10px 12px;
+      border-radius: 4px;
+      border-left: 3px solid transparent;
+      transition: background 0.2s ease;
+      position: relative;
     }
 
     .leaderboard-entry:hover {
-      transform: translateX(-5px);
-      background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.2) 100%);
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .leaderboard-entry.winner {
-      background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
-      border-color: #ffd700;
+      background: rgba(255, 215, 0, 0.15);
+      border-left-color: #ffd700;
     }
     
     .leaderboard-entry.current-player {
-      background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
-      border-width: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      border-left-color: #ffffff;
     }
 
     .player-name {
       font-family: var(--text-font);
-      font-size: 16px;
-      letter-spacing: 1px;
+      font-size: 14px;
+      letter-spacing: 0.5px;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -237,31 +241,34 @@
 
     .player-rank {
       font-family: var(--number-font);
-      font-size: 24px;
-      min-width: 30px;
+      font-size: 18px;
+      min-width: 25px;
       text-align: center;
-      text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
+      opacity: 0.8;
+    }
+    
+    /* Remove avatar styling completely */
+    .player-avatar {
+      display: none;
     }
     
     .rank-change {
-      font-size: 16px;
-      margin: 0 5px;
+      font-size: 12px;
+      margin: 0 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      position: relative;
     }
     
     .rank-up {
       color: #4CAF50;
-      animation: pulse-green 2s infinite;
     }
     
     .rank-down {
       color: #F44336;
-      animation: pulse-red 2s infinite;
     }
     
     .rank-same {
@@ -270,7 +277,6 @@
     
     .rank-new {
       color: #2196F3;
-      animation: sparkle 1.5s infinite;
     }
     
     @keyframes pulse-green {
@@ -292,12 +298,14 @@
       75% { transform: scale(1.2) rotate(-15deg); text-shadow: 0 0 15px rgba(33, 150, 243, 1); }
       100% { transform: scale(1) rotate(0deg); text-shadow: 0 0 5px rgba(33, 150, 243, 0.7); }
     }
+    
+    /* Remove the staggered animation keyframes */
 
     .player-wins {
       font-family: var(--number-font);
-      font-size: 28px;
-      text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
-      letter-spacing: 1px;
+      font-size: 20px;
+      letter-spacing: 0.5px;
+      font-weight: bold;
     }
 
     .round-info {
@@ -434,13 +442,13 @@
     }
     
     .player-you-tag {
-      font-size: 12px;
-      background: rgba(255, 255, 255, 0.2);
-      padding: 2px 6px;
-      border-radius: 10px;
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 1px 4px;
+      border-radius: 2px;
       margin-left: 5px;
       color: white;
-      text-shadow: none;
+      font-weight: bold;
     }
     
     .score-info {
@@ -2115,12 +2123,6 @@ function updateLeaderboard(data) {
     // Get player color
     const playerColor = entry.playerColor || '#FFFFFF';
     
-    // Highlight current player's entry with a border
-    if (isCurrentPlayer) {
-      entryDiv.style.borderColor = playerColor;
-      entryDiv.style.boxShadow = `0 0 8px ${playerColor}`;
-    }
-    
     // Create rank change indicator based on the rankChange field
     let rankChangeIndicator = '';
     if (entry.rankChange === 'up') {
@@ -2136,15 +2138,14 @@ function updateLeaderboard(data) {
     // Update the display to show placement points with player color
     entryDiv.innerHTML = `
       <div class="player-name">
-        <span class="player-rank" style="color: ${playerColor}">#${entry.currentRank}</span>
+        <span class="player-rank">#${entry.currentRank}</span>
         ${rankChangeIndicator}
         <div class="player-info">
-          <span class="player-avatar" style="background-color: ${playerColor}"></span>
           <span>Player ${entry.playerNumber}</span>
           ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
         </div>
       </div>
-      <span class="player-wins" style="color: ${playerColor}">${entry.points} pts</span>
+      <span class="player-wins">${entry.points}</span>
     `;
     
     container.appendChild(entryDiv);
