@@ -19,7 +19,9 @@ interface PlayerStats {
   playerNumber: number;
   consecutiveHits: number;  
   multiHitCount: number;    
-  lastHitTime: number;      
+  lastHitTime: number;
+  previousRank: number;     // Previous rank in the leaderboard
+  currentRank: number;      // Current rank in the leaderboard
 }
 
 export class ScoreManager extends Entity {
@@ -74,7 +76,9 @@ export class ScoreManager extends Entity {
         playerNumber: this.playerCount,
         consecutiveHits: 0,
         multiHitCount: 0,
-        lastHitTime: 0
+        lastHitTime: 0,
+        previousRank: 0,     // Initialize previous rank (0 means new player)
+        currentRank: this.playerCount // Default to last place initially
       });
     }
   }
@@ -87,7 +91,7 @@ export class ScoreManager extends Entity {
     }
   }
 
-  // Start a new round - reset round scores and total scores, but keep placement points
+  // Start a new round - reset round scores and total scores, but keep placement points and ranking
   public startNewRound(): void {
     for (const [playerId, stats] of this.playerStats.entries()) {
       stats.totalScore = 0;  // Reset total score at start of round
@@ -96,12 +100,20 @@ export class ScoreManager extends Entity {
       stats.consecutiveHits = 0;
       stats.multiHitCount = 0;
       stats.lastHitTime = 0;
+      // Keep previousRank and currentRank values
       this.playerStats.set(playerId, stats);
     }
   }
 
   // Add a win for the player with the highest score in the round
   public handleRoundEnd(): { winnerId: string | null, placements: Array<{ playerId: string, points: number }> } {
+    // Update previous ranks before calculating new ones
+    // Store current ranks as previous ranks
+    for (const [playerId, stats] of this.playerStats.entries()) {
+        stats.previousRank = stats.currentRank;
+        this.playerStats.set(playerId, stats);
+    }
+
     // Sort players by round score in descending order
     const sortedPlayers = Array.from(this.playerStats.entries())
         .sort((a, b) => b[1].roundScore - a[1].roundScore);
@@ -130,6 +142,27 @@ export class ScoreManager extends Entity {
         this.playerStats.set(playerId, stats);
         
         placements.push({ playerId, points: currentPoints });
+    });
+
+    // Update current ranks based on updated placement points
+    // Sort players by total placement points for the final leaderboard
+    const leaderboardRanking = Array.from(this.playerStats.entries())
+        .sort((a, b) => b[1].placementPoints - a[1].placementPoints);
+
+    // Assign new ranks, handling ties
+    let currentRank = 1;
+    let lastPointsValue = -1;
+    leaderboardRanking.forEach((entry, index) => {
+        const [playerId, stats] = entry;
+        
+        // If this is a new score, update the rank
+        if (stats.placementPoints !== lastPointsValue) {
+            currentRank = index + 1;
+            lastPointsValue = stats.placementPoints;
+        }
+        
+        stats.currentRank = currentRank;
+        this.playerStats.set(playerId, stats);
     });
 
     const winnerId = sortedPlayers.length > 0 ? sortedPlayers[0][0] : null;
@@ -208,6 +241,8 @@ export class ScoreManager extends Entity {
       stats.consecutiveHits = 0;
       stats.multiHitCount = 0;
       stats.lastHitTime = 0;
+      stats.previousRank = 0;  // Reset to "new player" state
+      stats.currentRank = stats.playerNumber;  // Default to player number order
       this.playerStats.set(playerId, stats);
     }
   }
@@ -240,14 +275,29 @@ export class ScoreManager extends Entity {
 
     // Create leaderboard data sorted by placement points
     const leaderboard = Array.from(this.playerStats.entries())
-        .map(([playerId, stats]) => ({
-            playerId,
-            playerNumber: stats.playerNumber,
-            playerColor: ScoreManager.PLAYER_COLORS[stats.playerNumber - 1],
-            points: stats.placementPoints, // Use placement points for leaderboard
-            isLeading: this.isLeadingByPlacements(playerId) // New method for placement-based leading
-        }))
-        .sort((a, b) => b.points - a.points);
+        .map(([playerId, stats]) => {
+            // Calculate the ranking change
+            let rankChange = 'same';
+            if (stats.previousRank === 0) {
+                rankChange = 'new'; // New player
+            } else if (stats.currentRank < stats.previousRank) {
+                rankChange = 'up'; // Moved up in rankings
+            } else if (stats.currentRank > stats.previousRank) {
+                rankChange = 'down'; // Moved down in rankings
+            }
+            
+            return {
+                playerId,
+                playerNumber: stats.playerNumber,
+                playerColor: ScoreManager.PLAYER_COLORS[stats.playerNumber - 1],
+                points: stats.placementPoints, // Use placement points for leaderboard
+                isLeading: this.isLeadingByPlacements(playerId), // For highlighting the leading player
+                currentRank: stats.currentRank,
+                previousRank: stats.previousRank,
+                rankChange: rankChange
+            };
+        })
+        .sort((a, b) => a.currentRank - b.currentRank); // Sort by rank now instead of points
 
     world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
         // Get player's own ID to highlight their scores in UI

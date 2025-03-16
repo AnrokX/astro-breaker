@@ -242,6 +242,56 @@
       text-align: center;
       text-shadow: 0 0 5px rgba(255, 255, 255, 0.4);
     }
+    
+    .rank-change {
+      font-size: 16px;
+      margin: 0 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+    }
+    
+    .rank-up {
+      color: #4CAF50;
+      animation: pulse-green 2s infinite;
+    }
+    
+    .rank-down {
+      color: #F44336;
+      animation: pulse-red 2s infinite;
+    }
+    
+    .rank-same {
+      color: #FFD700;
+    }
+    
+    .rank-new {
+      color: #2196F3;
+      animation: sparkle 1.5s infinite;
+    }
+    
+    @keyframes pulse-green {
+      0% { transform: scale(1); text-shadow: 0 0 2px rgba(76, 175, 80, 0.5); }
+      50% { transform: scale(1.1); text-shadow: 0 0 10px rgba(76, 175, 80, 0.8); }
+      100% { transform: scale(1); text-shadow: 0 0 2px rgba(76, 175, 80, 0.5); }
+    }
+    
+    @keyframes pulse-red {
+      0% { transform: scale(1); text-shadow: 0 0 2px rgba(244, 67, 54, 0.5); }
+      50% { transform: scale(1.1); text-shadow: 0 0 10px rgba(244, 67, 54, 0.8); }
+      100% { transform: scale(1); text-shadow: 0 0 2px rgba(244, 67, 54, 0.5); }
+    }
+    
+    @keyframes sparkle {
+      0% { transform: scale(1) rotate(0deg); text-shadow: 0 0 5px rgba(33, 150, 243, 0.7); }
+      25% { transform: scale(1.2) rotate(15deg); text-shadow: 0 0 15px rgba(33, 150, 243, 1); }
+      50% { transform: scale(1) rotate(0deg); text-shadow: 0 0 5px rgba(33, 150, 243, 0.7); }
+      75% { transform: scale(1.2) rotate(-15deg); text-shadow: 0 0 15px rgba(33, 150, 243, 1); }
+      100% { transform: scale(1) rotate(0deg); text-shadow: 0 0 5px rgba(33, 150, 243, 0.7); }
+    }
 
     .player-wins {
       font-family: var(--number-font);
@@ -2071,10 +2121,23 @@ function updateLeaderboard(data) {
       entryDiv.style.boxShadow = `0 0 8px ${playerColor}`;
     }
     
+    // Create rank change indicator based on the rankChange field
+    let rankChangeIndicator = '';
+    if (entry.rankChange === 'up') {
+      rankChangeIndicator = `<span class="rank-change rank-up">▲</span>`;
+    } else if (entry.rankChange === 'down') {
+      rankChangeIndicator = `<span class="rank-change rank-down">▼</span>`;
+    } else if (entry.rankChange === 'same') {
+      rankChangeIndicator = `<span class="rank-change rank-same">●</span>`;
+    } else if (entry.rankChange === 'new') {
+      rankChangeIndicator = `<span class="rank-change rank-new">★</span>`;
+    }
+    
     // Update the display to show placement points with player color
     entryDiv.innerHTML = `
       <div class="player-name">
-        <span class="player-rank" style="color: ${playerColor}">#${index + 1}</span>
+        <span class="player-rank" style="color: ${playerColor}">#${entry.currentRank}</span>
+        ${rankChangeIndicator}
         <div class="player-info">
           <span class="player-avatar" style="background-color: ${playerColor}"></span>
           <span>Player ${entry.playerNumber}</span>
