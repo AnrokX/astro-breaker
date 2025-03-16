@@ -178,6 +178,22 @@
       min-width: 260px;
       z-index: 100;
       will-change: transform; /* Optimize for performance */
+      transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), 
+                  opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+      transform: translateX(0);
+      opacity: 1;
+    }
+    
+    /* States for leaderboard visibility */
+    .leaderboard.hidden {
+      transform: translateX(120%);
+      opacity: 0;
+    }
+    
+    .leaderboard.pre-game {
+      transform: translateX(0);
+      opacity: 1;
+      background: rgba(0, 0, 0, 0.5);
     }
 
     .leaderboard-title {
@@ -206,8 +222,10 @@
       padding: 10px 12px;
       border-radius: 4px;
       border-left: 3px solid transparent;
-      transition: background 0.2s ease;
+      transition: background 0.2s ease, transform 0.3s ease, opacity 0.3s ease;
       position: relative;
+      opacity: 1;
+      transform: translateX(0);
     }
 
     .leaderboard-entry:hover {
@@ -222,6 +240,48 @@
     .leaderboard-entry.current-player {
       background: rgba(255, 255, 255, 0.1);
       border-left-color: #ffffff;
+    }
+    
+    /* Entry animations */
+    .leaderboard-entry.new-entry {
+      animation: newEntryAnimation 0.6s ease forwards;
+    }
+    
+    .leaderboard-entry.rank-changed {
+      animation: rankChangedAnimation 0.8s ease;
+    }
+    
+    .leaderboard-entry.score-updated {
+      animation: scoreUpdatedAnimation 0.4s ease;
+    }
+    
+    @keyframes newEntryAnimation {
+      0% {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    @keyframes rankChangedAnimation {
+      0% {
+        background: rgba(255, 255, 255, 0.3);
+      }
+      100% {
+        background: rgba(0, 0, 0, 0.3);
+      }
+    }
+    
+    @keyframes scoreUpdatedAnimation {
+      0%, 100% {
+        background: rgba(0, 0, 0, 0.3);
+      }
+      50% {
+        background: rgba(76, 175, 80, 0.2);
+      }
     }
 
     .player-name {
@@ -261,14 +321,17 @@
       width: 16px;
       height: 16px;
       position: relative;
+      transition: transform 0.3s ease;
     }
     
     .rank-up {
       color: #4CAF50;
+      animation: rankUpAnimation 0.6s ease;
     }
     
     .rank-down {
       color: #F44336;
+      animation: rankDownAnimation 0.6s ease;
     }
     
     .rank-same {
@@ -277,6 +340,43 @@
     
     .rank-new {
       color: #2196F3;
+      animation: rankNewAnimation 0.8s ease;
+    }
+    
+    @keyframes rankUpAnimation {
+      0% {
+        transform: translateY(5px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes rankDownAnimation {
+      0% {
+        transform: translateY(-5px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes rankNewAnimation {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.5);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
     
     @keyframes pulse-green {
@@ -306,6 +406,37 @@
       font-size: 20px;
       letter-spacing: 0.5px;
       font-weight: bold;
+      position: relative;
+    }
+    
+    /* Score change animation */
+    .player-wins.score-change::after {
+      content: attr(data-diff);
+      position: absolute;
+      right: 0;
+      top: -15px;
+      font-size: 14px;
+      color: #4CAF50;
+      opacity: 0;
+      animation: scoreChangeAnimation 1.5s ease-out forwards;
+    }
+    
+    @keyframes scoreChangeAnimation {
+      0% {
+        opacity: 0;
+        transform: translateY(0);
+      }
+      20% {
+        opacity: 1;
+      }
+      80% {
+        opacity: 1;
+        transform: translateY(-15px);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
     }
 
     .round-info {
@@ -1868,6 +1999,7 @@ function showWaitingForPlayers(data) {
   const gameStatus = document.querySelector('.game-status');
   const roundNumber = document.querySelector('.round-number');
   const roundTimer = document.querySelector('.round-timer');
+  const leaderboard = document.querySelector('.leaderboard');
   
   // Update game status to show waiting message
   roundNumber.textContent = 'Waiting for Players';
@@ -1875,6 +2007,30 @@ function showWaitingForPlayers(data) {
   
   // Add waiting style
   gameStatus.classList.add('waiting');
+  
+  // Update leaderboard to pre-game state
+  if (leaderboard) {
+    leaderboard.classList.add('pre-game');
+    
+    // Update leaderboard title to show it's in pre-game state
+    const title = leaderboard.querySelector('.leaderboard-title');
+    if (title) {
+      title.innerHTML = 'WAITING FOR PLAYERS<br><span style="font-size:14px;opacity:0.7;">Game starting soon...</span>';
+    }
+    
+    // Clear any existing entries
+    const container = document.getElementById('leaderboard-container');
+    if (container) {
+      // Create a placeholder entry
+      container.innerHTML = `
+        <div class="leaderboard-entry pre-game-message">
+          <div style="width:100%;text-align:center;padding:10px;opacity:0.7;">
+            Players will appear here when the game starts
+          </div>
+        </div>
+      `;
+    }
+  }
 }
 
 let lastTimeRemaining = 0;
@@ -1944,6 +2100,7 @@ function startLocalTimer(initialTimeMs) {
 function updateRoundInfo(roundData) {
   const gameStatus = document.querySelector('.game-status');
   const roundNumber = document.querySelector('.round-number');
+  const leaderboard = document.querySelector('.leaderboard');
   
   // Remove waiting style
   gameStatus.classList.remove('waiting');
@@ -1958,6 +2115,24 @@ function updateRoundInfo(roundData) {
     if (window.comboTimeout) {
       clearTimeout(window.comboTimeout);
     }
+  }
+  
+  // Reset leaderboard from pre-game state if necessary
+  if (leaderboard && leaderboard.classList.contains('pre-game')) {
+    // We need to animate the leaderboard to show it's now active
+    leaderboard.classList.add('hidden');
+    leaderboard.classList.remove('pre-game');
+    
+    // Reset the title
+    const title = leaderboard.querySelector('.leaderboard-title');
+    if (title) {
+      title.textContent = 'LEADERBOARD';
+    }
+    
+    // Animate in the leaderboard with a slight delay
+    setTimeout(() => {
+      leaderboard.classList.remove('hidden');
+    }, 500);
   }
   
   // Start or update timer with the full duration
@@ -2108,20 +2283,51 @@ function updateScoreboard(scores) {
   });
 }
 
+// Track previous leaderboard state to detect changes
+let previousLeaderboard = [];
+let leaderboardInitialized = false;
+
 function updateLeaderboard(data) {
   const container = document.getElementById('leaderboard-container');
-  container.innerHTML = '';
-  
+  const leaderboardElement = document.querySelector('.leaderboard');
   const leaderboardData = data.leaderboard || data;
   const currentPlayerId = data.currentPlayerId;
+  
+  // Initialize leaderboard state on first load
+  if (!leaderboardInitialized) {
+    leaderboardElement.classList.add('hidden');
+    setTimeout(() => {
+      leaderboardElement.classList.remove('hidden');
+      leaderboardInitialized = true;
+    }, 500);
+  }
+  
+  // Store old container contents to allow for comparing changes
+  const oldEntries = Array.from(container.querySelectorAll('.leaderboard-entry'));
+  container.innerHTML = '';
   
   leaderboardData.forEach((entry, index) => {
     const isCurrentPlayer = entry.playerId === currentPlayerId;
     const entryDiv = document.createElement('div');
-    entryDiv.className = `leaderboard-entry ${entry.isLeading ? 'winner' : ''} ${isCurrentPlayer ? 'current-player' : ''}`;
     
-    // Get player color
-    const playerColor = entry.playerColor || '#FFFFFF';
+    // Check if this entry changed rank or score
+    const previousEntry = previousLeaderboard.find(prev => prev.playerId === entry.playerId);
+    const isNew = !previousEntry;
+    const rankChanged = previousEntry && previousEntry.currentRank !== entry.currentRank;
+    const scoreChanged = previousEntry && previousEntry.points !== entry.points;
+    
+    // Apply appropriate animation classes
+    let animationClass = '';
+    if (isNew) {
+      animationClass = 'new-entry';
+    } else if (rankChanged) {
+      animationClass = 'rank-changed';
+    } else if (scoreChanged) {
+      animationClass = 'score-updated';
+    }
+    
+    entryDiv.className = `leaderboard-entry ${entry.isLeading ? 'winner' : ''} ${isCurrentPlayer ? 'current-player' : ''} ${animationClass}`;
+    entryDiv.style.animationDelay = `${index * 0.05}s`;
     
     // Create rank change indicator based on the rankChange field
     let rankChangeIndicator = '';
@@ -2135,7 +2341,16 @@ function updateLeaderboard(data) {
       rankChangeIndicator = `<span class="rank-change rank-new">★</span>`;
     }
     
-    // Update the display to show placement points with player color
+    // Add point difference for score animations if score changed
+    let pointsDiff = '';
+    if (scoreChanged && previousEntry) {
+      const diff = entry.points - previousEntry.points;
+      if (diff > 0) {
+        pointsDiff = `data-diff="+${diff}"`;
+      }
+    }
+    
+    // Update the display
     entryDiv.innerHTML = `
       <div class="player-name">
         <span class="player-rank">#${entry.currentRank}</span>
@@ -2145,12 +2360,16 @@ function updateLeaderboard(data) {
           ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
         </div>
       </div>
-      <span class="player-wins">${entry.points}</span>
+      <span class="player-wins ${scoreChanged ? 'score-change' : ''}" ${pointsDiff}>${entry.points}</span>
     `;
     
     container.appendChild(entryDiv);
   });
+  
+  // Update our stored state for next comparison
+  previousLeaderboard = JSON.parse(JSON.stringify(leaderboardData));
 }
+
 
 // Settings menu functionality
 let isSettingsOpen = false;
