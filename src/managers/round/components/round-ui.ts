@@ -27,6 +27,23 @@ export class RoundUI {
                          winnerId: string | null, 
                          placements: Array<RoundEndPlacement>,
                          transitionDuration: number): void {
+    // Enhance placements with player information (playerNumber and playerColor)
+    const enhancedPlacements = placements.map(placement => {
+      // Get player stats from score manager
+      const playerStats = (this.scoreManager as any).playerStats.get(placement.playerId);
+      const playerNumber = playerStats?.playerNumber || 0;
+      
+      // Get color from the player colors array
+      const playerColors = (this.scoreManager as any).constructor.PLAYER_COLORS || [];
+      const playerColor = playerColors[playerNumber - 1] || '#FFFFFF';
+      
+      return {
+        ...placement,
+        playerNumber,
+        playerColor
+      };
+    });
+    
     // Send enhanced data to each player with their own ID for highlighting
     for (const playerEntity of this.world.entityManager.getAllPlayerEntities()) {
       const currentPlayerId = playerEntity.player.id;
@@ -38,7 +55,7 @@ export class RoundUI {
           totalRounds,
           nextRoundIn: transitionDuration,
           winnerId,
-          placements,
+          placements: enhancedPlacements,
           currentPlayerId // Send current player ID for highlighting
         }
       });

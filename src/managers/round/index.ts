@@ -280,6 +280,15 @@ export class RoundManager {
       .forEach(entity => entity.despawn());
 
     if (gameWinner) {
+      // Ensure gameWinner has all required properties
+      if (!gameWinner.playerNumber) {
+        const playerStats = (this.scoreManager as any).playerStats.get(gameWinner.playerId);
+        gameWinner.playerNumber = playerStats?.playerNumber || 1;
+        
+        const playerColors = (this.scoreManager as any).constructor.PLAYER_COLORS || [];
+        gameWinner.playerColor = playerColors[(gameWinner.playerNumber - 1) % playerColors.length] || '#FFFFFF';
+      }
+      
       this.ui.displayGameEnd(
         gameWinner,
         finalStandings,
