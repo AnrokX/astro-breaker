@@ -1,0 +1,154 @@
+User Interface
+One of the toughest parts of game development is crafting great user interfaces (UIs). 
+
+HYTOPIA makes this process remarkably simple. You can build anything from basic menus to highly complex interfaces using standard web tools like HTML, CSS, and JavaScript. If you’d rather work with a framework like React or Svelte, that’s no problem—HYTOPIA supports those too! 
+
+One strength that sets HYTOPIA apart is its extremely flexible and unopinionated UI system. If you can create a webpage, you can create the UI for your game. 
+
+Your user interfaces are injected into the same page (DOM) as the HYTOPIA game scene while enabling your user interfaces and your game’s server to seamlessly exchange game state, interactions, and data in real time.  
+
+The HYTOPIA game scene and your injected content is loaded in a CSP (Content-Security Policy) controlled iframe, isolating game behavior from any meaningful user data.
+
+All aspects of custom UIs are handled automatically and internally via a WebSocket connection, ensuring everything stays fast and responsive. 
+
+Any interaction you can implement on a webpage can work in your UI!
+
+
+A custom HYTOPIA Leaderboard UI 
+Overlay UI & Scene UIs.
+HYTOPIA supports 2 distinct types of user interfaces. Here's the difference between the two.
+
+Overlay UI - The Overlay UI is the global user interface that overlays the game scene. This is great for things like menus, skill bars, leaderboards, countdown timers, visual effects, and other UI elements that do not require spatial placement in the game scene.
+
+Scene UIs -  Scene UIs exist spatially within the 3D game scene itself. They can be attached to entities to follow them, placed at a fixed position, and more. Health bars, entity status icons, quest symbols, NPC messages, and much more are examples of what you could use Scene UIs for. 
+
+
+A top-right leaderboard that's part of our Overlay UI, and a Scene UI showing a join message above an entity.
+Creating & Loading A UI
+Both the Overlay UI and Scene UI elements are defined in a single .html file.
+
+In this example, we'll use simple HTML and Javascript to create a basic box on the screen as part of the Overlay UI. As long as your UI is bundled/rendered into an entry .html file, it can be loaded as a HYTOPIA UI regardless of the framework you use.
+
+Make sure to never include <html>, <body>, or <head>tags in your entry .html file!
+
+In your assetsfolder of your project, we'll create a new folder called ui . Within that, create a file called index.html. Your folder and file can be named whatever you like, but for this example we'll keep it simple. Your file should exist at assets/ui/index.html
+
+In your index.htmlfile, let's create a basic box UI - remember, UI's act more or less like a transparently overlayed web page, so we can use HTML, CSS and Javascript for it.
+
+Copy
+<div
+  style="
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    top: 100px;
+    right: 100px;
+    background-color: #FF0000; 
+  "
+/>
+Now, in our server code, specifically in our world.on(PlayerEvent.Joined_WORLD, ({ player }) => { ... }) event listener, we can load the UI for the player when they join.
+
+Copy
+startServer(world => {
+  // other code...
+  
+  world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
+    // other code..
+    
+    player.ui.load('ui/index.html'); // loads relative to assets directory, this resolves to assets/ui/index.html
+    
+    // other code..
+  });
+  
+  // other code...
+});
+
+Boom! That's all we have to do, our UI is fully loaded. 
+
+UI is loaded and controlled on a per-player basis, giving you fine grain controls of what each player sees. 
+
+If you call player.ui.load() again, it will override the previously loaded UI and load a new UI for the player.
+
+Here's what we should see from our example! A red box positioned in the top right of our screen.
+
+
+UI Example
+UIs With Images & Other Assets
+If you want to load images in your UI using things like <img /> tag, or load other file types that exist in your assetsfolder, you'll need prefix their relative file path with the magic value {{CDN_ASSETS_URL}} .
+
+For example, let's say in our index.html we have an image we want to load that exists at assets/images/icon.png . We can correctly load it by setting the srcas follows.
+
+Copy
+<img src="{{CDN_ASSETS_URL}}/images/icon.png" />
+All occurrences of this magic {{CDN_ASSETS_URL}}value are replaced at runtime with the origin server your assets serve from. In local development this origin is your local game server, in production when deployed to HYTOPIA services this will be an arbitrarily assigned CDN url.
+
+You can use this to get the correct URI of any asset type from your assetsdirectory. Stylesheets, images, videos, etc.
+
+Sending & Receiving UI Data
+Nearly every client UI and game server needs to be able to receive or send some amount of data. 
+
+Here's how we can do that.
+
+Sending data from server & receiving data in the client UI
+We can send a JSON compatible object of any shape to a player's client as follows. 
+
+When sending data, it's sent to a specific player. If you need to send a data update to all players, you can use the PlayerManager to iterate all connected players and send data. In our index.html file.
+
+Copy
+player.ui.sendData({
+  my: 'data',
+  health: 53,
+  somethingElse: [ '1', 2, 'three' ]
+  // any properties of any JSON compatible shape you want!
+});
+To receive data on the client, you can use the hytopiaglobal variable in your index.html that is automatically injected by the client and always available when your UI loads.
+
+Copy
+<script>
+  hytopia.onData(data => {
+    console.log(data); // the data object sent from the server to this client ui
+  });
+</script>
+It's that simple! You have full control over the way data is sent and received by players, as well as the shape of the data based on the needs of your game.
+
+Sending data from client UI and receiving data on the server
+Similar to how we send data from our server to our client UI, we can send data back from our player's client UI to our server. In our index.html:
+
+Copy
+<script>
+  hytopia.sendData({
+    hello: 'world', 
+    clicked: 'button', 
+    something: [ 'else' ]
+    // any properties of any JSON compatible shape you want!
+  });
+</script>
+We can receive UI data sent from each player's client UI and handle it on the server however we need to with the following:
+
+Copy
+// In our game server scripts, anywhere we have a player object we can set the calblack
+// Remember, setting the onData callback more than once for a player will override
+// the previous set callback for that player!
+
+// Receiving UI data is processed and unique to each player.
+player.ui.on(PlayerUIEvent.DATA, ({ playerUi, data }) => {
+  // playerUI is the reference to player.ui, the ui of the player the data came from
+  // You can get the player the data is from if needed with playerUI.player
+  
+  // The data object sent from the client UI to the server
+  console.log(data);
+}
+Server to client Scene UI specific state
+Scene UIs have their own internally tracked state you can control. Each Scene UIs state is unique to that given instance of the scene UI. 
+
+Scene UI state management is similar to the state patterns of React. Each Scene UI instance can have its own internally tracked state defined by you, and updated directly to trigger UI updates of just that scene element without extra logic. 
+
+You can learn how to use Scene UI state management in Scene UIs.
+
+Using React, Svelte, etc
+If you're building more complex UIs with modals, fade effects, and a lot of managed state, you'll likely want to use some popular framework like React, Svelte, etc.
+
+To use one of these frameworks to build a UI, you'll simply need to make sure the output bundles to a .html file that excludes <html>, <head>and <body> tags. Add that file to your assetsfolder, and then load it as ui with player.ui.load()
+
+Sandboxing
+The entire game scene, including the UI is loaded for players in a content security policy (CSP) controlled iframe. This sandboxing blocks all external network requests and access to sensitive user data. It effectively acts as a maximum set of isolation around the game and its UI relative to the connected player and their HYTOPIA account.

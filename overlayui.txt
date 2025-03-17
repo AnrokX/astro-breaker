@@ -1,0 +1,270 @@
+Overlay UI
+The Overlay UI is exactly what it sounds like. A UI that overlays your game. You can use it to create any type of UI you'd like. 
+
+Overlay UI is loaded into an absolutely positioned <div> on top of the game scene that spans the full width and height of the window.
+
+All Overlay UI is defined in the .html file used to load your UI when invoking player.ui.load()for a player from the server.
+
+Creating A RPG Skills UI Example
+We'll use the Overlay UI to create a skills based UI that looks like something that would belong in an RPG (role-playing game) as an overlay in our game.
+
+First, let's make sure we've created our index.htmlfile at assets/ui/index.html.
+
+In our index.html, we'll add the following HTML & CSS to create our UI. In the same exact way you build standard web pages, you can build your HYTOPIA Overlay UI.
+
+Copy
+<style>
+  .skills-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(to bottom, rgba(40, 40, 40, 0.92), rgba(25, 25, 25, 0.92));
+    border: 3px solid rgba(180, 180, 180, 0.4);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5),
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 15px;
+    width: 220px;
+    backdrop-filter: blur(4px);
+  }
+
+  .skill-row {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    padding: 6px 8px;
+    background: rgba(30, 30, 30, 0.6);
+    border: 1px solid rgba(200, 200, 200, 0.15);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+
+  .skill-row:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(-3px);
+  }
+
+  .skill-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 12px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+  }
+
+  .skill-name {
+    flex: 1;
+    color: #ffffff;
+    font-family: 'Trebuchet MS', 'Arial', sans-serif;
+    font-size: 15px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.5px;
+  }
+
+  .skill-level {
+    font-weight: bold;
+    font-size: 16px;
+    color: #00ffaa;
+    text-shadow: 0 0 8px rgba(0, 255, 170, 0.4),
+                 1px 1px 2px rgba(0, 0, 0, 0.8);
+    font-family: 'Georgia', serif;
+    padding: 0 6px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+
+  .mining-icon {
+    background-image: url('https://static.wikia.nocookie.net/runescape2/images/0/0a/Mining_shop_map_icon.png');
+  }
+
+  .woodcutting-icon {
+    background-image: url('https://static.wikia.nocookie.net/runescape2/images/8/81/Axe_shop_map_icon.png');
+  }
+
+  .fishing-icon {
+    background-image: url('https://static.wikia.nocookie.net/runescape2/images/4/4f/Fishing_shop_map_icon.png');
+  }
+
+  .combat-icon {
+    background-image: url('https://static.wikia.nocookie.net/runescape2/images/4/4a/Sword_shop_map_icon.png');
+  }
+</style>
+
+<div class="skills-panel">
+  <div class="skill-row">
+    <div class="skill-icon mining-icon"></div>
+    <div class="skill-name">Mining</div>
+    <div class="skill-level mining-level">13</div>
+  </div>
+
+  <div class="skill-row">
+    <div class="skill-icon woodcutting-icon"></div>
+    <div class="skill-name">Woodcutting</div>
+    <div class="skill-level woodcutting-level">10</div>
+  </div>
+
+  <div class="skill-row">
+    <div class="skill-icon fishing-icon"></div>
+    <div class="skill-name">Fishing</div>
+    <div class="skill-level fishing-level">7</div>
+  </div>
+
+  <div class="skill-row">
+    <div class="skill-icon combat-icon"></div>
+    <div class="skill-name">Combat</div>
+    <div class="skill-level combat-level">22</div>
+  </div>
+</div>
+Now, on our server, when a player joins our game we'll load the UI file we created for them. 
+
+We can do that as follows.
+
+Copy
+world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
+  player.ui.load('ui/index.html');
+  
+  // ... other code
+});
+That's it! That's how easy it is to create a basic Overlay UI in HYTOPIA! 
+
+If all went well, we should see an awesome skills menu that looks like this.
+
+
+The skills menu overlay UI we created in our example.
+Sending Data From Server To UI
+In our previous example, we created our skills menu UI, but it doesn't update or change based on gameplay. 
+
+Let's expand on it so that we can communicate things like updates to the player's skill levels from the server.
+
+To do this, we need our UI to listen for data from the server. Here's how we can update our index.htmlfile to listen for this data. Let's add this script to the top of the file
+
+Copy
+<!-- Top of our index.html file -->
+<script>
+  hytopia.onData(data => { // data is any arbitrary object you send from the server
+    if (data.type === 'mining-level') {
+      document.querySelector('.mining-level').textContent = data.level;
+    }
+
+    if (data.type === 'woodcutting-level') {
+      document.querySelector('.woodcutting-level').textContent = data.level;
+    }
+
+    if (data.type === 'fishing-level') {
+      document.querySelector('.fishing-level').textContent = data.level;
+    }
+
+    if (data.type === 'combat-level') {
+      document.querySelector('.combat-level').textContent = data.level;
+    }
+  });
+</script>
+
+<!-- ... The rest of our index.html from the previous example ... -->
+Perfect, our UI is ready to listen for data from our server.
+
+For the sake of showcasing how data works, let's do something simple like set the level of our player's different skills to a random value every second, controlled by the server.
+
+Here's how we can do that.
+
+Copy
+world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
+  player.ui.load('ui/demo.html');
+
+  // Notice that .sendData is specific to the player. We can
+  // control sending data uniquely to each individual player as
+  // needed through their player.ui
+  setInterval(() => {
+    player.ui.sendData({ type: 'mining-level', level: Math.floor(Math.random() * 100) });
+    player.ui.sendData({ type: 'woodcutting-level', level: Math.floor(Math.random() * 100) });
+    player.ui.sendData({ type: 'fishing-level', level: Math.floor(Math.random() * 100) });
+    player.ui.sendData({ type: 'combat-level', level: Math.floor(Math.random() * 100) });
+  }, 1000);
+  
+  // ... other code
+});
+That's it! That's all we have to do to send data to the UI of a specific player.
+
+Here's what we should see in our Overlay UI.
+
+
+Our updated skills menu Overlay UI, receiving randomized level updates from our server.
+Sending Data From UI To Server
+Let's end on one final example. We're sending data down to our UI, but what if we need to send data from our UI back to our server?
+
+We can do that as well, and receive that data on the server with a reference to the player it came from, allowing us to fully scope any UI and game behavior specific to each player if necessary.
+
+In our index.htmlfile for our UI that we created in the previous example, we'll add the following to our script.
+
+Copy
+<!-- Top of our index.html file -->
+<script>
+  // Send "ping" data from our UI to server
+  // sendData() can send any arbitrary object
+  // with any JSON compatible data.
+  setInterval(() => {
+    hytopia.sendData({ hello: 'world!' });
+  }, 2000);
+  //////
+
+  hytopia.onData(data => { // data is any arbitrary object you send from the server
+    if (data.type === 'mining-level') {
+      document.querySelector('.mining-level').textContent = data.level;
+    }
+
+    if (data.type === 'woodcutting-level') {
+      document.querySelector('.woodcutting-level').textContent = data.level;
+    }
+
+    if (data.type === 'fishing-level') {
+      document.querySelector('.fishing-level').textContent = data.level;
+    }
+
+    if (data.type === 'combat-level') {
+      document.querySelector('.combat-level').textContent = data.level;
+    }
+  });
+</script>
+
+<!-- ... The rest of our index.html from the previous example ... -->
+Now, on our server we can listen for data from our player like this.
+
+Copy
+world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
+  player.ui.load('ui/demo.html');
+
+  setInterval(() => {
+    player.ui.sendData({ type: 'mining-level', level: Math.floor(Math.random() * 100) });
+    player.ui.sendData({ type: 'woodcutting-level', level: Math.floor(Math.random() * 100) });
+    player.ui.sendData({ type: 'fishing-level', level: Math.floor(Math.random() * 100) });
+    player.ui.sendData({ type: 'combat-level', level: Math.floor(Math.random() * 100) });
+  }, 1000);
+  
+  player.ui.on(PlayerUIEvent.DATA, ({ playerUI, data }) => {
+    console.log('got data from this players UI!', data);
+    // We can also get the player the data came from by
+    // playerUI.player if ever needed.
+  });
+  
+  // ... other code
+});
+Now, in our server console, we should see a console.log every second for the data sent up from the UI.
+
+That's it! You can expand on these concepts of sending and receiving data however you'd like. The interface for data communication was left intentionally simple and uses generic JSON compatible objects to allow you to create whatever data structures and interactions you need for your specific game.
+
+
+Explicitly Controlling Pointer Lock
+If you need to programmatically unlock a player's cursor lock, which hides their cursor while they're controlling their character in game, we can do that directly from our server code.
+
+By default, a user must press Escapeor Tto unlock their cursor to interact with UI elements. This isn't a great user experience if a menu suddenly pops up for your game, or they interact with something in game that results in a UI change that also requires interaction. They'd have to manually unlock their own pointer with Escape or T, and that's annoying.
+
+On our server, we can lock and unlock a player's cursor at any time with the following code.
+
+Copy
+// To unlock their pointer
+player.ui.lockPointer(false);
+
+// To lock their pointer
+player.ui.lockPointer(true);
+Simple! Now, we can better control the UI experience of a player based on everything from in game interactions, UI interactions, and more.
