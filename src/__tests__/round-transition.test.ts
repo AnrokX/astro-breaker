@@ -90,7 +90,9 @@ describe('RoundTransition', () => {
     try {
       // Mock the current time to simulate elapsed time since transition start
       const now = Date.now();
-      Date.now = jest.fn().mockReturnValue(now + 1000);
+      // Type-safe mocking
+      const mockDateNow = jest.fn(() => now + 1000);
+      Date.now = mockDateNow;
 
       // Check remaining time (~2000ms)
       const remaining = transition.getRemainingTransitionTime();
@@ -98,7 +100,8 @@ describe('RoundTransition', () => {
       expect(remaining).toBeLessThanOrEqual(2100);
 
       // Advance to end
-      Date.now = jest.fn().mockReturnValue(now + 3100);
+      const mockDateNowEnd = jest.fn(() => now + 3100);
+      Date.now = mockDateNowEnd;
       expect(transition.getRemainingTransitionTime()).toBe(0);
     } finally {
       // Restore the original implementation

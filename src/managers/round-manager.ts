@@ -2,28 +2,8 @@ import { World } from 'hytopia';
 import { MovingBlockManager } from '../moving_blocks/moving-block-entity';
 import { ScoreManager } from './score-manager';
 
-// Define interfaces locally to avoid dependency issues
-export interface RoundConfig {
-  duration: number;  // Duration in milliseconds
-  minBlockCount: number;  // Minimum number of blocks in play
-  maxBlockCount: number;  // Maximum number of blocks in play
-  blockSpawnInterval: number;  // How often to spawn new blocks (ms)
-  speedMultiplier: number;  // Speed multiplier for blocks
-  blockTypes: {  // Probability weights for different block types
-    normal: number;
-    sineWave: number;
-    static: number;
-    verticalWave: number;
-    popup: number;     // Pop-up targets that appear and disappear
-    rising: number;    // Rising targets that move upward
-    parabolic: number; // Targets that follow parabolic paths
-    pendulum: number;  // Targets that swing like pendulums
-  };
-}
-
-export interface GameConfig {
-  maxRounds: number;
-}
+// Re-export interfaces from the modular implementation
+export { RoundConfig, GameConfig } from './round/interfaces/round-interfaces';
 
 // Import modular implementation
 import { RoundManager as ModularRoundManager } from './round';
@@ -34,23 +14,46 @@ import { RoundUI } from './round/components/round-ui';
 
 /**
  * Compatibility facade for RoundManager that delegates to the new modular implementation.
- * This maintains the same public API while using the new modular architecture internally.
+ * This maintains the same public API while using the modular architecture internally.
+ * 
+ * This facade exists to provide backward compatibility with existing code.
+ * For new code, it's recommended to use the modular implementation directly
+ * from the './round' directory.
  */
 export class RoundManager {
+  /** The modular implementation that handles the actual round management */
   private modularManager: ModularRoundManager;
+  
+  /** The player tracker component */
   private playerTracker: PlayerTracker;
+  
+  /** The transition component */
   private transition: RoundTransition;
+  
+  /** The spawner component */
   private spawner: RoundSpawner;
+  
+  /** The UI component */
   private ui: RoundUI;
+  
+  /** The game's world */
   private world: World;
   
-  // Properties needed for tests
+  // Properties needed for backward compatibility with tests
   public GAME_CONFIG = { maxRounds: 10 };
   public roundTransitionPending = false;
   public roundTimer: NodeJS.Timeout | null = null;
   public blockSpawnTimer: NodeJS.Timeout | null = null;
   public checkPlayersInterval: NodeJS.Timeout | null = null;
   
+  /**
+   * Creates a new RoundManager facade that delegates to the modular implementation.
+   * 
+   * @param world The game world
+   * @param blockManager The block manager for creating blocks
+   * @param scoreManager The score manager for tracking scores
+   * @param transitionDuration The duration of transitions between rounds in milliseconds
+   */
   constructor(
     world: World,
     blockManager: MovingBlockManager,
@@ -79,22 +82,19 @@ export class RoundManager {
         transitionDuration
       }
     );
-    
-    // For test compatibility
-    this.roundTransitionPending = false;
   }
   
-  // For testing purposes, expose ui and other components
-  public getUI(): RoundUI {
-    return this.ui;
-  }
-  
-  // Expose this method for testing
+  /**
+   * For testing purposes, exposes access to the actuallyStartRound method
+   * of the modular implementation.
+   */
   public actuallyStartRound(): void {
     return (this.modularManager as any).actuallyStartRound();
   }
   
-  // Implement all original public methods by delegating to the modular manager
+  /**
+   * Starts a new round or waits for players if there aren't enough.
+   */
   public startRound(): void {
     // Check if we need to wait for players
     if (!this.playerTracker.hasEnoughPlayers()) {
@@ -112,6 +112,9 @@ export class RoundManager {
     return this.modularManager.startRound();
   }
   
+  /**
+   * Ends the current round.
+   */
   public endRound(): void {
     // Set this for test compatibility
     (this as any).roundTransitionPending = true;
@@ -119,30 +122,61 @@ export class RoundManager {
     return this.modularManager.endRound();
   }
   
+  /**
+   * Cleans up resources used by the round manager.
+   */
   public cleanup(): void {
     return this.modularManager.cleanup();
   }
   
+  /**
+   * Handles a player leaving the game.
+   */
   public handlePlayerLeave(): void {
     return this.modularManager.handlePlayerLeave();
   }
   
+  /**
+   * Gets the current round number.
+   * 
+   * @returns The current round number
+   */
   public getCurrentRound(): number {
     return this.modularManager.getCurrentRound();
   }
   
+  /**
+   * Checks if a round is currently active.
+   * 
+   * @returns True if a round is active, false otherwise
+   */
   public isActive(): boolean {
     return this.modularManager.isActive();
   }
   
+  /**
+   * Checks if shooting is currently allowed.
+   * 
+   * @returns True if shooting is allowed, false otherwise
+   */
   public isShootingAllowed(): boolean {
     return this.modularManager.isShootingAllowed();
   }
   
+  /**
+   * Checks if the game is waiting for players to join.
+   * 
+   * @returns True if waiting for players, false otherwise
+   */
   public isWaitingForPlayers(): boolean {
     return this.playerTracker.isWaitingForPlayers();
   }
   
+  /**
+   * Gets the number of rounds remaining in the game.
+   * 
+   * @returns The number of rounds remaining
+   */
   public getRemainingRounds(): number {
     return this.modularManager.getRemainingRounds();
   }

@@ -23,7 +23,9 @@ describe('PlayerTracker', () => {
       getPlayerEntitiesByPlayer: jest.fn().mockReturnValue([]),
       spawnEntity: jest.fn(),
       getEntityById: jest.fn(),
-      loadPrefab: jest.fn()
+      loadPrefab: jest.fn(),
+      despawnEntity: jest.fn(),
+      getEntityByName: jest.fn()
     };
     playerTracker = new PlayerTracker(world, requiredPlayers);
   });

@@ -10,14 +10,49 @@ import { GameConfig, GameEndStanding, RoundConfig } from './interfaces/round-int
 import { DEFAULT_GAME_CONFIG } from './configs/game-configs';
 import { ROUND_CONFIGS } from './configs/round-configs';
 
+/**
+ * Manages the game rounds in a modular, component-based architecture.
+ * 
+ * This class coordinates the following aspects of round management:
+ * - Round lifecycle (start, end, transitions)
+ * - Game state tracking (active, waiting, transitions)
+ * - Player management through PlayerTracker
+ * - Block spawning through RoundSpawner
+ * - UI communication through RoundUI
+ * - Scoring through ScoreManager integration
+ * 
+ * It delegates specific responsibilities to specialized components.
+ */
 export class RoundManager {
+  /** Current round number (0 = no round started yet) */
   private currentRound: number = 0;
+  
+  /** Timer for the current round */
   private roundTimer: NodeJS.Timeout | null = null;
+  
+  /** Whether a round is currently active */
   private isRoundActive: boolean = false;
+  
+  /** Timestamp when the current round started */
   private roundStartTime: number = 0;
+  
+  /** Whether a game is in progress across multiple rounds */
   private gameInProgress: boolean = false;
+  
+  /** Configuration for the game */
   private readonly gameConfig: GameConfig;
 
+  /**
+   * Creates a new RoundManager with the specified components and configuration.
+   * 
+   * @param world The game world
+   * @param transition Component that manages transitions between rounds
+   * @param spawner Component that handles block spawning
+   * @param playerTracker Component that tracks player presence
+   * @param ui Component that handles UI communication
+   * @param scoreManager Manager for tracking scores
+   * @param gameConfig Optional configuration overrides for the game
+   */
   constructor(
     private world: World,
     private transition: RoundTransition,
@@ -34,7 +69,11 @@ export class RoundManager {
     };
   }
 
-  // Public API
+  /**
+   * Starts a new round or waits for players if necessary.
+   * If conditions are met, begins the countdown to start the round.
+   * If a round is already active or in transition, does nothing.
+   */
   public startRound(): void {
     // Don't start if round is active or we're in transition
     if (this.isRoundActive || this.transition.isInTransition()) return;
@@ -66,6 +105,18 @@ export class RoundManager {
     this.startCountdown();
   }
 
+  /**
+   * Ends the current round and handles post-round activities.
+   * This includes:
+   * - Stopping block spawning
+   * - Getting round results and updating scores
+   * - Playing sound effects
+   * - Displaying round end UI
+   * - Checking if the game is over
+   * - Starting the transition to the next round
+   * 
+   * If no round is active, does nothing.
+   */
   public endRound(): void {
     // Don't end if no round is active
     if (!this.isRoundActive) return;
