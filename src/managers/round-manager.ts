@@ -2,8 +2,12 @@ import { World } from 'hytopia';
 import { MovingBlockManager } from '../moving_blocks/moving-block-entity';
 import { ScoreManager } from './score-manager';
 
-// Re-export interfaces from the modular implementation
-export { RoundConfig, GameConfig } from './round/interfaces/round-interfaces';
+// Define interfaces locally for compatibility
+import { RoundConfig as ModularRoundConfig, GameConfig as ModularGameConfig } from './round/interfaces/round-interfaces';
+
+// Re-export the interfaces
+export type RoundConfig = ModularRoundConfig;
+export type GameConfig = ModularGameConfig;
 
 // Import modular implementation
 import { RoundManager as ModularRoundManager } from './round';
