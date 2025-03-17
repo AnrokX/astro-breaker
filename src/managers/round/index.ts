@@ -173,7 +173,8 @@ export class RoundManager {
     }, 1000);
   }
 
-  private actuallyStartRound(): void {
+  // Made public for testing purposes
+  public actuallyStartRound(): void {
     // Don't start if a round is already active
     if (this.isRoundActive) {
       console.log('Attempted to start round while another is active');
@@ -258,7 +259,9 @@ export class RoundManager {
       
       // Get color from player colors array
       const playerColors = (this.scoreManager as any).constructor.PLAYER_COLORS || [];
-      const playerColor = playerColors[playerNumber - 1] || '#FFFFFF';
+      const playerColor = playerColors.length > 0 
+        ? playerColors[(playerNumber - 1) % playerColors.length] 
+        : '#FFFFFF';
       
       finalStandings.push({
         playerId,
@@ -286,7 +289,11 @@ export class RoundManager {
         gameWinner.playerNumber = playerStats?.playerNumber || 1;
         
         const playerColors = (this.scoreManager as any).constructor.PLAYER_COLORS || [];
-        gameWinner.playerColor = playerColors[(gameWinner.playerNumber - 1) % playerColors.length] || '#FFFFFF';
+        // Use a non-null assertion or provide a default value for playerNumber to avoid TypeScript error
+        const playerIndex = ((gameWinner.playerNumber || 1) - 1) % (playerColors.length || 1);
+        gameWinner.playerColor = playerColors.length > 0 
+          ? playerColors[playerIndex] 
+          : '#FFFFFF';
       }
       
       this.ui.displayGameEnd(

@@ -1,3 +1,4 @@
+import { describe, test, expect, jest, beforeEach } from '@jest/globals';
 import { World } from './mocks/hytopia';
 import { RoundManager } from '../managers/round';
 import { RoundTransition } from '../managers/round/components/round-transition';
@@ -16,6 +17,23 @@ jest.mock('../managers/round/components/player-tracker');
 jest.mock('../managers/round/components/round-ui');
 jest.mock('../managers/round/components/round-spawner');
 
+// Mock AudioManager
+jest.mock('../managers/audio-manager', () => {
+  return {
+    AudioManager: {
+      getInstance: jest.fn().mockReturnValue({
+        playSoundEffect: jest.fn(),
+        playRandomSoundEffect: jest.fn(),
+        playMusic: jest.fn(),
+        stopMusic: jest.fn()
+      })
+    }
+  };
+});
+
+// Set up Jest timer mocks
+jest.useFakeTimers();
+
 describe('Modular RoundManager Integration', () => {
   let world: World;
   let roundManager: RoundManager;
@@ -32,6 +50,16 @@ describe('Modular RoundManager Integration', () => {
     
     // Create mock instances
     world = new World();
+    // Ensure the entityManager mock methods exist
+    world.entityManager = {
+      getAllPlayerEntities: jest.fn().mockReturnValue([]),
+      getAllEntities: jest.fn().mockReturnValue([]),
+      getPlayerEntitiesByPlayer: jest.fn().mockReturnValue([]),
+      spawnEntity: jest.fn(),
+      getEntityById: jest.fn(),
+      loadPrefab: jest.fn()
+    };
+    
     scoreManager = new ScoreManager();
     blockManager = new MovingBlockManager(world, scoreManager);
     transition = new RoundTransition();
@@ -43,6 +71,16 @@ describe('Modular RoundManager Integration', () => {
     (playerTracker.hasEnoughPlayers as jest.Mock).mockReturnValue(true);
     (transition.isInTransition as jest.Mock).mockReturnValue(false);
     
+    // Mock ScoreManager methods
+    (scoreManager.handleRoundEnd as jest.Mock).mockReturnValue({
+      winnerId: 'player1',
+      placements: [{ playerId: 'player1', score: 100, place: 1 }]
+    });
+    (scoreManager.startNewRound as jest.Mock).mockImplementation(() => {});
+    (scoreManager.getLeaderboardPoints as jest.Mock).mockReturnValue(10);
+    (scoreManager.getWins as jest.Mock).mockReturnValue(1);
+    (scoreManager.getScore as jest.Mock).mockReturnValue(100);
+    
     // Create round manager with components
     roundManager = new RoundManager(
       world,
@@ -50,7 +88,12 @@ describe('Modular RoundManager Integration', () => {
       spawner,
       playerTracker,
       ui,
-      scoreManager
+      scoreManager,
+      {
+        maxRounds: 10,
+        requiredPlayers: 2,
+        transitionDuration: 3000
+      }
     );
   });
 

@@ -1,3 +1,4 @@
+import { describe, test, expect, jest, beforeEach } from '@jest/globals';
 import { RoundTransition } from '../managers/round/components/round-transition';
 
 // Set up Jest timer mocks
@@ -8,6 +9,7 @@ describe('RoundTransition', () => {
   const defaultDuration = 3000;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     transition = new RoundTransition(defaultDuration);
   });
 
@@ -81,19 +83,27 @@ describe('RoundTransition', () => {
   test('should provide accurate remaining time', () => {
     // Start a transition
     transition.startTransition(jest.fn());
+    
+    // Store the original implementation
+    const originalDateNow = Date.now;
 
-    // Mock the current time to simulate elapsed time since transition start
-    const now = Date.now();
-    Date.now = jest.fn().mockReturnValue(now + 1000);
+    try {
+      // Mock the current time to simulate elapsed time since transition start
+      const now = Date.now();
+      Date.now = jest.fn().mockReturnValue(now + 1000);
 
-    // Check remaining time (~2000ms)
-    const remaining = transition.getRemainingTransitionTime();
-    expect(remaining).toBeGreaterThanOrEqual(1900);
-    expect(remaining).toBeLessThanOrEqual(2100);
+      // Check remaining time (~2000ms)
+      const remaining = transition.getRemainingTransitionTime();
+      expect(remaining).toBeGreaterThanOrEqual(1900);
+      expect(remaining).toBeLessThanOrEqual(2100);
 
-    // Advance to end
-    Date.now = jest.fn().mockReturnValue(now + 3100);
-    expect(transition.getRemainingTransitionTime()).toBe(0);
+      // Advance to end
+      Date.now = jest.fn().mockReturnValue(now + 3100);
+      expect(transition.getRemainingTransitionTime()).toBe(0);
+    } finally {
+      // Restore the original implementation
+      Date.now = originalDateNow;
+    }
   });
 
   test('cleanup should cancel any active transition', () => {

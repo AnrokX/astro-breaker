@@ -35,7 +35,9 @@ export class RoundUI {
       
       // Get color from the player colors array
       const playerColors = (this.scoreManager as any).constructor.PLAYER_COLORS || [];
-      const playerColor = playerColors[playerNumber - 1] || '#FFFFFF';
+      const playerColor = playerColors.length > 0 
+        ? playerColors[(playerNumber - 1) % playerColors.length] 
+        : '#FFFFFF';
       
       return {
         ...placement,

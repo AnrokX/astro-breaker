@@ -1,3 +1,4 @@
+import { describe, test, expect, jest, beforeEach } from '@jest/globals';
 import { World } from './mocks/hytopia';
 import { PlayerTracker } from '../managers/round/components/player-tracker';
 
@@ -15,6 +16,15 @@ describe('PlayerTracker', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     world = new World();
+    // Ensure the entityManager mock methods exist
+    world.entityManager = {
+      getAllPlayerEntities: jest.fn().mockReturnValue([]),
+      getAllEntities: jest.fn().mockReturnValue([]),
+      getPlayerEntitiesByPlayer: jest.fn().mockReturnValue([]),
+      spawnEntity: jest.fn(),
+      getEntityById: jest.fn(),
+      loadPrefab: jest.fn()
+    };
     playerTracker = new PlayerTracker(world, requiredPlayers);
   });
 

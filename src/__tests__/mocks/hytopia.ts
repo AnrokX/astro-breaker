@@ -1,23 +1,49 @@
 // Mock Hytopia classes for testing
 export class World {
+  id = 'test-world';
+  ambientLightColor = { r: 1, g: 1, b: 1 };
+  ambientLightIntensity = 1;
+  directionalLightColor = { r: 1, g: 1, b: 1 };
+  directionalLightIntensity = 1;
+  directionalLightDirection = { x: 0, y: -1, z: 0 };
+  isDebugEnabled = false;
+  name = 'TestWorld';
+  enablePhysics = jest.fn();
+  setGravity = jest.fn();
+
   entityManager = {
     getAllEntities: jest.fn().mockReturnValue([]),
     getAllPlayerEntities: jest.fn().mockReturnValue([]),
-    getPlayerEntitiesByPlayer: jest.fn().mockReturnValue([])
+    getPlayerEntitiesByPlayer: jest.fn().mockReturnValue([]),
+    spawnEntity: jest.fn(),
+    getEntityById: jest.fn(),
+    loadPrefab: jest.fn()
   };
   
   simulation = {
-    enableDebugRendering: jest.fn()
+    enableDebugRendering: jest.fn(),
+    raycast: jest.fn().mockReturnValue(null),
+    enableDebugRaycasting: jest.fn(),
+    isDebugRaycastingEnabled: false,
+    // For testing
+    addTestBlock: jest.fn()
   };
   
   chatManager = {
     registerCommand: jest.fn(),
-    sendPlayerMessage: jest.fn()
+    sendPlayerMessage: jest.fn(),
+    sendGlobalMessage: jest.fn()
   };
   
   on = jest.fn();
+  off = jest.fn();
+  emit = jest.fn();
   
   loadMap = jest.fn();
+  setInterval = jest.fn().mockReturnValue(123);
+  clearInterval = jest.fn();
+  setTimeout = jest.fn().mockReturnValue(456);
+  clearTimeout = jest.fn();
 }
 
 export class Audio {

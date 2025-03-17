@@ -4,13 +4,18 @@ module.exports = {
   testEnvironment: 'node',
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
-      useESM: true,
+      useESM: false, // Changed to false to use CommonJS
+      isolatedModules: true
     }],
   },
   moduleNameMapper: {
-    '^hytopia/server$': '<rootDir>/src/__tests__/mocks/hytopia.ts'
+    '^hytopia$': '<rootDir>/src/__tests__/mocks/hytopia.ts',
+    '^hytopia/server$': '<rootDir>/src/__tests__/mocks/hytopia.ts',
+    'bun:test': '<rootDir>/src/__tests__/mocks/bun-test.ts'
   },
-  extensionsToTreatAsEsm: ['.ts'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(hytopia)/)'
+  ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  testMatch: ['**/__tests__/**/*.test.ts'],
+  testMatch: ['**/__tests__/**/*.test.ts']
 }; 
