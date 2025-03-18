@@ -1688,15 +1688,6 @@
   <div class="settings-section">
     <div class="settings-section-title">Game Settings</div>
     <div class="settings-option">
-      <span class="settings-label">Game Mode</span>
-      <div class="settings-value">
-        <select id="game-mode-select">
-          <option value="multiplayer">Multiplayer</option>
-          <option value="solo">Solo</option>
-        </select>
-      </div>
-    </div>
-    <div class="settings-option">
       <span class="settings-label">Background Music Volume</span>
       <div class="settings-value">
         <input type="range" min="0" max="100" value="10" id="bgm-volume-slider">
@@ -1826,7 +1817,7 @@
 </div>
 
 <script>
-let projectileCount = 5;
+// Removed projectile count variable - projectiles are now unlimited
 let particles = [];
 
 const scoresContainer = document.getElementById('scores-container');
@@ -1860,7 +1851,7 @@ function createParticle() {
 // Create particles periodically
 setInterval(createParticle, 200);
 
-// Listen for game events
+// Listen for projectile count updates and shoot attempts from the game
 hytopia.onData(data => {
   // Projectile count handlers removed - projectiles are now unlimited
   if (data.type === 'updateScores') {
@@ -2364,16 +2355,6 @@ volumeSlider.addEventListener('input', (e) => {
   }, 50); // Small delay to prevent too many updates
 });
 
-// Game mode change handler
-document.getElementById('game-mode-select').addEventListener('change', (e) => {
-  const selectedMode = e.target.value;
-  hytopia.sendData({ 
-    type: 'updateSettings',
-    setting: 'gameMode',
-    value: selectedMode
-  });
-});
-
 // Listen for settings updates from the game
 hytopia.onData(data => {
   if (data.type === 'settingsUpdate' && data.settings) {
@@ -2382,11 +2363,6 @@ hytopia.onData(data => {
       const uiValue = Math.round(data.settings.bgmVolume * 100);
       volumeSlider.value = String(uiValue);
       volumeValue.textContent = String(uiValue);
-    }
-    
-    // Update game mode selector
-    if (data.settings.gameMode !== undefined) {
-      document.getElementById('game-mode-select').value = data.settings.gameMode;
     }
   }
 });

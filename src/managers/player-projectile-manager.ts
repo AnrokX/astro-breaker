@@ -148,13 +148,11 @@ export class PlayerProjectileManager {
       const timeSinceLastShot = currentTime - state.lastShotTime;
 
       if (timeSinceLastShot < PlayerProjectileManager.SHOT_COOLDOWN) {
-        // Still on cooldown - provide feedback about remaining cooldown
+        // Still on cooldown - provide feedback via console log only
+        // We're not sending UI data because there seems to be no handler for it
         if (player) {
           const remainingCooldown = Math.ceil((PlayerProjectileManager.SHOT_COOLDOWN - timeSinceLastShot) / 100) / 10;
-          player.ui.sendData({ 
-            type: 'onCooldown',
-            remainingSeconds: remainingCooldown
-          });
+          console.log(`Projectile on cooldown: ${remainingCooldown}s remaining`);
         }
         return;
       }
