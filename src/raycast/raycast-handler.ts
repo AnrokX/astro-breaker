@@ -61,7 +61,6 @@ export class RaycastHandler {
     }
 
     enableDebugRaycasting(enabled: boolean): void {
-        console.log(`${enabled ? 'Enabling' : 'Disabling'} debug raycasting`);
         this.world.simulation.enableDebugRaycasting(enabled);
     }
 

@@ -201,7 +201,7 @@ export class PlayerProjectileManager {
       const particleSystem = BlockParticleEffects.getInstance(this.world);
       particleSystem.createDestructionEffect(this.world, position, blockTextureUri);
     } catch (error) {
-      console.error('Failed to create particle effect:', error);
+      // Silently fail if particle creation fails
     }
   }
 } 

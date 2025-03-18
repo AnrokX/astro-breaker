@@ -16,7 +16,6 @@ export class SceneUIManager {
   }
 
   public showHitNotification(worldPosition: Vector3Like, score: number, player: Player): void {
-    console.log('Showing hit notification with score:', score);
     
     player.ui.sendData({
       type: 'showHitNotification',
@@ -28,7 +27,6 @@ export class SceneUIManager {
   }
 
   public showBlockDestroyedNotification(worldPosition: Vector3Like, score: number, player: Player, spawnOrigin?: Vector3Like): void {
-    console.log('Showing block destroyed notification with score:', score);
     
     // Ensure score is rounded and positive
     const roundedScore = Math.max(0, Math.round(score));
@@ -80,7 +78,6 @@ export class SceneUIManager {
   }
 
   public showComboNotification(consecutiveHits: number, comboBonus: number, player: Player): void {
-    console.log('Showing combo notification:', { hits: consecutiveHits, bonus: comboBonus });
     
     player.ui.sendData({
       type: 'showCombo',

@@ -346,7 +346,6 @@ export class ScoreManager extends Entity {
   // Get movement multiplier based on block type
   private getMovementMultiplier(block: MovingBlockEntity): number {
     const behaviorType = block.getMovementBehaviorType();
-    console.log(`Determining multiplier for behavior type: ${behaviorType}`);
     
     switch (behaviorType) {
       case 'ZAxisMovement':
@@ -412,13 +411,6 @@ export class ScoreManager extends Entity {
       }
     }
 
-    console.log(`Player ${playerId} hit counters updated:`, {
-      consecutiveHits: stats.consecutiveHits,
-      multiHitCount: stats.multiHitCount,
-      comboTimeRemaining: ScoreManager.SCORING_CONFIG.COMBO_TIMEOUT_MS - (currentTime - stats.lastHitTime),
-      currentComboBonus: comboBonus.toFixed(2),
-      currentMultiHitBonus: multiHitBonus.toFixed(2)
-    });
   }
 
   // Calculate the dynamic score for a grenade hit
@@ -436,44 +428,20 @@ export class ScoreManager extends Entity {
 
     // Calculate distance (D)
     const distance = this.calculateDistance(spawnOrigin, impactPoint);
-    console.log('🎯 Distance Analysis:', {
-      spawnPoint: spawnOrigin,
-      impactPoint,
-      distance: distance.toFixed(2),
-      explanation: 'Higher distance should increase score'
-    });
 
     // Calculate size factor (S)
     const averageSize = this.calculateAverageSize(block.getBlockDimensions());
-    console.log('📏 Size Analysis:', {
-      blockDimensions: block.getBlockDimensions(),
-      averageSize: averageSize.toFixed(2),
-      distanceToSizeRatio: (distance / averageSize).toFixed(2),
-      explanation: 'Smaller targets should give higher scores'
-    });
 
     // Get movement multiplier (M)
     const movementMultiplier = this.getMovementMultiplier(block);
-    console.log('🔄 Movement Analysis:', {
-      behaviorType: block.getMovementBehaviorType(),
-      multiplier: movementMultiplier,
-      explanation: `Using ${movementMultiplier}x multiplier based on movement pattern`
-    });
 
     // Calculate time factor (T)
     const elapsedTime = (Date.now() - block.getSpawnTime()) / 1000; // Convert to seconds
     const timeFactor = ScoreManager.SCORING_CONFIG.TIME_DECAY_FACTOR / (elapsedTime + ScoreManager.SCORING_CONFIG.TIME_DECAY_FACTOR);
-    console.log('⏱️ Time Analysis:', {
-      elapsedSeconds: elapsedTime.toFixed(2),
-      decayFactor: ScoreManager.SCORING_CONFIG.TIME_DECAY_FACTOR,
-      timeFactor: timeFactor.toFixed(4),
-      explanation: 'Time factor decreases score for older targets'
-    });
 
     // Get combo (C) and multi-hit (H) bonuses
     const stats = this.playerStats.get(playerId);
     if (!stats) {
-      console.warn('No stats found for player, initializing new stats');
       this.initializePlayer(playerId);
     }
     
@@ -490,19 +458,7 @@ export class ScoreManager extends Entity {
       ScoreManager.SCORING_CONFIG.MAX_MULTI_HIT_BONUS
     );
 
-    console.log('🔄 Combo Analysis:', {
-      consecutiveHits: updatedStats.consecutiveHits,
-      maxComboBonus: ScoreManager.SCORING_CONFIG.MAX_COMBO_BONUS,
-      actualComboBonus: comboBonus.toFixed(2),
-      explanation: `${updatedStats.consecutiveHits} consecutive hits = ${comboBonus.toFixed(2)}x bonus`
-    });
 
-    console.log('🎯 Multi-Hit Analysis:', {
-      multiHitCount: updatedStats.multiHitCount,
-      maxMultiHitBonus: ScoreManager.SCORING_CONFIG.MAX_MULTI_HIT_BONUS,
-      actualMultiHitBonus: multiHitBonus.toFixed(2),
-      explanation: `${updatedStats.multiHitCount} hits on target = ${multiHitBonus.toFixed(2)}x bonus`
-    });
 
     // Calculate base score components
     const distanceSizeFactor = distance / averageSize;
@@ -517,21 +473,6 @@ export class ScoreManager extends Entity {
       Math.round(baseScore * bonusMultiplier)
     );
 
-    console.log('💯 Final Score Breakdown:', {
-      components: {
-        distanceSizeFactor: distanceSizeFactor.toFixed(2),
-        movementMultiplier: movementMultiplier.toFixed(2),
-        timeFactor: timeFactor.toFixed(2),
-        baseMultiplier: ScoreManager.SCORING_CONFIG.BASE_SCORE_MULTIPLIER,
-        bonusMultiplier: bonusMultiplier.toFixed(2)
-      },
-      calculations: {
-        baseScore: baseScore.toFixed(2),
-        afterBonuses: (baseScore * bonusMultiplier).toFixed(2),
-        finalScore: finalScore
-      },
-      formula: 'Score = ((D/S * M * timeFactor * BASE_MULTIPLIER) * (1 + C + H))'
-    });
 
     return finalScore;
   }

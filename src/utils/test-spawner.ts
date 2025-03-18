@@ -338,8 +338,6 @@ export class TestBlockSpawner {
         
         // Try to manually force a movement to test if the block can move
         if (block && block.position) {
-            console.log("Initial block position:", block.position);
-            
             // Force a position update to verify the block can be moved
             setTimeout(() => {
                 if (block.isSpawned) {
@@ -349,7 +347,6 @@ export class TestBlockSpawner {
                         z: block.position.z + 1
                     };
                     block.setPosition(newPos);
-                    console.log("Forced new block position:", newPos);
                 }
             }, 1000);
         }
@@ -418,13 +415,8 @@ export class TestBlockSpawner {
     public spawnPendulumTarget(speedMultiplier: number = 1): void {
         const pivotPoint = this.getSafePendulumPosition();
 
-        if (this.DEBUG_ENABLED) {
-            console.log(`Spawning pendulum at (${pivotPoint.x.toFixed(2)}, ${pivotPoint.y.toFixed(2)}, ${pivotPoint.z.toFixed(2)})`);
-        }
-
         // Validate the spawn position
         if (!this.isValidSpawnPosition(pivotPoint, 'pendulum')) {
-            console.warn('Invalid pendulum spawn position, using default center position');
             pivotPoint.x = 0;
             pivotPoint.z = 0;
         }

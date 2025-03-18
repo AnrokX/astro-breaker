@@ -24,8 +24,7 @@ export class AudioManager {
             if (this.backgroundMusic) {
                 const actualVolume = this.bgmVolume === 0 ? 0 : this.bgmVolume;
                 this.backgroundMusic.setVolume(actualVolume);
-                console.log(`Background music volume updated to: ${actualVolume}`);
-                return;
+                    return;
             }
 
             // Create new background music instance
@@ -37,7 +36,6 @@ export class AudioManager {
 
             // Play the music and log success
             this.backgroundMusic.play(this.world);
-            console.log(`Background music started with volume: ${this.bgmVolume}`);
         } catch (error) {
             console.error('Failed to initialize background music:', error);
             this.backgroundMusic = undefined;
@@ -60,7 +58,6 @@ export class AudioManager {
             // Ensure we're setting exactly 0 when muting
             const actualVolume = this.bgmVolume === 0 ? 0 : this.bgmVolume;
             this.backgroundMusic.setVolume(actualVolume);
-            console.log(`Background music volume set to: ${actualVolume}`);
         } catch (error) {
             console.error('Error setting background music volume:', error);
         }

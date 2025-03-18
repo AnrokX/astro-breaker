@@ -260,7 +260,6 @@ export class RoundManager {
   public actuallyStartRound(): void {
     // Don't start if a round is already active
     if (this.isRoundActive) {
-      console.log('Attempted to start round while another is active');
       return;
     }
 
@@ -272,7 +271,6 @@ export class RoundManager {
     this.roundStartTime = Date.now();
 
     const config = this.getRoundConfig(this.currentRound);
-    console.log('Starting round with config:', config);
 
     // Reset scores for the new round
     this.scoreManager.startNewRound();
@@ -294,7 +292,6 @@ export class RoundManager {
     }
     
     this.roundTimer = setTimeout(() => {
-      console.log('Round timer completed');
       this.endRound();
     }, config.duration);
   }
