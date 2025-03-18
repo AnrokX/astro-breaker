@@ -149,12 +149,14 @@ export class RoundManager {
       { gameMode: mode }
     );
     
-    // For solo mode with active player, start right away
+    // For solo mode, start immediately
     if (mode === 'solo' && this.playerTracker.getPlayerCount() >= 1) {
-      // Start the game immediately without showing additional messages
       setTimeout(() => {
         this.actuallyStartRound();
       }, 500);
+    } else if (mode === 'multiplayer') {
+      // Just start round process, which will wait for players if needed
+      this.startRound();
     }
   }
   
@@ -180,7 +182,7 @@ export class RoundManager {
     if (!this.gameInProgress && !this.playerTracker.hasEnoughPlayers()) {
       // Start waiting for players
       if (!this.playerTracker.isWaitingForPlayers()) {
-        // Display different UI for solo vs multiplayer mode
+        // Display waiting UI without additional messages
         this.ui.displayWaitingForPlayers(
           this.playerTracker.getPlayerCount(),
           this.playerTracker.getRequiredPlayers(),
@@ -378,17 +380,14 @@ export class RoundManager {
     const isSoloMode = this.gameConfig.gameMode === 'solo';
     
     if (isSoloMode) {
-      // In solo mode, we can start immediately
-      this.ui.displaySystemMessage('Solo game starting...', 'FFFFFF');
-      
+      // In solo mode, we can start immediately without messages
       setTimeout(() => {
         this.startRound();
       }, 3000);
     } else {
       // Check if we have enough players to start new game
       if (this.playerTracker.hasEnoughPlayers()) {
-        this.ui.displaySystemMessage('New game starting...', 'FFFFFF');
-        
+        // Start new game without messages
         setTimeout(() => {
           this.startRound();
         }, 5000);

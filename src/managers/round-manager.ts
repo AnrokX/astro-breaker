@@ -154,7 +154,7 @@ export class RoundManager {
       { gameMode: mode }
     );
     
-    // For solo mode, we start the game immediately without additional messages
+    // For solo mode, start the game immediately
     if (mode === 'solo') {
       // Start the round immediately
       this.modularManager.startRound();
@@ -164,8 +164,9 @@ export class RoundManager {
         this.actuallyStartRound();
       }, 500);
     } else {
-      // For multiplayer, show a message and wait for players
-      this.ui.displaySystemMessage('Multiplayer Mode selected! Waiting for more players...', '96c93d');
+      // For multiplayer, just start the round without additional messages
+      // The round will automatically wait for players if needed
+      this.modularManager.startRound();
     }
   }
   

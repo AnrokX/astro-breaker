@@ -2871,12 +2871,13 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Solo button found, adding click handler');
     soloButton.addEventListener('click', function() {
       console.log('Solo mode clicked');
-      // Send message to game that solo mode was selected
+      // Hide selection UI first
+      hideGameModeSelection();
+      // Then send message to game that solo mode was selected
       hytopia.sendData({ 
         type: 'modeSelection',
         mode: 'solo'
       });
-      hideGameModeSelection();
     });
   } else {
     console.log('Solo button not found!');
@@ -2886,12 +2887,13 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Multiplayer button found, adding click handler');
     multiplayerButton.addEventListener('click', function() {
       console.log('Multiplayer mode clicked');
-      // Send message to game that multiplayer mode was selected
+      // Hide selection UI first
+      hideGameModeSelection();
+      // Then send message to game that multiplayer mode was selected
       hytopia.sendData({ 
         type: 'modeSelection',
         mode: 'multiplayer'
       });
-      hideGameModeSelection();
     });
   } else {
     console.log('Multiplayer button not found!');
@@ -2941,11 +2943,14 @@ document.addEventListener('keydown', (e) => {
       console.log('Multiplayer mode selected via key 2');
       e.preventDefault(); // Prevent any default behavior
       
+      // Immediately hide the selection UI
+      hideGameModeSelection();
+      
+      // Then send the data to start multiplayer mode
       hytopia.sendData({ 
         type: 'modeSelection',
         mode: 'multiplayer'
       });
-      hideGameModeSelection();
     }
   }
 });

@@ -85,8 +85,11 @@ export class PlayerTracker {
     // The constructor will set this value properly when the RoundManager is recreated
     // with the correct game mode
     
-    // Reset the shown mode selection flag to avoid further prompts
+    // Reset the shown mode selection flag to avoid further prompts for any mode
     this.hasShownModeSelection = true;
+    
+    // Also make sure to stop waiting for players if we were before
+    this.stopWaitingForPlayers();
   }
 
   public stopWaitingForPlayers(): void {

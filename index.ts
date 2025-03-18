@@ -256,14 +256,14 @@ startServer(world => {
       if (data.type === 'modeSelection' && data.mode && roundManager) {
         console.log(`Forwarding mode selection: ${data.mode}`);
         
-        // For solo mode, ensure the player's pointer is locked again
+        // Ensure the player's pointer is locked again for any mode
+        player.ui.lockPointer(true);
+        
+        // Call handleModeSelection to start the game
+        roundManager.handleModeSelection(data.mode);
+        
+        // For solo mode, also force the round to start immediately
         if (data.mode === 'solo') {
-          player.ui.lockPointer(true);
-          
-          // Call handleModeSelection which will start the game immediately in solo mode
-          roundManager.handleModeSelection(data.mode);
-          
-          // Force the round to start right away
           setTimeout(() => {
             (roundManager as any).actuallyStartRound();
             
@@ -272,9 +272,6 @@ startServer(world => {
               (projectileManager as any).forceEnableShooting = true;
             }
           }, 300);
-        } else {
-          // For multiplayer, use the normal flow
-          roundManager.handleModeSelection(data.mode);
         }
       }
     });
@@ -504,12 +501,8 @@ startServer(world => {
               console.log('Updated projectile manager with new round manager');
             }
             
-            // Display information about multiplayer mode
-            player.ui.sendData({
-              type: 'systemMessage',
-              message: 'Switched to Multiplayer Mode - Game requires 2 players to start',
-              color: '00FF00'
-            });
+            // Display information about multiplayer mode (without UI messages)
+            console.log('Multiplayer Mode activated - waiting for more players');
             
             // Start a new round (it will wait for players in multiplayer mode)
             console.log('Starting new multiplayer round');
