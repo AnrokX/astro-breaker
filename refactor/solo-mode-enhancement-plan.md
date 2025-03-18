@@ -22,7 +22,7 @@ The current solo mode implementation allows the game to be played with a single 
 1. **First Player Mode Selection**:
    - Show a prominent UI modal to the first player who joins
    - Allow selection between solo and multiplayer modes
-   - Make the UI visually consistent with the leaderboard
+   - Make the UI visually consistent with the leaderboard (regarding the style)
 
 2. **Edge Case Handling**:
    - Handle additional players joining a solo mode game
@@ -39,14 +39,13 @@ The current solo mode implementation allows the game to be played with a single 
 ### Phase 1: First Player Mode Selection UI
 
 1. **Create Mode Selection UI Component**:
-   - Develop a modal UI component styled similar to the leaderboard
+   - Develop a UI component styled similar to the leaderboard, needs to be inside index.html
    - Include clear buttons for "Solo Mode" and "Multiplayer Mode"
-   - Add descriptive text explaining each mode
+   - MVP: Just the buttons, no text, make sure they work when clicked
 
 2. **First Player Detection**:
    - Modify PlayerTracker to detect the first player joining
    - Add logic to display the mode selection UI only to this player
-   - Include a timeout to auto-select multiplayer mode if no selection is made
 
 3. **Mode Selection Event Handling**:
    - Create event handlers for mode selection buttons
@@ -62,6 +61,8 @@ The current solo mode implementation allows the game to be played with a single 
      2. Automatically transition to multiplayer mode with countdown and notification
      3. Place new players in a "waiting room" until solo player finishes or switches
 
+     (select the easiest option to implement)
+
 2. **Mode Switching During Gameplay**:
    - Implement a mode switch request mechanism in the UI
    - Create logic for graceful transition between modes:
@@ -74,18 +75,22 @@ The current solo mode implementation allows the game to be played with a single 
 
 ### Phase 3: Solo-Specific UI Enhancements
 
+phase 3.1:
+
 1. **Score Display Adaptation**:
+
    - Create solo-specific score display focusing on:
      - Current score
      - High score tracking
      - Round-to-round progress
    - Remove multiplayer-focused elements (rankings, other players)
-
+   - remember to add all of this in index.html
+phase 3.2:
 2. **Round Transition UI**:
    - Modify transitions to show solo-appropriate messages
    - Add personal best indicators during transitions
    - Implement performance metrics relevant to solo play
-
+phase 3.3:
 3. **Solo Scoreboard**:
    - Redesign leaderboard for solo mode to show:
      - Personal stats across rounds
