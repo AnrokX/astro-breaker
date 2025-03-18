@@ -262,11 +262,7 @@ startServer(world => {
       });
     }
     
-    // Send initial projectile count to UI
-    player.ui.sendData({
-      type: 'updateProjectileCount',
-      count: projectileManager.getProjectilesRemaining(player.id)
-    });
+    // Projectile count no longer needed as projectiles are unlimited
     
     // Generate spawn position based on player count
     const playerCount = world.entityManager.getAllPlayerEntities().length;

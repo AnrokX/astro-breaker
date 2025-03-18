@@ -8,12 +8,10 @@ import { RoundManager } from './round-manager';
 export interface PlayerProjectileState {
   previewProjectile: ProjectileEntity | null;
   lastInputState: { mr: boolean };
-  projectilesRemaining: number;
   lastShotTime: number;
 }
 
 export class PlayerProjectileManager {
-  private static readonly INITIAL_AMMO_COUNT = 1000;
   private static readonly SHOT_COOLDOWN = 400; // 400ms cooldown (~150 shots per minute)
   private static readonly PROJECTILE_SOUNDS = [
     'audio/sfx/projectile/grenade-launcher.mp3',
@@ -54,7 +52,6 @@ export class PlayerProjectileManager {
     this.playerStates.set(playerId, {
       previewProjectile: null,
       lastInputState: { mr: false },
-      projectilesRemaining: PlayerProjectileManager.INITIAL_AMMO_COUNT,
       lastShotTime: 0
     });
   }
@@ -68,7 +65,7 @@ export class PlayerProjectileManager {
   }
 
   getProjectilesRemaining(playerId: string): number {
-    return this.playerStates.get(playerId)?.projectilesRemaining ?? 0;
+    return Infinity; // Always return infinite projectiles
   }
 
   private createProjectile(playerId: string, position: Vector3Like, direction: Vector3Like): ProjectileEntity {
@@ -162,13 +159,7 @@ export class PlayerProjectileManager {
         return;
       }
 
-      if (state.projectilesRemaining <= 0) {
-        // Send UI event when trying to shoot with no ammo
-        if (player) {
-          player.ui.sendData({ type: 'attemptShootNoAmmo' });
-        }
-        return;
-      }
+      // Projectiles are now unlimited, so this check is removed
 
       if (!state.previewProjectile) {
         state.previewProjectile = this.createProjectile(playerId, position, direction);
@@ -190,8 +181,7 @@ export class PlayerProjectileManager {
       state.previewProjectile.clearTrajectoryMarkers();
       state.previewProjectile = null;
       
-      // Decrease projectile count and update last shot time
-      state.projectilesRemaining--;
+      // Only update last shot time since projectiles are unlimited
       state.lastShotTime = Date.now();
     }
 
@@ -199,12 +189,10 @@ export class PlayerProjectileManager {
     state.lastInputState.mr = currentMrState;
   }
 
-  // Optional: Method to refill projectiles (could be used for pickups or respawn)
-  refillProjectiles(playerId: string, amount: number = PlayerProjectileManager.INITIAL_AMMO_COUNT): void {
-    const state = this.playerStates.get(playerId);
-    if (state) {
-      state.projectilesRemaining = amount;
-    }
+  // No longer needed as projectiles are unlimited
+  refillProjectiles(playerId: string, amount: number = Infinity): void {
+    // Method kept for backward compatibility, but no longer does anything
+    return;
   }
 
   private handleProjectileImpact(position: Vector3Like, blockTextureUri: string): void {
