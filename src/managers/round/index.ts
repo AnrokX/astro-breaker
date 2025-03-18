@@ -89,8 +89,75 @@ export class RoundManager {
         { gameMode: 'solo' }
       );
     }
+    
+    // Subscribe to UI events for mode selection
+    this.subscribeToUIEvents();
   }
-
+  
+  /**
+   * Subscribe to UI events to handle mode selection and other player inputs
+   */
+  private subscribeToUIEvents(): void {
+    // Set up a world event listener for UI messages
+    // Since we can't directly access the player UI event API, we'll add a handler
+    // to the main game entry point that will call this method when UI events are received.
+    // 
+    // In the main game, this should be set up like:
+    // world.on('playerUIData', (player, data) => {
+    //   if (data.type === 'modeSelection' && data.mode) {
+    //     roundManager.handleModeSelection(data.mode, player.id);
+    //   }
+    // });
+    
+    console.log('UI event subscription ready. Main game must implement event forwarding.');
+  }
+  
+  /**
+   * Handle mode selection from a player
+   */
+  private handleModeSelection(mode: 'solo' | 'multiplayer', playerId: string): void {
+    console.log(`Player ${playerId} selected ${mode} mode`);
+    
+    // Don't allow mode changes during active gameplay
+    if (this.isRoundActive || this.gameInProgress) {
+      return;
+    }
+    
+    // Get player entity to re-lock pointer
+    const playerEntities = this.world.entityManager.getAllPlayerEntities();
+    const playerEntity = playerEntities.find(entity => entity.player.id === playerId);
+    
+    if (playerEntity) {
+      // Lock the pointer again after mode selection
+      playerEntity.player.ui.lockPointer(true);
+    }
+    
+    // Update game config mode
+    this.gameConfig.gameMode = mode;
+    
+    // Re-initialize player tracker for the selected mode
+    this.playerTracker = new PlayerTracker(
+      this.world,
+      mode === 'solo' ? 1 : 2,  // required players
+      mode === 'solo'           // isSoloMode
+    );
+    
+    // Re-initialize UI for the selected mode
+    this.ui = new RoundUI(
+      this.world,
+      this.scoreManager,
+      { gameMode: mode }
+    );
+    
+    // For solo mode with active player, start right away
+    if (mode === 'solo' && this.playerTracker.getPlayerCount() >= 1) {
+      // Start the game immediately without showing additional messages
+      setTimeout(() => {
+        this.actuallyStartRound();
+      }, 500);
+    }
+  }
+  
   /**
    * Starts a new round or waits for players if necessary.
    * If conditions are met, begins the countdown to start the round.
@@ -241,7 +308,7 @@ export class RoundManager {
   public getRemainingRounds(): number {
     return this.gameConfig.maxRounds - this.currentRound;
   }
-
+  
   // Private implementation methods
   private startCountdown(): void {
     // Don't start countdown if in transition or a round is active

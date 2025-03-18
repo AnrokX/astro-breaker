@@ -3,6 +3,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  
+  <!-- Add particles container -->
+  <div class="particles"></div>
+  
   <style>
     :root {
       --matrix-green: #00ff41;
@@ -1532,6 +1536,143 @@
       color: white;
       padding: 8px;
     }
+
+    /* Game Mode Selection Modal */
+    #game-mode-selection {
+      /* Initially hidden, will be shown via JavaScript */
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      background: rgba(0, 0, 0, 0.95);
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      padding: 30px;
+      color: white;
+      text-align: center;
+      z-index: 10000; /* Ensure it's above everything */
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+    }
+
+    #game-mode-selection h2 {
+      font-family: var(--title-font);
+      font-size: 38px;
+      margin-bottom: 25px;
+      color: #FFC107;
+      text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+    }
+
+    #game-mode-selection .mode-buttons {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 30px;
+    }
+
+    #game-mode-selection button {
+      background: linear-gradient(to bottom, #134e5e, #71b280);
+      color: white;
+      border: 2px solid white;
+      border-radius: 8px;
+      padding: 15px 30px;
+      font-family: var(--text-font);
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.3s;
+      min-width: 180px;
+    }
+
+    #game-mode-selection button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+
+    #game-mode-selection button#solo-mode {
+      background: linear-gradient(to bottom, #4a00e0, #8e2de2);
+    }
+
+    #game-mode-selection button#multiplayer-mode {
+      background: linear-gradient(to bottom, #00b09b, #96c93d);
+    }
+
+    input[type="range"] {
+      width: 300px;
+      height: 12px;
+    }
+
+    #game-mode-selection button#multiplayer-mode {
+      background: linear-gradient(to bottom, #00b09b, #96c93d);
+    }
+    
+    /* Key hint styling */
+    .key-hint {
+      font-size: 18px;
+      opacity: 0.8;
+      margin-left: 5px;
+      font-weight: normal;
+    }
+    
+    .key-instruction {
+      margin-top: 20px;
+      font-size: 20px;
+      color: #FFC107;
+      opacity: 0.9;
+    }
+    
+    .key-label {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-family: var(--display-font);
+      margin: 0 3px;
+    }
+
+    input[type="range"] {
+      width: 300px;
+      height: 12px;
+    }
+
+    /* System message styling */
+    .system-message-container {
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    
+    .system-message {
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-family: var(--text-font);
+      font-size: 24px;
+      text-align: center;
+      max-width: 80vw;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    
+    .system-message.appear {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .system-message.disappear {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
   </style>
 <!-- Scene UI Templates -->
 <template id="hit-notification-template">
@@ -1849,7 +1990,8 @@ function createParticle() {
 }
 
 // Create particles periodically
-setInterval(createParticle, 200);
+// Commented out to disable automatic particle creation
+// setInterval(createParticle, 200);
 
 // Listen for projectile count updates and shoot attempts from the game
 hytopia.onData(data => {
@@ -1882,6 +2024,12 @@ hytopia.onData(data => {
     showLocalHitNotification(data.data);
   } else if (data.type === 'showBlockDestroyedNotification') {
     showLocalBlockDestroyedNotification(data.data);
+  } else if (data.type === 'showModeSelection') {
+    console.log('Received showModeSelection event from server, showing game mode selection UI');
+    showGameModeSelection();
+  } else if (data.type === 'systemMessage') {
+    // Display system message
+    showSystemMessage(data.message, data.color || 'FFFFFF');
   }
 });
 
@@ -2687,7 +2835,174 @@ function showLocalBlockDestroyedNotification(data) {
     container.remove();
   }, data.duration + 100);
 }
+
+// Game Mode Selection Functionality
+function showGameModeSelection() {
+  console.log('Showing game mode selection');
+  const modal = document.getElementById('game-mode-selection');
+  if (modal) {
+    // Note: We can't directly control pointer lock from UI code
+    // The server should call player.ui.lockPointer(false) when sending the showModeSelection event
+    modal.style.display = 'block';
+  } else {
+    console.error('Game mode selection modal not found!');
+  }
+}
+
+function hideGameModeSelection() {
+  console.log('Hiding game mode selection');
+  const modal = document.getElementById('game-mode-selection');
+  if (modal) {
+    modal.style.display = 'none';
+    // Note: We can't directly control pointer lock from UI code
+    // The game will automatically relock the pointer as needed
+  } else {
+    console.error('Game mode selection modal not found!');
+  }
+}
+
+// Set up event listeners for game mode buttons - ONCE when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Setting up game mode buttons...');
+  const soloButton = document.getElementById('solo-mode');
+  const multiplayerButton = document.getElementById('multiplayer-mode');
+  
+  if (soloButton) {
+    console.log('Solo button found, adding click handler');
+    soloButton.addEventListener('click', function() {
+      console.log('Solo mode clicked');
+      // Send message to game that solo mode was selected
+      hytopia.sendData({ 
+        type: 'modeSelection',
+        mode: 'solo'
+      });
+      hideGameModeSelection();
+    });
+  } else {
+    console.log('Solo button not found!');
+  }
+  
+  if (multiplayerButton) {
+    console.log('Multiplayer button found, adding click handler');
+    multiplayerButton.addEventListener('click', function() {
+      console.log('Multiplayer mode clicked');
+      // Send message to game that multiplayer mode was selected
+      hytopia.sendData({ 
+        type: 'modeSelection',
+        mode: 'multiplayer'
+      });
+      hideGameModeSelection();
+    });
+  } else {
+    console.log('Multiplayer button not found!');
+  }
+  
+  // Remove the duplicate keydown event listener
+  // No longer needed since we have a global one
+  
+  // For debugging - manually show the game mode selection (comment out for production)
+  // setTimeout(() => {
+  //   console.log('DEBUG: Manually showing game mode selection');
+  //   showGameModeSelection();
+  // }, 2000);
+});
+
+// Comment out the duplicate handler
+/*
+// Listen for showModeSelection event from the game
+hytopia.onData(data => {
+  if (data.type === 'showModeSelection') {
+    showGameModeSelection();
+  }
+  // ... existing data handlers
+});
+*/
+
+// Global keyboard shortcuts for mode selection
+document.addEventListener('keydown', (e) => {
+  // Only handle number keys when the mode selection is visible
+  const modeSelectionElement = document.getElementById('game-mode-selection');
+  if (modeSelectionElement && modeSelectionElement.style.display === 'block') {
+    console.log('Key pressed while mode selection is visible:', e.key);
+    
+    if (e.key === '1') {
+      console.log('Solo mode selected via key 1');
+      e.preventDefault(); // Prevent any default behavior
+      
+      // Immediately hide the selection UI
+      hideGameModeSelection();
+      
+      // Then send the data to start solo mode
+      hytopia.sendData({ 
+        type: 'modeSelection',
+        mode: 'solo'
+      });
+    } else if (e.key === '2') {
+      console.log('Multiplayer mode selected via key 2');
+      e.preventDefault(); // Prevent any default behavior
+      
+      hytopia.sendData({ 
+        type: 'modeSelection',
+        mode: 'multiplayer'
+      });
+      hideGameModeSelection();
+    }
+  }
+});
+
+// Display a system message for brief periods
+function showSystemMessage(message, color = 'FFFFFF') {
+  console.log('System message:', message);
+  
+  // Create or get the system message container
+  let container = document.querySelector('.system-message-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'system-message-container';
+    document.body.appendChild(container);
+  }
+  
+  // Create the message element
+  const messageElement = document.createElement('div');
+  messageElement.className = 'system-message';
+  messageElement.innerHTML = message;
+  messageElement.style.color = `#${color}`;
+  
+  // Add to container
+  container.appendChild(messageElement);
+  container.style.display = 'flex';
+  
+  // Add appearing animation
+  messageElement.classList.add('appear');
+  
+  // Remove after 5 seconds
+  setTimeout(() => {
+    messageElement.classList.add('disappear');
+    setTimeout(() => {
+      messageElement.remove();
+      
+      // Hide container if no more messages
+      if (container.children.length === 0) {
+        container.style.display = 'none';
+      }
+    }, 500);
+  }, 5000);
+}
+
+// Function removed - no longer needed with unlimited projectiles
 </script>
+
+<!-- Game Mode Selection Modal -->
+<div id="game-mode-selection">
+  <h2>SELECT GAME MODE</h2>
+  <div class="mode-buttons">
+    <button id="solo-mode">SOLO MODE <span class="key-hint">[1]</span></button>
+    <button id="multiplayer-mode">MULTIPLAYER MODE <span class="key-hint">[2]</span></button>
+  </div>
+  <div class="key-instruction">
+    Press <span class="key-label">1</span> or <span class="key-label">2</span> to select a mode
+  </div>
+</div>
 
 <div class="game-end-overlay">
     <div class="game-end-content">
@@ -2698,5 +3013,29 @@ function showLocalBlockDestroyedNotification(data) {
     </div>
 </div>
 
+<!-- Remove the duplicate script tag with mode functions -->
+<!--
+<script>
+// Direct onclick handlers for mode buttons
+function modeSolo() {
+  console.log('Solo mode selected via onclick');
+  hideGameModeSelection();
+  hytopia.sendData({ 
+    type: 'modeSelection',
+    mode: 'solo'
+  });
+}
 
+function modeMultiplayer() {
+  console.log('Multiplayer mode selected via onclick');
+  hideGameModeSelection();
+  hytopia.sendData({ 
+    type: 'modeSelection',
+    mode: 'multiplayer'
+  });
+}
+</script>
+-->
+</body>
+</html>
   

@@ -4,6 +4,8 @@ export class PlayerTracker {
   private waitingForPlayers: boolean = false;
   private readonly requiredPlayers: number;
   private checkPlayersInterval: NodeJS.Timeout | null = null;
+  private hasShownModeSelection: boolean = false;
+  private previousPlayerCount: number = 0;
 
   constructor(
     private world: World,
@@ -31,6 +33,9 @@ export class PlayerTracker {
     
     // Set up player checking interval
     this.checkPlayersInterval = setInterval(() => {
+      // Check for first player joining to show mode selection
+      this.checkForFirstPlayer();
+      
       if (this.hasEnoughPlayers()) {
         this.waitingForPlayers = false;
         
@@ -44,6 +49,44 @@ export class PlayerTracker {
         onEnoughPlayers();
       }
     }, 1000);
+  }
+
+  // Method to check if the first player has joined and show the mode selection
+  private checkForFirstPlayer(): void {
+    const currentPlayerCount = this.getPlayerCount();
+    
+    // If this is the first player joining and we haven't shown the selection yet
+    if (currentPlayerCount === 1 && this.previousPlayerCount === 0 && !this.hasShownModeSelection) {
+      // Show the mode selection UI to this player
+      const player = this.world.entityManager.getAllPlayerEntities()[0]?.player;
+      if (player) {
+        console.log('First player joined, showing mode selection UI');
+        
+        // Unlock the pointer first to allow interaction with the UI
+        player.ui.lockPointer(false);
+        
+        // Then show the mode selection
+        player.ui.sendData({
+          type: 'showModeSelection'
+        });
+        
+        this.hasShownModeSelection = true;
+      }
+    }
+    
+    this.previousPlayerCount = currentPlayerCount;
+  }
+
+  // Allow setting the game mode based on player selection
+  public setGameMode(mode: 'solo' | 'multiplayer'): void {
+    this.isSoloMode = mode === 'solo';
+    
+    // We can't modify the readonly property directly, so we won't change requiredPlayers here
+    // The constructor will set this value properly when the RoundManager is recreated
+    // with the correct game mode
+    
+    // Reset the shown mode selection flag to avoid further prompts
+    this.hasShownModeSelection = true;
   }
 
   public stopWaitingForPlayers(): void {
@@ -77,5 +120,10 @@ export class PlayerTracker {
       this.checkPlayersInterval = null;
     }
     this.waitingForPlayers = false;
+  }
+  
+  // Reset the mode selection shown flag for a new game
+  public resetModeSelection(): void {
+    this.hasShownModeSelection = false;
   }
 }

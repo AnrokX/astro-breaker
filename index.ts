@@ -248,6 +248,37 @@ startServer(world => {
     // Load the UI first
     player.ui.load('ui/index.html');
     
+    // Forward UI events to the round manager when a player sends UI data
+    player.ui.on(PlayerUIEvent.DATA, ({ playerUI, data }) => {
+      console.log('Received UI data:', data);
+      
+      // Forward mode selection events to the round manager
+      if (data.type === 'modeSelection' && data.mode && roundManager) {
+        console.log(`Forwarding mode selection: ${data.mode}`);
+        
+        // For solo mode, ensure the player's pointer is locked again
+        if (data.mode === 'solo') {
+          player.ui.lockPointer(true);
+          
+          // Call handleModeSelection which will start the game immediately in solo mode
+          roundManager.handleModeSelection(data.mode);
+          
+          // Force the round to start right away
+          setTimeout(() => {
+            (roundManager as any).actuallyStartRound();
+            
+            // Update projectile manager
+            if (projectileManager) {
+              (projectileManager as any).forceEnableShooting = true;
+            }
+          }, 300);
+        } else {
+          // For multiplayer, use the normal flow
+          roundManager.handleModeSelection(data.mode);
+        }
+      }
+    });
+    
     // Initialize audio with player's settings
     const playerSettings = settingsManager.getPlayerSettings(player.id);
     if (playerSettings) {
@@ -417,40 +448,31 @@ startServer(world => {
               console.log('Updated projectile manager with new round manager');
             }
             
-            // Display information about solo mode
-            player.ui.sendData({
-              type: 'systemMessage',
-              message: 'Switched to Solo Mode - Game will start with a single player',
-              color: '00FF00'
-            });
-            
-            // Immediately start a new round in solo mode
+            // Immediately start a new round in solo mode without showing UI messages
             console.log('Starting new solo round');
-            setTimeout(() => {
-              if (roundManager) {
-                roundManager.startRound();
+            // Immediately start the round - no delays
+            if (roundManager) {
+              // Start the round
+              roundManager.startRound();
+              
+              // In solo mode, we need to force the round to actually start
+              // This ensures the shooting is enabled
+              // Access the internal method to start the round immediately
+              (roundManager as any).actuallyStartRound();
+              
+              // Force another update to the projectile manager
+              if (projectileManager) {
+                // Update the round manager reference
+                if ((projectileManager as any).updateRoundManager) {
+                  (projectileManager as any).updateRoundManager(roundManager);
+                } else {
+                  (projectileManager as any).roundManager = roundManager;
+                }
                 
-                // In solo mode, we need to force the round to actually start
-                // This ensures the shooting is enabled
-                setTimeout(() => {
-                  // Access the internal method to start the round immediately
-                  (roundManager as any).actuallyStartRound();
-                  
-                  // Force another update to the projectile manager
-                  if (projectileManager) {
-                    // Update the round manager reference
-                    if ((projectileManager as any).updateRoundManager) {
-                      (projectileManager as any).updateRoundManager(roundManager);
-                    } else {
-                      (projectileManager as any).roundManager = roundManager;
-                    }
-                    
-                    // Explicitly enable force shooting in solo mode
-                    (projectileManager as any).forceEnableShooting = true;
-                  }
-                }, 1500);
+                // Explicitly enable force shooting in solo mode
+                (projectileManager as any).forceEnableShooting = true;
               }
-            }, 1000);
+            }
             
           } else {
             // Use multiplayer mode configuration

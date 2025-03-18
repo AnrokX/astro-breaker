@@ -101,6 +101,72 @@ export class RoundManager {
         gameMode: gameMode || 'multiplayer'
       }
     );
+    
+    // Set up event listener for mode selection
+    this.setupModeSelectionListener();
+  }
+  
+  /**
+   * Sets up an event listener for mode selection UI events.
+   * This is a simplified initialization since we're not directly 
+   * using the World API event system.
+   */
+  private setupModeSelectionListener(): void {
+    // Add a message to the log so developers know how to connect UI events
+    console.log('IMPORTANT: You must set up UI event forwarding in your main game file.');
+    console.log('In your main game entry point (e.g., index.ts), add this code:');
+    console.log('-----------------------------------------------------------');
+    console.log('// Forward UI events to the round manager');
+    console.log('world.on(PlayerEvent.UI_DATA, ({ player, data }) => {');
+    console.log('  if (data.type === "modeSelection" && data.mode) {');
+    console.log('    roundManager.handleModeSelection(data.mode);');
+    console.log('  }');
+    console.log('});');
+    console.log('-----------------------------------------------------------');
+  }
+  
+  /**
+   * Handles game mode selection events from the UI.
+   * This should be called when a player selects a game mode in the UI.
+   * 
+   * In the main game entry point, set up event forwarding:
+   * ```
+   * world.on('playerUIData', (player, data) => {
+   *   if (data.type === 'modeSelection' && data.mode) {
+   *     roundManager.handleModeSelection(data.mode);
+   *   }
+   * });
+   * ```
+   * 
+   * @param mode The selected game mode ('solo' or 'multiplayer')
+   */
+  public handleModeSelection(mode: 'solo' | 'multiplayer'): void {
+    // Only handle mode selection if no game is in progress
+    if (this.isActive()) return;
+    
+    // Update the PlayerTracker's mode
+    this.playerTracker.setGameMode(mode);
+    
+    // Update the UI component's mode
+    this.ui = new RoundUI(
+      this.world,
+      this.modularManager['scoreManager'],
+      { gameMode: mode }
+    );
+    
+    // For solo mode, we start the game immediately without additional messages
+    if (mode === 'solo') {
+      // Start the round immediately
+      this.modularManager.startRound();
+      
+      // Force the round to actually start (bypass waiting)
+      setTimeout(() => {
+        this.actuallyStartRound();
+      }, 500);
+    } else {
+      // For multiplayer, show a message and wait for players
+      this.ui.displaySystemMessage('Multiplayer Mode selected! Waiting for more players...', '96c93d');
+    }
   }
   
   /**
