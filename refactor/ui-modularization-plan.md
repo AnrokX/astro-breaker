@@ -72,10 +72,33 @@ The main `index.html` will serve as a lightweight entry point that:
 
 ## 4. Implementation Plan
 
-### Phase 1: Structure and Setup
+### Phase 0: Preliminary Testing
+
+Before proceeding with the full modularization, we'll perform a simple test to verify that the approach works within the HYTOPIA environment:
+
+1. **Create a Test Component**
+   - Extract a single, simple component (like the projectile counter) from index.html
+   - Create a new file `test-component.html` with this component's HTML, CSS, and JavaScript
+   - Ensure all styles and functionality are self-contained in this file
+
+2. **Create a Test UI Loader**
+   - Create a minimal `test.html` file that loads the test component
+   - Include only the necessary code to display and interact with the component
+
+3. **Test with the Game Engine**
+   - Modify the game to load `test.html` instead of `index.html` for a single test player
+   - Verify that the component appears correctly and functions as expected
+   - Test sending and receiving data between the server and the component
+
+4. **Evaluate Results**
+   - If the test is successful, proceed with the full modularization plan
+   - If issues arise, identify and resolve them before continuing
+   - Document any special requirements or constraints discovered during testing
+
+### Phase 1: Structure and Setup (After successful preliminary test)
 
 1. **Create UI Directory Structure**
-   - Set up component directories and files
+   - Set up component directories and files based on the successful test approach
    - Create stub files for each component
    - Keep CSS and JavaScript inline with HTML files for compatibility
 
@@ -339,7 +362,144 @@ This approach directly switches entire UI files rather than trying to manage com
 - **Improved User Experience**: Mode-specific UIs provide better context and feedback
 - **Simplified Development**: Following the established HYTOPIA pattern makes implementation straightforward
 
-## 9. Example UI Mode Files
+## 9. Test Component Example
+
+For the Phase 0 preliminary test, we'll extract the projectile counter component:
+
+```html
+<!-- test-component.html -->
+<div class="projectile-counter" id="projectile-counter">
+  <div class="projectile-icon"></div>
+  <div class="projectile-count" id="projectile-count">5</div>
+</div>
+
+<style>
+  :root {
+    --matrix-green: #00ff41;
+    --matrix-dark: #0d0208;
+    --matrix-light: #003b00;
+    --blood-red: #ff1717;
+    --dark-red: #8b0000;
+    --glow-red: #ff000d;
+    --terminal-green: #39ff14;
+    --matrix-bg: rgba(0, 15, 2, 0.85);
+    --title-font: 'Press Start 2P', cursive;
+    --display-font: 'VT323', monospace;
+    --number-font: 'VT323', monospace;
+    --text-font: 'VT323', monospace;
+  }
+
+  .projectile-counter {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    background: linear-gradient(135deg, var(--matrix-dark) 0%, rgba(13, 2, 8, 0.95) 100%);
+    padding: 15px 25px;
+    border-radius: 16px;
+    color: #ffffff;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--blood-red);
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.2),
+                inset 0 0 10px rgba(255, 0, 0, 0.1);
+  }
+
+  .projectile-icon {
+    width: 28px;
+    height: 28px;
+    background: radial-gradient(circle at 30% 30%, var(--blood-red), var(--dark-red)) !important;
+    border-radius: 50%;
+    position: relative;
+    display: inline-block;
+    box-shadow: 0 0 15px var(--glow-red) !important;
+    transition: all 0.3s ease;
+  }
+
+  .projectile-count {
+    font-family: var(--number-font);
+    font-size: 36px;
+    font-weight: bold;
+    min-width: 35px;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    letter-spacing: 2px;
+  }
+</style>
+
+<script>
+  // This function would be called by the parent HTML
+  function updateProjectileCount(count) {
+    document.getElementById('projectile-count').textContent = count;
+    
+    // Add shake animation if low
+    const counterElement = document.getElementById('projectile-counter');
+    if (count <= 2) {
+      counterElement.classList.add('low');
+      counterElement.classList.add('shake');
+      
+      // Remove shake after animation completes
+      setTimeout(() => {
+        counterElement.classList.remove('shake');
+      }, 500);
+    } else {
+      counterElement.classList.remove('low');
+    }
+  }
+</script>
+```
+
+And the test loader HTML:
+
+```html
+<!-- test.html -->
+<!DOCTYPE html>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<div id="component-container"></div>
+
+<script>
+  // Load the component when the page loads
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      // Fetch and insert the component
+      const response = await fetch('test-component.html');
+      const html = await response.text();
+      document.getElementById('component-container').innerHTML = html;
+      
+      // Set up communication with the server
+      hytopia.onData(data => {
+        if (data.type === 'projectileCount') {
+          // Call the function defined in the component
+          updateProjectileCount(data.count);
+        }
+      });
+      
+      // Let the server know we're ready
+      hytopia.sendData({
+        type: 'componentLoaded',
+        component: 'projectileCounter'
+      });
+    } catch (error) {
+      console.error('Failed to load component:', error);
+    }
+  });
+</script>
+```
+
+This simple test will verify that:
+1. Components can be loaded from separate files
+2. CSS styles work correctly when moved to a separate file
+3. JavaScript functions can be called across files
+4. Communication with the server works as expected
+
+If this test succeeds, we can confidently proceed with the full modularization plan.
+
+## 10. Example UI Mode Files
 
 ### Mode Selection UI (mode-selection.html)
 
@@ -457,10 +617,12 @@ This approach directly switches entire UI files rather than trying to manage com
 </script>
 ```
 
-## 10. Conclusion
+## 11. Conclusion
 
 Modularizing the UI using separate HTML files for different game modes will significantly improve the codebase's maintainability and extensibility. This approach follows the established pattern in HYTOPIA games (as seen in the casino example) and allows for proper implementation of solo mode while maintaining the existing multiplayer functionality.
 
 By creating mode-specific UI files rather than trying to conditionally show/hide elements within a single file, we achieve cleaner code organization and better separation of concerns. Each mode can have its own tailored UI experience without unnecessary complexity.
+
+The preliminary testing phase will ensure that the approach works correctly within the HYTOPIA environment before investing time in full implementation. Starting with a single component extraction allows us to validate the technique and identify any potential issues early in the process.
 
 This modularization approach will provide a solid foundation for current features and future enhancements to the game.
