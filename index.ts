@@ -12,7 +12,6 @@ import {
 } from 'hytopia';
 
 import worldMap from './assets/map.json';
-import { RaycastHandler } from './src/raycast/raycast-handler';
 import { PlayerProjectileManager } from './src/managers/player-projectile-manager';
 import { MovingBlockManager, MOVING_BLOCK_CONFIG } from './src/moving_blocks/moving-block-entity';
 import { ScoreManager } from './src/managers/score-manager';
@@ -91,10 +90,7 @@ startServer(world => {
   // Enable debug rendering for development
   world.simulation.enableDebugRendering(DEBUG_ENABLED);
   
-  // Initialize raycast handler with debug enabled
-  const raycastHandler = new RaycastHandler(world);
-  raycastHandler.enableDebugRaycasting(DEBUG_ENABLED);
-  console.log('RaycastHandler initialized with debug enabled');
+  // Raycast handler removed
 
   // Initialize the score manager
   const scoreManager = new ScoreManager();
@@ -121,7 +117,7 @@ startServer(world => {
   // Initialize the projectile manager with round manager if not in test mode
   const projectileManager = new PlayerProjectileManager(
     world,
-    raycastHandler,
+    null,
     SHOW_TRAJECTORY_PREVIEW,
     roundManager ?? undefined
   );
@@ -318,7 +314,7 @@ startServer(world => {
     // Set a comfortable FOV for first-person gameplay (70 degrees is a common value)
     playerEntity.player.camera.setFov(70);
   
-    // Wire up raycast handler and projectile system to the SDK's input system
+    // Wire up projectile system to the SDK's input system
     playerEntity.controller!.on(BaseEntityControllerEvent.TICK_WITH_PLAYER_INPUT, ({ entity, input, cameraOrientation, deltaTimeMs }) => {
       // Create a clean copy of the input state to avoid recursive references
       const cleanInput = {
@@ -326,24 +322,8 @@ startServer(world => {
         mr: input.mr || false,
       };
 
-      // Right click for raycast
+      // Raycast removed
       if (cleanInput.mr) {
-        const result = raycastHandler.raycast(
-          entity.position,
-          entity.player.camera.facingDirection,
-          5
-        );
-        
-        if (result) {
-          console.log(`Raycast hit at distance: ${result.hitDistance}`);
-          if (result.hitBlock) {
-            const coord = result.hitBlock.globalCoordinate;
-            console.log(`Hit block at (${coord.x}, ${coord.y}, ${coord.z})`);
-          }
-        } else {
-          console.log('Raycast missed');
-        }
-        
         cleanInput.mr = false;
       }
 
@@ -538,7 +518,6 @@ startServer(world => {
     world.chatManager.sendPlayerMessage(player, 'Use WASD to move around.');
     world.chatManager.sendPlayerMessage(player, 'Press space to jump.');
     world.chatManager.sendPlayerMessage(player, 'Hold shift to sprint.');
-    world.chatManager.sendPlayerMessage(player, 'Right click to raycast.');
     world.chatManager.sendPlayerMessage(player, 'Left click to throw projectiles.');
     world.chatManager.sendPlayerMessage(player, 'Press ESC, Tab, or P to open settings.', '00FF00');
     

@@ -1,5 +1,3 @@
-import { Vector3Like, RaycastHit as SDKRaycastHit } from 'hytopia';
+import { Vector3Like } from 'hytopia';
 
-export type Vector3 = Vector3Like;
-
-export type RaycastHit = SDKRaycastHit; 
+export type Vector3 = Vector3Like; 

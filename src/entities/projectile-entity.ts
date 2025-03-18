@@ -1,6 +1,5 @@
 import { Entity, EntityOptions, Vector3Like, ColliderShape, CollisionGroup, BlockType, World, PlayerEntity, EntityEvent } from 'hytopia';
 import { MovingBlockEntity } from '../moving_blocks/moving-block-entity';
-import { RaycastHandler } from '../raycast/raycast-handler';
 import { BlockParticleEffects } from '../effects/block-particle-effects';
 import { ScoreManager } from '../managers/score-manager';
 
@@ -8,7 +7,7 @@ export interface ProjectileOptions extends EntityOptions {
     speed?: number;
     lifetime?: number;
     damage?: number;
-    raycastHandler?: RaycastHandler;
+    raycastHandler?: any;
     enablePreview?: boolean;
     playerId?: string;
 }
@@ -53,7 +52,7 @@ export class ProjectileEntity extends Entity {
     private lifetime: number;
     private damage: number;
     private spawnTime: number;
-    private raycastHandler?: RaycastHandler;
+    private raycastHandler?: any;
     private enablePreview: boolean;
     private static readonly SPAWN_CHECK_DIRECTIONS = [
         { x: 0, y: -1, z: 0 },  // Down

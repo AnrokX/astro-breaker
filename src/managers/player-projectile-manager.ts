@@ -1,6 +1,5 @@
 import { World, Player } from 'hytopia';
 import { ProjectileEntity } from '../entities/projectile-entity';
-import { RaycastHandler } from '../raycast/raycast-handler';
 import { Vector3Like } from 'hytopia';
 import { BlockParticleEffects } from '../effects/block-particle-effects';
 import { AudioManager } from './audio-manager';
@@ -23,14 +22,14 @@ export class PlayerProjectileManager {
   ];
   private playerStates = new Map<string, PlayerProjectileState>();
   private readonly world: World;
-  private readonly raycastHandler: RaycastHandler;
+  private readonly raycastHandler: any;
   private readonly enablePreview: boolean;
   private readonly audioManager: AudioManager;
   private readonly roundManager?: RoundManager;
   // Special flag to force enable shooting in solo mode
   private forceEnableShooting: boolean = false;
 
-  constructor(world: World, raycastHandler: RaycastHandler, enablePreview: boolean = false, roundManager?: RoundManager) {
+  constructor(world: World, raycastHandler: any, enablePreview: boolean = false, roundManager?: RoundManager) {
     this.world = world;
     this.raycastHandler = raycastHandler;
     this.enablePreview = enablePreview;
