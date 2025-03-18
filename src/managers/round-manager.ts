@@ -56,21 +56,35 @@ export class RoundManager {
    * @param world The game world
    * @param blockManager The block manager for creating blocks
    * @param scoreManager The score manager for tracking scores
-   * @param transitionDuration The duration of transitions between rounds in milliseconds
+   * @param config Configuration options (or legacy transitionDuration as number)
+   *                Can include gameMode: 'solo' | 'multiplayer'
    */
   constructor(
     world: World,
     blockManager: MovingBlockManager,
     scoreManager: ScoreManager, 
-    transitionDuration: number = 3000
+    config?: Partial<ModularGameConfig> | number
   ) {
     this.world = world;
+    
+    // Handle legacy case where config is just a number (transitionDuration)
+    const transitionDuration = typeof config === 'number' ? config : (config?.transitionDuration || 3000);
+    const gameMode = typeof config === 'object' ? config.gameMode : 'multiplayer';
+    const requiredPlayers = (gameMode === 'solo') ? 1 : 2;
     
     // Initialize components
     this.transition = new RoundTransition(transitionDuration);
     this.spawner = new RoundSpawner(world, blockManager);
-    this.playerTracker = new PlayerTracker(world, 2); // Default required players = 2
-    this.ui = new RoundUI(world, scoreManager);
+    this.playerTracker = new PlayerTracker(
+      world, 
+      requiredPlayers, 
+      gameMode === 'solo'
+    );
+    this.ui = new RoundUI(
+      world, 
+      scoreManager, 
+      { gameMode }
+    );
     
     // Create the modular manager with components
     this.modularManager = new ModularRoundManager(
@@ -82,8 +96,9 @@ export class RoundManager {
       scoreManager,
       {
         maxRounds: 10,
-        requiredPlayers: 2,
-        transitionDuration
+        requiredPlayers: requiredPlayers,
+        transitionDuration,
+        gameMode: gameMode || 'multiplayer'
       }
     );
   }
@@ -105,7 +120,8 @@ export class RoundManager {
       // Display waiting message and start waiting
       this.ui.displayWaitingForPlayers(
         this.playerTracker.getPlayerCount(),
-        this.playerTracker.getRequiredPlayers()
+        this.playerTracker.getRequiredPlayers(),
+        this.playerTracker.isSolo()
       );
       this.playerTracker.startWaitingForPlayers(() => {
         this.modularManager.startRound();

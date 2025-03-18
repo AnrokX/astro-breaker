@@ -3,6 +3,7 @@ import { World, Player } from 'hytopia';
 export interface PlayerSettings {
     crosshairColor: string;
     bgmVolume: number;
+    gameMode: 'solo' | 'multiplayer';
 }
 
 export interface UISettingsData {
@@ -30,7 +31,8 @@ export class PlayerSettingsManager {
     public initializePlayer(playerId: string): void {
         this.playerSettings.set(playerId, {
             crosshairColor: '#ffff00',
-            bgmVolume: 0.1 // Default background music volume
+            bgmVolume: 0.1, // Default background music volume
+            gameMode: 'multiplayer' // Default to multiplayer
         });
     }
 

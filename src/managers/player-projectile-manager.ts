@@ -27,6 +27,8 @@ export class PlayerProjectileManager {
   private readonly enablePreview: boolean;
   private readonly audioManager: AudioManager;
   private readonly roundManager?: RoundManager;
+  // Special flag to force enable shooting in solo mode
+  private forceEnableShooting: boolean = false;
 
   constructor(world: World, raycastHandler: RaycastHandler, enablePreview: boolean = false, roundManager?: RoundManager) {
     this.world = world;
@@ -34,6 +36,14 @@ export class PlayerProjectileManager {
     this.enablePreview = enablePreview;
     this.audioManager = AudioManager.getInstance(world);
     this.roundManager = roundManager;
+    
+    // Create a special method to update the round manager reference later
+    (this as any).updateRoundManager = (newRoundManager: RoundManager) => {
+      this.roundManager = newRoundManager;
+      
+      // Check if this is solo mode and enable force shooting if so
+      this.forceEnableShooting = (newRoundManager as any)?.gameConfig?.gameMode === 'solo';
+    };
   }
 
   initializePlayer(playerId: string): void {
@@ -107,7 +117,11 @@ export class PlayerProjectileManager {
     if (!state) return;
 
     // Check if shooting is allowed based on round state
-    if (this.roundManager && !this.roundManager.isShootingAllowed()) {
+    if (this.forceEnableShooting) {
+      // Skip the check in solo mode - always allow shooting
+      // Removed console log to reduce console spam
+    } else if (this.roundManager && !this.roundManager.isShootingAllowed()) {
+      // Normal check for multiplayer mode
       // Clear any existing preview if shooting is not allowed
       if (state.previewProjectile) {
         state.previewProjectile.despawn();

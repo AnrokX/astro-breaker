@@ -230,7 +230,12 @@ export class RoundManager {
 
   public isShootingAllowed(): boolean {
     // Should return true when round is active and not waiting for players
-    return this.isRoundActive && !this.playerTracker.isWaitingForPlayers();
+    // For solo mode, we should allow shooting as soon as the round is active
+    if (this.gameConfig.gameMode === 'solo') {
+      return this.isRoundActive;
+    } else {
+      return this.isRoundActive && !this.playerTracker.isWaitingForPlayers();
+    }
   }
 
   public getRemainingRounds(): number {

@@ -107,7 +107,13 @@ startServer(world => {
   const testSpawner = IS_TEST_MODE ? new TestBlockSpawner(world, movingBlockManager) : null;
   
   // Initialize the round manager (only used in normal mode)
-  const roundManager = !IS_TEST_MODE ? new RoundManager(world, movingBlockManager, scoreManager) : null;
+  // Default to multiplayer mode, will be updated based on player settings
+  let roundManager = !IS_TEST_MODE ? new RoundManager(
+    world, 
+    movingBlockManager, 
+    scoreManager, 
+    { gameMode: 'multiplayer' }
+  ) : null;
 
   // Development flag for trajectory preview - set to false to disable
   const SHOW_TRAJECTORY_PREVIEW = false;
@@ -369,6 +375,152 @@ startServer(world => {
         if (data.setting === 'bgmVolume') {
           const volume = data.value / 100; // Convert from percentage to decimal
           audioManager.setBgmVolume(volume);
+        }
+        
+        // Handle game mode changes
+        if (data.setting === 'gameMode' && !IS_TEST_MODE && roundManager) {
+          const gameMode = data.value;
+          // Reset the game with new game mode
+          if (roundManager.isActive()) {
+            // End the current round first if active
+            roundManager.endRound();
+          }
+          
+          // Create a new round manager with the selected game mode
+          // We need to reset the round manager to apply the new game mode
+          // First, end any active round
+          if (roundManager && roundManager.isActive()) {
+            console.log('Ending current round before mode switch');
+            roundManager.endRound();
+          }
+          
+          // Save player camera orientation before cleaning up
+          const playerPositions = new Map();
+          world.entityManager.getAllPlayerEntities().forEach(entity => {
+            // Store player's position and orientation
+            playerPositions.set(entity.player.id, {
+              position: { ...entity.position },
+              rotation: { ...entity.rotation },
+              // We don't need to store camera orientation as it's maintained by Hytopia
+            });
+          });
+          
+          // Clean up existing blocks only (not player entities)
+          world.entityManager.getAllEntities()
+            .filter(entity => entity.name.toLowerCase().includes('block'))
+            .forEach(entity => entity.despawn());
+          
+          if (gameMode === 'solo') {
+            // Use solo mode configuration
+            console.log('Switching to solo mode');
+            
+            // Create a completely new round manager
+            if (roundManager) {
+              // Clean up the old manager first
+              roundManager.cleanup();
+            }
+            
+            // Create a new instance with solo mode
+            roundManager = new RoundManager(
+              world, 
+              movingBlockManager, 
+              scoreManager,
+              { gameMode: 'solo' }
+            );
+            
+            // We also need to update the projectile manager's reference to the round manager
+            // This is critical since the projectile manager uses this to check if shooting is allowed
+            if (projectileManager) {
+              // Use our special method to update the reference
+              if ((projectileManager as any).updateRoundManager) {
+                (projectileManager as any).updateRoundManager(roundManager);
+              } else {
+                // Fallback to direct property update
+                (projectileManager as any).roundManager = roundManager;
+              }
+              console.log('Updated projectile manager with new round manager');
+            }
+            
+            // Display information about solo mode
+            player.ui.sendData({
+              type: 'systemMessage',
+              message: 'Switched to Solo Mode - Game will start with a single player',
+              color: '00FF00'
+            });
+            
+            // Immediately start a new round in solo mode
+            console.log('Starting new solo round');
+            setTimeout(() => {
+              if (roundManager) {
+                roundManager.startRound();
+                
+                // In solo mode, we need to force the round to actually start
+                // This ensures the shooting is enabled
+                setTimeout(() => {
+                  // Access the internal method to start the round immediately
+                  (roundManager as any).actuallyStartRound();
+                  
+                  // Force another update to the projectile manager
+                  if (projectileManager) {
+                    // Update the round manager reference
+                    if ((projectileManager as any).updateRoundManager) {
+                      (projectileManager as any).updateRoundManager(roundManager);
+                    } else {
+                      (projectileManager as any).roundManager = roundManager;
+                    }
+                    
+                    // Explicitly enable force shooting in solo mode
+                    (projectileManager as any).forceEnableShooting = true;
+                  }
+                }, 1500);
+              }
+            }, 1000);
+            
+          } else {
+            // Use multiplayer mode configuration
+            console.log('Switching to multiplayer mode');
+            
+            // Create a completely new round manager
+            if (roundManager) {
+              // Clean up the old manager first
+              roundManager.cleanup();
+            }
+            
+            // Create a new instance with multiplayer mode
+            roundManager = new RoundManager(
+              world, 
+              movingBlockManager, 
+              scoreManager,
+              { gameMode: 'multiplayer' }
+            );
+            
+            // We also need to update the projectile manager's reference to the round manager
+            if (projectileManager) {
+              // Use our special method to update the reference
+              if ((projectileManager as any).updateRoundManager) {
+                (projectileManager as any).updateRoundManager(roundManager);
+              } else {
+                // Fallback to direct property update
+                (projectileManager as any).roundManager = roundManager;
+              }
+              console.log('Updated projectile manager with new round manager');
+            }
+            
+            // Display information about multiplayer mode
+            player.ui.sendData({
+              type: 'systemMessage',
+              message: 'Switched to Multiplayer Mode - Game requires 2 players to start',
+              color: '00FF00'
+            });
+            
+            // Start a new round (it will wait for players in multiplayer mode)
+            console.log('Starting new multiplayer round');
+            setTimeout(() => {
+              if (roundManager) {
+                roundManager.startRound();
+              }
+            }, 1000);
+          }
         }
       }
     });
