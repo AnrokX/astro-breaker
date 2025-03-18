@@ -1566,7 +1566,7 @@
 
     #game-mode-selection .mode-buttons {
       display: flex;
-      justify-content: space-around;
+      justify-content: center;
       margin-top: 30px;
     }
 
@@ -1590,15 +1590,66 @@
 
     #game-mode-selection button#solo-mode {
       background: linear-gradient(to bottom, #4a00e0, #8e2de2);
+      font-size: 32px;
+      padding: 25px 40px;
+      min-width: 320px;
+      margin: 10px auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
     }
 
-    #game-mode-selection button#multiplayer-mode {
-      background: linear-gradient(to bottom, #00b09b, #96c93d);
+    /* Main text in button */
+    .button-main-text {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 5px;
     }
 
-    input[type="range"] {
-      width: 300px;
-      height: 12px;
+    /* Key hint styling */
+    .key-hint {
+      font-size: 32px;
+      opacity: 1;
+      margin-left: 10px;
+      font-weight: bold;
+      color: #FFC107;
+      text-shadow: 0 0 8px rgba(255, 193, 7, 0.7);
+    }
+    
+    /* Retro prompt styling */
+    .retro-prompt {
+      font-family: var(--title-font);
+      font-size: 22px;
+      font-weight: bold;
+      color: #FF3366;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(255, 51, 102, 0.7);
+      animation: pulse 1.2s infinite alternate;
+      margin-top: 5px;
+    }
+    
+    @keyframes pulse {
+      from {
+        opacity: 0.7;
+        transform: scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1.03);
+      }
+    }
+    
+    .retro-prompt .key-label {
+      display: inline-block;
+      background: #FF3366;
+      color: white;
+      padding: 2px 12px;
+      margin: 0 5px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(255, 51, 102, 0.7);
+      font-family: var(--display-font);
     }
 
     #game-mode-selection button#multiplayer-mode {
@@ -1672,6 +1723,91 @@
     .system-message.disappear {
       opacity: 0;
       transform: translateY(-20px);
+    }
+
+    #game-mode-selection button#solo-mode {
+      background: linear-gradient(to bottom, #4a00e0, #8e2de2);
+      font-size: 32px;
+      padding: 25px 40px;
+      min-width: 320px;
+      margin: 10px auto;
+    }
+
+    /* Key hint styling */
+    .key-hint {
+      font-size: 32px;
+      opacity: 1;
+      margin-left: 10px;
+      font-weight: bold;
+      color: #FFC107;
+      text-shadow: 0 0 8px rgba(255, 193, 7, 0.7);
+    }
+    
+    /* Retro prompt styling */
+    .retro-prompt {
+      font-family: var(--title-font);
+      font-size: 22px;
+      font-weight: bold;
+      color: #FF3366;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(255, 51, 102, 0.7);
+      animation: pulse 1.2s infinite alternate;
+      margin-top: 5px;
+    }
+    
+    @keyframes pulse {
+      from {
+        opacity: 0.7;
+        transform: scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1.03);
+      }
+    }
+    
+    .retro-prompt .key-label {
+      display: inline-block;
+      background: #FF3366;
+      color: white;
+      padding: 2px 12px;
+      margin: 0 5px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(255, 51, 102, 0.7);
+      font-family: var(--display-font);
+    }
+
+    #game-mode-selection button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+
+    #game-mode-selection button.button-flash {
+      animation: button-flash 0.2s forwards;
+    }
+
+    @keyframes button-flash {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+      }
+      50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 30px rgba(255, 255, 255, 1);
+        background: linear-gradient(to bottom, #8e2de2, #4a00e0);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+      }
+    }
+
+    #game-mode-selection button#solo-mode {
+      background: linear-gradient(to bottom, #4a00e0, #8e2de2);
+      font-size: 32px;
+      padding: 25px 40px;
+      min-width: 320px;
+      margin: 10px auto;
     }
   </style>
 <!-- Scene UI Templates -->
@@ -2865,14 +3001,21 @@ function hideGameModeSelection() {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Setting up game mode buttons...');
   const soloButton = document.getElementById('solo-mode');
-  const multiplayerButton = document.getElementById('multiplayer-mode');
   
   if (soloButton) {
     console.log('Solo button found, adding click handler');
     soloButton.addEventListener('click', function() {
       console.log('Solo mode clicked');
+      
+      // Add flash effect
+      soloButton.classList.add('button-flash');
+      setTimeout(() => {
+        soloButton.classList.remove('button-flash');
+      }, 200);
+      
       // Hide selection UI first
       hideGameModeSelection();
+      
       // Then send message to game that solo mode was selected
       hytopia.sendData({ 
         type: 'modeSelection',
@@ -2882,25 +3025,6 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     console.log('Solo button not found!');
   }
-  
-  if (multiplayerButton) {
-    console.log('Multiplayer button found, adding click handler');
-    multiplayerButton.addEventListener('click', function() {
-      console.log('Multiplayer mode clicked');
-      // Hide selection UI first
-      hideGameModeSelection();
-      // Then send message to game that multiplayer mode was selected
-      hytopia.sendData({ 
-        type: 'modeSelection',
-        mode: 'multiplayer'
-      });
-    });
-  } else {
-    console.log('Multiplayer button not found!');
-  }
-  
-  // Remove the duplicate keydown event listener
-  // No longer needed since we have a global one
   
   // For debugging - manually show the game mode selection (comment out for production)
   // setTimeout(() => {
@@ -2931,6 +3055,15 @@ document.addEventListener('keydown', (e) => {
       console.log('Solo mode selected via key 1');
       e.preventDefault(); // Prevent any default behavior
       
+      // Add flash effect to the button
+      const soloButton = document.getElementById('solo-mode');
+      if (soloButton) {
+        soloButton.classList.add('button-flash');
+        setTimeout(() => {
+          soloButton.classList.remove('button-flash');
+        }, 200);
+      }
+      
       // Immediately hide the selection UI
       hideGameModeSelection();
       
@@ -2938,18 +3071,6 @@ document.addEventListener('keydown', (e) => {
       hytopia.sendData({ 
         type: 'modeSelection',
         mode: 'solo'
-      });
-    } else if (e.key === '2') {
-      console.log('Multiplayer mode selected via key 2');
-      e.preventDefault(); // Prevent any default behavior
-      
-      // Immediately hide the selection UI
-      hideGameModeSelection();
-      
-      // Then send the data to start multiplayer mode
-      hytopia.sendData({ 
-        type: 'modeSelection',
-        mode: 'multiplayer'
       });
     }
   }
@@ -2999,13 +3120,12 @@ function showSystemMessage(message, color = 'FFFFFF') {
 
 <!-- Game Mode Selection Modal -->
 <div id="game-mode-selection">
-  <h2>SELECT GAME MODE</h2>
+  <h2>WAITING FOR ANOTHER PLAYER</h2>
   <div class="mode-buttons">
-    <button id="solo-mode">SOLO MODE <span class="key-hint">[1]</span></button>
-    <button id="multiplayer-mode">MULTIPLAYER MODE <span class="key-hint">[2]</span></button>
-  </div>
-  <div class="key-instruction">
-    Press <span class="key-label">1</span> or <span class="key-label">2</span> to select a mode
+    <button id="solo-mode" style="display: flex; flex-direction: column; align-items: center; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 30px 50px; min-width: 350px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);">
+      <div class="button-main-text" style="font-size: 42px; font-weight: bold; color: #ffffff; margin-bottom: 15px;">START SOLO</div>
+      <div style="font-family: var(--text-font); font-size: 24px; color: #ffffff; opacity: 0.8;">PRESS 1 TO START</div>
+    </button>
   </div>
 </div>
 

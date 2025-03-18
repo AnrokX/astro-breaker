@@ -252,27 +252,25 @@ startServer(world => {
     player.ui.on(PlayerUIEvent.DATA, ({ playerUI, data }) => {
       console.log('Received UI data:', data);
       
-      // Forward mode selection events to the round manager
-      if (data.type === 'modeSelection' && data.mode && roundManager) {
-        console.log(`Forwarding mode selection: ${data.mode}`);
+      // Handle solo mode selection
+      if (data.type === 'modeSelection' && data.mode === 'solo' && roundManager) {
+        console.log(`Starting solo mode`);
         
-        // Ensure the player's pointer is locked again for any mode
+        // Ensure the player's pointer is locked again
         player.ui.lockPointer(true);
         
         // Call handleModeSelection to start the game
-        roundManager.handleModeSelection(data.mode);
+        roundManager.handleModeSelection('solo');
         
-        // For solo mode, also force the round to start immediately
-        if (data.mode === 'solo') {
-          setTimeout(() => {
-            (roundManager as any).actuallyStartRound();
-            
-            // Update projectile manager
-            if (projectileManager) {
-              (projectileManager as any).forceEnableShooting = true;
-            }
-          }, 300);
-        }
+        // Force the round to start immediately
+        setTimeout(() => {
+          (roundManager as any).actuallyStartRound();
+          
+          // Update projectile manager
+          if (projectileManager) {
+            (projectileManager as any).forceEnableShooting = true;
+          }
+        }, 300);
       }
     });
     

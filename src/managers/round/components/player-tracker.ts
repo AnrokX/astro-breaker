@@ -57,15 +57,15 @@ export class PlayerTracker {
     
     // If this is the first player joining and we haven't shown the selection yet
     if (currentPlayerCount === 1 && this.previousPlayerCount === 0 && !this.hasShownModeSelection) {
-      // Show the mode selection UI to this player
+      // Show the waiting for another player UI with solo option
       const player = this.world.entityManager.getAllPlayerEntities()[0]?.player;
       if (player) {
-        console.log('First player joined, showing mode selection UI');
+        console.log('First player joined, showing waiting for player UI with solo option');
         
         // Unlock the pointer first to allow interaction with the UI
         player.ui.lockPointer(false);
         
-        // Then show the mode selection
+        // Then show the waiting UI with solo option
         player.ui.sendData({
           type: 'showModeSelection'
         });
