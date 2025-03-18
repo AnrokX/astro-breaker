@@ -7,9 +7,14 @@ export class PlayerTracker {
 
   constructor(
     private world: World,
-    requiredPlayers: number = 2
+    requiredPlayers: number = 2,
+    private isSoloMode: boolean = false
   ) {
     this.requiredPlayers = requiredPlayers;
+  }
+  
+  public isSolo(): boolean {
+    return this.isSoloMode;
   }
 
   public startWaitingForPlayers(onEnoughPlayers: () => void): void {

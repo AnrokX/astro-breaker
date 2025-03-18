@@ -3,10 +3,15 @@ import { ScoreManager } from '../../score-manager';
 import { GameEndStanding, RoundEndPlacement } from '../interfaces/round-interfaces';
 
 export class RoundUI {
+  private isSoloMode: boolean = false;
+
   constructor(
     private world: World,
-    private scoreManager: ScoreManager
-  ) { }
+    private scoreManager: ScoreManager,
+    gameConfig?: { gameMode?: 'solo' | 'multiplayer' }
+  ) { 
+    this.isSoloMode = gameConfig?.gameMode === 'solo';
+  }
 
   public displayRoundInfo(round: number, totalRounds: number, remainingRounds: number, remainingTime: number): void {
     const message = {
@@ -64,15 +69,26 @@ export class RoundUI {
     }
   }
 
-  public displayWaitingForPlayers(currentCount: number, requiredCount: number): void {
-    const message = {
-      type: 'waitingForPlayers',
-      data: {
-        current: currentCount,
-        required: requiredCount,
-        remaining: requiredCount - currentCount
-      }
-    };
+  public displayWaitingForPlayers(currentCount: number, requiredCount: number, isSoloMode: boolean = false): void {
+    let message;
+    
+    if (isSoloMode) {
+      message = {
+        type: 'waitingForSoloStart',
+        data: {
+          message: 'Press SPACE to start solo game'
+        }
+      };
+    } else {
+      message = {
+        type: 'waitingForPlayers',
+        data: {
+          current: currentCount,
+          required: requiredCount,
+          remaining: requiredCount - currentCount
+        }
+      };
+    }
 
     this.broadcastToAllPlayers(message);
   }
@@ -95,27 +111,36 @@ export class RoundUI {
           stats: {
             totalRounds,
             completedRounds
-          }
+          },
+          isSoloMode: this.isSoloMode
         }
       });
       
-      // Send congratulatory message to winner
-      if (currentPlayerId === winner.playerId) {
+      // Different messages for solo vs multiplayer mode
+      if (this.isSoloMode) {
+        // In solo mode, just show completion message
         playerEntity.player.ui.sendData({
           type: 'systemMessage',
-          message: `🏆 Congratulations! You won the game with ${winner.placementPoints} placement points!`,
+          message: `🏆 Game complete! Your final score: ${winner.totalScore}`,
           color: 'FFD700' // Gold color
         });
+      } else {
+        // In multiplayer, show congratulatory message to winner
+        if (currentPlayerId === winner.playerId) {
+          playerEntity.player.ui.sendData({
+            type: 'systemMessage',
+            message: `🏆 Congratulations! You won the game with ${winner.placementPoints} placement points!`,
+            color: 'FFD700' // Gold color
+          });
+        }
+        
+        // Use player number for clearer winner announcement
+        playerEntity.player.ui.sendData({
+          type: 'systemMessage',
+          message: `Game Over! Player ${winner.playerNumber} wins!`,
+          color: 'FFD700'
+        });
       }
-    });
-
-    // Use player number for clearer winner announcement
-    this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
-      playerEntity.player.ui.sendData({
-        type: 'systemMessage',
-        message: `Game Over! Player ${winner.playerNumber} wins!`,
-        color: 'FFD700'
-      });
     });
   }
 

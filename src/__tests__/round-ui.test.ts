@@ -20,7 +20,7 @@ describe('RoundUI', () => {
     // Create mock instances
     world = new World();
     scoreManager = new ScoreManager();
-    roundUI = new RoundUI(world, scoreManager);
+    roundUI = new RoundUI(world, scoreManager, { gameMode: 'multiplayer' });
     
     // Create mock player entities
     mockPlayerId = 'player1';
@@ -132,8 +132,26 @@ describe('RoundUI', () => {
       });
     }
   });
+  
+  test('displayWaitingForPlayers should send solo start message when in solo mode', () => {
+    // Create a RoundUI instance with solo mode
+    const soloRoundUI = new RoundUI(world, scoreManager, { gameMode: 'solo' });
+    
+    // Call method with solo mode flag
+    soloRoundUI.displayWaitingForPlayers(1, 1, true);
+    
+    // Verify solo message sent to all players
+    for (const entity of mockPlayerEntities) {
+      expect(entity.player.ui.sendData).toHaveBeenCalledWith({
+        type: 'waitingForSoloStart',
+        data: {
+          message: 'Press SPACE to start solo game'
+        }
+      });
+    }
+  });
 
-  test('displayGameEnd should send appropriate messages to players', () => {
+  test('displayGameEnd should send appropriate messages to players in multiplayer mode', () => {
     // Set up test data
     const winner: GameEndStanding = {
       playerId: 'player1',
@@ -170,7 +188,8 @@ describe('RoundUI', () => {
         stats: {
           totalRounds: 10,
           completedRounds: 8
-        }
+        },
+        isSoloMode: false
       }
     });
     
@@ -188,6 +207,59 @@ describe('RoundUI', () => {
         message: expect.stringContaining('Player 1 wins'),
         color: 'FFD700'
       });
+    }
+  });
+  
+  test('displayGameEnd should send solo-specific messages in solo mode', () => {
+    // Create a RoundUI instance with solo mode
+    const soloRoundUI = new RoundUI(world, scoreManager, { gameMode: 'solo' });
+    
+    // Set up test data
+    const winner: GameEndStanding = {
+      playerId: 'player1',
+      playerNumber: 1,
+      playerColor: '#FF0000',
+      placementPoints: 0,
+      wins: 0,
+      totalScore: 300
+    };
+    
+    const standings: GameEndStanding[] = [winner];
+    
+    // Call method
+    soloRoundUI.displayGameEnd(winner, standings, 10, 8, 5000);
+    
+    // Verify game end message includes solo mode flag
+    expect(mockPlayerEntities[0].player.ui.sendData).toHaveBeenCalledWith({
+      type: 'gameEnd',
+      data: {
+        winner,
+        standings,
+        currentPlayerId: 'player1',
+        nextGameIn: 5000,
+        stats: {
+          totalRounds: 10,
+          completedRounds: 8
+        },
+        isSoloMode: true
+      }
+    });
+    
+    // Solo player should get solo completion message
+    expect(mockPlayerEntities[0].player.ui.sendData).toHaveBeenCalledWith({
+      type: 'systemMessage',
+      message: expect.stringContaining('Game complete'),
+      color: 'FFD700'
+    });
+    
+    // Should NOT get multiplayer winner announcement
+    for (const entity of mockPlayerEntities) {
+      const calls = (entity.player.ui.sendData as jest.Mock).mock.calls;
+      const hasWinnerAnnouncement = calls.some(call => 
+        call[0].type === 'systemMessage' && 
+        call[0].message.includes('Player 1 wins')
+      );
+      expect(hasWinnerAnnouncement).toBe(false);
     }
   });
 

@@ -22,6 +22,7 @@ export interface GameConfig {
     maxRounds: number;
     requiredPlayers: number;
     transitionDuration: number;
+    gameMode: 'solo' | 'multiplayer';
 }
 
 export interface GameEndStanding {

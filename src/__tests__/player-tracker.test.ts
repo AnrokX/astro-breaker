@@ -149,4 +149,25 @@ describe('PlayerTracker', () => {
     // Verify callback not called
     expect(callback).not.toHaveBeenCalled();
   });
+
+  test('should initialize in solo mode when specified', () => {
+    // Create with solo mode flag
+    const soloPlayerTracker = new PlayerTracker(world, 1, true);
+    
+    // Verify solo mode settings
+    expect(soloPlayerTracker.getRequiredPlayers()).toBe(1);
+    expect(soloPlayerTracker.isSolo()).toBe(true);
+  });
+
+  test('should require only one player in solo mode', () => {
+    // Create with solo mode flag
+    const soloPlayerTracker = new PlayerTracker(world, 1, true);
+    
+    // Mock a single player
+    const mockPlayerEntities = [{ id: '1' }];
+    (world.entityManager.getAllPlayerEntities as jest.Mock).mockReturnValue(mockPlayerEntities);
+    
+    // Verify one player is enough
+    expect(soloPlayerTracker.hasEnoughPlayers()).toBe(true);
+  });
 });

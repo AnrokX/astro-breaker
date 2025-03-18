@@ -7,7 +7,7 @@ import { RoundSpawner } from './components/round-spawner';
 import { PlayerTracker } from './components/player-tracker';
 import { RoundUI } from './components/round-ui';
 import { GameConfig, GameEndStanding, RoundConfig } from './interfaces/round-interfaces';
-import { DEFAULT_GAME_CONFIG } from './configs/game-configs';
+import { DEFAULT_GAME_CONFIG, SOLO_GAME_CONFIG } from './configs/game-configs';
 import { ROUND_CONFIGS } from './configs/round-configs';
 
 /**
@@ -62,11 +62,33 @@ export class RoundManager {
     private scoreManager: ScoreManager,
     gameConfig?: Partial<GameConfig>
   ) {
+    // Determine if we're using solo mode
+    const isSoloMode = gameConfig?.gameMode === 'solo';
+    
+    // Select the appropriate default config
+    const defaultConfig = isSoloMode ? SOLO_GAME_CONFIG : DEFAULT_GAME_CONFIG;
+    
     // Merge provided config with defaults
     this.gameConfig = {
-      ...DEFAULT_GAME_CONFIG,
+      ...defaultConfig,
       ...gameConfig
     };
+    
+    // If we're in solo mode, recreate the playerTracker with solo settings
+    if (this.gameConfig.gameMode === 'solo') {
+      this.playerTracker = new PlayerTracker(
+        world,
+        1, // Required players is 1
+        true // isSoloMode = true
+      );
+      
+      // Recreate the UI with solo mode config
+      this.ui = new RoundUI(
+        world,
+        scoreManager,
+        { gameMode: 'solo' }
+      );
+    }
   }
 
   /**
@@ -84,13 +106,18 @@ export class RoundManager {
       return;
     }
 
-    // Only check for minimum players when starting a new game (not in progress)
+    // Check if we're in solo mode
+    const isSoloMode = this.gameConfig.gameMode === 'solo';
+
+    // Only check for minimum players when starting a new game (not in progress) and not in solo mode
     if (!this.gameInProgress && !this.playerTracker.hasEnoughPlayers()) {
       // Start waiting for players
       if (!this.playerTracker.isWaitingForPlayers()) {
+        // Display different UI for solo vs multiplayer mode
         this.ui.displayWaitingForPlayers(
           this.playerTracker.getPlayerCount(),
-          this.playerTracker.getRequiredPlayers()
+          this.playerTracker.getRequiredPlayers(),
+          isSoloMode
         );
         
         // Start waiting for players with a callback for when we have enough
@@ -278,30 +305,43 @@ export class RoundManager {
     this.scoreManager.resetAllStats();
     this.ui.updateLeaderboard();
     
-    // Check if we have enough players to start new game
-    if (this.playerTracker.hasEnoughPlayers()) {
-      this.ui.displaySystemMessage('New game starting...', 'FFFFFF');
+    // Check if we're in solo mode
+    const isSoloMode = this.gameConfig.gameMode === 'solo';
+    
+    if (isSoloMode) {
+      // In solo mode, we can start immediately
+      this.ui.displaySystemMessage('Solo game starting...', 'FFFFFF');
       
       setTimeout(() => {
         this.startRound();
-      }, 5000);
+      }, 3000);
     } else {
-      // Wait for enough players
-      this.ui.displayWaitingForPlayers(
-        this.playerTracker.getPlayerCount(),
-        this.playerTracker.getRequiredPlayers()
-      );
-      
-      // Start waiting for players with a callback
-      this.playerTracker.startWaitingForPlayers(() => {
-        this.startCountdown();
-      });
+      // Check if we have enough players to start new game
+      if (this.playerTracker.hasEnoughPlayers()) {
+        this.ui.displaySystemMessage('New game starting...', 'FFFFFF');
+        
+        setTimeout(() => {
+          this.startRound();
+        }, 5000);
+      } else {
+        // Wait for enough players
+        this.ui.displayWaitingForPlayers(
+          this.playerTracker.getPlayerCount(),
+          this.playerTracker.getRequiredPlayers()
+        );
+        
+        // Start waiting for players with a callback
+        this.playerTracker.startWaitingForPlayers(() => {
+          this.startCountdown();
+        });
+      }
     }
   }
 
   private endGame(): void {
     this.gameInProgress = false;
     const finalStandings: GameEndStanding[] = [];
+    const isSoloMode = this.gameConfig.gameMode === 'solo';
     
     this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
       const playerId = playerEntity.player.id;
@@ -347,6 +387,7 @@ export class RoundManager {
           : '#FFFFFF';
       }
       
+      // Send game end UI
       this.ui.displayGameEnd(
         gameWinner,
         finalStandings,
@@ -354,11 +395,23 @@ export class RoundManager {
         this.currentRound,
         10000 // 10 seconds until next game
       );
+      
+      // For solo mode, add a specific message about the score
+      if (isSoloMode) {
+        this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
+          playerEntity.player.ui.sendData({
+            type: 'systemMessage',
+            message: `Solo game complete! Your final score: ${gameWinner.totalScore}`,
+            color: 'FFD700' // Gold color
+          });
+        });
+      }
     }
 
-    // Reset game after delay
+    // Reset game after delay (shorter for solo mode)
+    const resetDelay = isSoloMode ? 5000 : 10000;
     setTimeout(() => {
       this.resetGame();
-    }, 10000);
+    }, resetDelay);
   }
 }
