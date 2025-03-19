@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "hytopia-helper": {
+      "command": "bunx",
+      "args": [
+        "-y",
+        "topia-mcp@latest",
+        "serve",
+        "C:\\Users\\anrok\\OneDrive\\Documentos\\GitHub\\astro-breaker"
+      ]
+    }
+  }
+}

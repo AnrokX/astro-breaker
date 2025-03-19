@@ -257,8 +257,7 @@ export class LeaderboardManager {
 - Add leaderboard to settings menu
 
 **Files to Modify:**
-- `assets/ui/index.html`
-- `assets/ui/styles/`
+- `assets/ui/index.html` (all UI needs to be here)
 - `src/scene-ui/scene-ui-manager.ts`
 - `src/managers/player-settings-manager.ts`
 - `index.ts` (for key binding)

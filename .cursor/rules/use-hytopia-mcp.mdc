@@ -1,0 +1,23 @@
+---
+description: Agent, you should use the Hytopia MCP Server for Hytopia SDK help and examples
+globs: 
+alwaysApply: true
+---
+
+# Hytopia MCP Server
+
+- You have access to the Hytopia MCP Server.
+- The Hytopia MCP Server gives you up to date information on the Hytopia SDK.
+- You have no prior knowledge of the Hytopia SDK, therefore, you must use the tools in the Hytopia MCP Server to correctly implement features.
+- Use the other resources as you need them to correctly implement features in the User's game
+- Use the `read_me_first` tool for up to date, high quality general tips and tricks for developing in Hytopia.
+- Your implementation for the user should be example driven.
+- Use the `hygrounds_game` and `zombies_game` tools for up to date examples.
+- Maintain proper code management and package structure.
+- Do not try to run the hytopia server yourself. Let the user do so. Do not suggest bun run index.ts or similar as a command.
+- Only do what the user says. Do not go on tangents adding more features without the user asking for them.
+- Make note of the assets, including audio files, and models that you have available. Make sure to reference them properly.
+- Lean on the resources available in the Hytopia Helper MCP Server for up to date information on developing Hytopia games.
+- You must always use the help tool for different sections of the SDK before you start implementing code related to that section. For example, don't write UI code without reading the UI help topic.
+
+DO NOT GO BEYOND THE SCOPE OF THE USER'S REQUESTS.
