@@ -237,13 +237,28 @@ startServer(world => {
   }, 100); // Check every 100ms
 
   // Replace direct assignment with proper event listener for player join
-  world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
+  world.on(PlayerEvent.JOINED_WORLD, async ({ player }) => {
     console.log('New player joined the game');
     
     // Initialize player states
     scoreManager.initializePlayer(player.id);
     projectileManager.initializePlayer(player.id);
     settingsManager.initializePlayer(player.id);
+    
+    // Initialize player in LeaderboardManager
+    try {
+      const { LeaderboardManager } = await import('./src/managers/leaderboard-manager');
+      const leaderboardManager = LeaderboardManager.getInstance(world);
+      
+      // Get player data and increment games played count
+      const playerData = await leaderboardManager.getPlayerData(player);
+      playerData.gamesPlayed++;
+      await leaderboardManager.updatePlayerData(player, playerData);
+      
+      console.log(`Player ${player.id} has played ${playerData.gamesPlayed} games`);
+    } catch (error) {
+      console.error("Error initializing player in LeaderboardManager:", error);
+    }
     
     // Load the UI first
     player.ui.load('ui/index.html');

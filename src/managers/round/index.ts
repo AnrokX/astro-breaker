@@ -406,12 +406,14 @@ export class RoundManager {
     }
   }
 
-  private endGame(): void {
+  private async endGame(): Promise<void> {
     this.gameInProgress = false;
     const finalStandings: GameEndStanding[] = [];
     const isSoloMode = this.gameConfig.gameMode === 'solo';
     
-    this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
+    // Get all players' info for the final standings
+    const playerEntities = this.world.entityManager.getAllPlayerEntities();
+    for (const playerEntity of playerEntities) {
       const playerId = playerEntity.player.id;
       const playerStats = (this.scoreManager as any).playerStats.get(playerId);
       const playerNumber = playerStats?.playerNumber || 0;
@@ -430,7 +432,7 @@ export class RoundManager {
         wins: this.scoreManager.getWins(playerId),
         totalScore: this.scoreManager.getScore(playerId)
       });
-    });
+    }
 
     // Sort by placement points
     finalStandings.sort((a, b) => b.placementPoints - a.placementPoints);
@@ -440,6 +442,56 @@ export class RoundManager {
     this.world.entityManager.getAllEntities()
       .filter(entity => entity.name.toLowerCase().includes('block'))
       .forEach(entity => entity.despawn());
+
+    // Update leaderboard with game results
+    try {
+      const { LeaderboardManager } = await import('../../managers/leaderboard-manager');
+      const leaderboardManager = LeaderboardManager.getInstance(this.world);
+      
+      // Process each player's scores and update their data
+      for (const playerEntity of playerEntities) {
+        const player = playerEntity.player;
+        const playerId = player.id;
+        const totalScore = this.scoreManager.getScore(playerId);
+        const roundScore = this.scoreManager.getRoundScore(playerId);
+        const isWinner = playerId === gameWinner?.playerId;
+        
+        // Normalize scores for solo mode
+        const normalizedTotalScore = isSoloMode 
+          ? Math.round(totalScore * 0.8) // Apply solo mode multiplier
+          : totalScore;
+        
+        // 1. Update personal best
+        // Get the highest combo from score manager (default to 0 if not available)
+        const highestCombo = (this.scoreManager as any).playerStats.get(playerId)?.consecutiveHits || 0;
+        await leaderboardManager.updatePlayerPersonalBest(
+          player,
+          normalizedTotalScore,
+          roundScore,
+          highestCombo
+        );
+        
+        // 2. Check if score qualifies for leaderboard and add it
+        const isHighScore = await leaderboardManager.isLeaderboardQualifier(normalizedTotalScore);
+        if (isHighScore) {
+          await leaderboardManager.addAllTimeHighScore(player, normalizedTotalScore);
+          
+          // Notify player of high score achievement
+          player.ui.sendData({
+            type: 'systemMessage',
+            message: 'New high score achieved!',
+            color: 'FFD700' // Gold color
+          });
+        }
+        
+        // 3. If player is winner, increment their win count
+        if (isWinner) {
+          await leaderboardManager.incrementWins(player);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating leaderboard at game end:", error);
+    }
 
     if (gameWinner) {
       // Ensure gameWinner has all required properties

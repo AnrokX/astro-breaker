@@ -172,7 +172,116 @@ export class ScoreManager extends Entity {
         this.playerStats.set(winnerId, stats);
     }
 
+    // Update leaderboard with round scores
+    this.updateLeaderboardWithRoundScores();
+
     return { winnerId, placements };
+  }
+
+  // Update leaderboard with round scores
+  private async updateLeaderboardWithRoundScores(): Promise<void> {
+    if (!this.world) return;
+
+    try {
+      // Import dynamically to avoid circular dependency
+      const { LeaderboardManager } = await import('./leaderboard-manager');
+      const leaderboardManager = LeaderboardManager.getInstance(this.world);
+      
+      // Get current round number
+      const roundNumber = this.getCurrentRound();
+
+      // Normalize scores based on game mode (solo vs multiplayer)
+      const gameMode = this.determineGameMode();
+      
+      // Find the player with the highest round score (winner)
+      const sortedPlayers = Array.from(this.playerStats.entries())
+        .sort((a, b) => b[1].roundScore - a[1].roundScore);
+      
+      const winnerPlayerId = sortedPlayers.length > 0 ? sortedPlayers[0][0] : null;
+      
+      // Process each player's scores
+      for (const playerEntity of this.world.entityManager.getAllPlayerEntities()) {
+        const playerId = playerEntity.player.id;
+        const stats = this.playerStats.get(playerId);
+        
+        if (stats) {
+          // Get player stats
+          const totalScore = this.normalizeScore(stats.totalScore, gameMode);
+          const roundScore = this.normalizeScore(stats.roundScore, gameMode);
+          const consecutiveHits = stats.consecutiveHits;
+          
+          // Check if the score is high enough to be recorded
+          const isHighScore = await leaderboardManager.isLeaderboardQualifier(totalScore);
+          
+          if (isHighScore) {
+            // Add to all-time high scores
+            await leaderboardManager.addAllTimeHighScore(
+              playerEntity.player, 
+              totalScore
+            );
+          }
+          
+          // Add round high score
+          await leaderboardManager.addRoundHighScore(
+            playerEntity.player,
+            roundScore,
+            roundNumber
+          );
+          
+          // Update player personal best
+          await leaderboardManager.updatePlayerPersonalBest(
+            playerEntity.player,
+            totalScore,
+            roundScore,
+            consecutiveHits
+          );
+          
+          // If this player won, increment their win count
+          if (playerId === winnerPlayerId) {
+            await leaderboardManager.incrementWins(playerEntity.player);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error updating leaderboard with round scores:", error);
+    }
+  }
+
+  // Helper method to determine the current game mode
+  private determineGameMode(): 'solo' | 'multiplayer' {
+    // If only one player, assume solo mode
+    return this.playerStats.size === 1 ? 'solo' : 'multiplayer';
+  }
+
+  // Helper to normalize score based on game mode
+  private normalizeScore(score: number, gameMode: 'solo' | 'multiplayer'): number {
+    // Apply fixed multiplier for solo mode to balance with multiplayer
+    const SOLO_MULTIPLIER = 0.8;
+    return gameMode === 'solo' ? Math.round(score * SOLO_MULTIPLIER) : score;
+  }
+
+  // Helper method to get current round number
+  private getCurrentRound(): number {
+    // Try to find a RoundManager instance
+    // This is a simplified approach; in a real implementation, we might want to
+    // pass the round number as a parameter to handleRoundEnd
+    try {
+      // Look for any RoundManager or ModularRoundManager in the world
+      const entities = this.world?.entityManager.getAllEntities() || [];
+      for (const entity of entities) {
+        if (entity.name.includes('RoundManager')) {
+          // Try to access the getCurrentRound method
+          if (typeof (entity as any).getCurrentRound === 'function') {
+            return (entity as any).getCurrentRound();
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error getting current round:", error);
+    }
+    
+    // Default to round 1 if we can't determine it
+    return 1;
   }
 
   // Increment (or decrement) player's score
