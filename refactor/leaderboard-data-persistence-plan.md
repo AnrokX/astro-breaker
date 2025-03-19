@@ -12,16 +12,23 @@ The game currently tracks player scores with the following components:
 - Scores reset between game sessions
 - No persistence mechanism is currently implemented
 
-## Persistence Requirements
+## Requirements
 
 1. **All-Time Leaderboard**: Store top player scores across all game sessions
 2. **Personal Best Records**: Store individual player's best performances
 3. **Round High Scores**: Track best scores achieved in individual rounds
+4. **User Interface**: Provide a way to view leaderboards during and after gameplay
 
-## Implementation Plan
+## Implementation Phases
 
-### 1. Define Persistence Data Structures
+### Phase 1: Data Structures and LeaderboardManager
 
+**Tasks:**
+- Define data interfaces for persisted information
+- Create the LeaderboardManager class
+- Implement core persistence functions
+
+**Data Structures:**
 ```typescript
 // Global leaderboard structure
 interface GlobalLeaderboard {
@@ -55,200 +62,333 @@ interface PlayerPersistentData {
 }
 ```
 
-### 2. Create PersistenceManager Integration
+**Files to Modify/Create:**
+- Create new file: `src/managers/leaderboard-manager.ts`
 
-Create a new `LeaderboardManager` class that will:
-1. Interact with the Hytopia `PersistenceManager`
-2. Handle loading/saving global and player-specific data
-3. Provide an API for the rest of the game to access persistent data
-
-```typescript
-// Naming/location: src/managers/leaderboard-manager.ts
-```
-
-### 3. Score Storage Implementation
-
-#### Global Leaderboard Updates
-- Update global leaderboard at the end of each game
-- Store top 10 scores for total game score
-- Store top 5 scores for individual rounds
-
-#### Player Data Updates
-- Store personal bests on game completion
-- Track statistics across multiple game sessions
-
-### 4. UI Integration
-
-- Add a new leaderboard UI panel to display:
-  - All-time high scores
-  - Personal bests for the current player
-  - Best round scores
-  
-- **Leaderboard Access Methods**:
-  1. **Key Binding**: Add an 'L' key binding to toggle the leaderboard display
-  2. **Menu Button**: Add "Leaderboard" button to the game menu/settings panel
-  3. **Round End**: Automatically show after completing a round/game
-  
-- **UI States**:
-  - The leaderboard will be an overlay that can be toggled on/off
-  - Should be accessible during gameplay and between rounds
-  - Will automatically appear briefly at the end of a game
-
-- **Player Setting Integration**:
-  - Update `PlayerSettings` interface to include leaderboard display preference
-  - Add toggle in settings menu for auto-display of leaderboard after rounds
-
-### 5. Score Normalization (Handle Solo vs Multiplayer)
-
-Two approaches to consider:
-1. **Fixed Multiplier System**:
-   - Apply a consistent multiplier to normalize scores across solo and multiplayer
-   - Solo scores might be multiplied by 0.8 to maintain balance
-
-2. **Separate Leaderboards**:
-   - Maintain different leaderboards for solo and multiplayer modes
-   - Display mode-specific results to players
-
-**Selected Approach**: Use a fixed multiplier system for MVP simplicity.
-
-## Implementation Steps
-
-1. **Create LeaderboardManager**
-   - Implement `LeaderboardManager` class with methods for:
-     - Getting/updating global leaderboard
-     - Getting/updating player stats
-     - Normalizing scores across game modes
-   - **Files to reference**:
-     - Create new file: `src/managers/leaderboard-manager.ts`
-     - Import from: `node_modules/hytopia/docs/server.persistencemanager.md`
-     - Import types from: `src/types.ts`
-     - Use patterns from: `src/managers/score-manager.ts`
-
-2. **Integrate with ScoreManager**
-   - Modify `ScoreManager.handleRoundEnd()` to update persistent data
-   - Add methods to save scores to LeaderboardManager
-   - **Files to modify**:
-     - `src/managers/score-manager.ts` (primarily the `handleRoundEnd()` method)
-     - Ensure integration with: `src/managers/round-manager.ts`
-     - Update interface: `src/managers/round/interfaces/round-interfaces.ts` to include high score data
-
-3. **Update RoundManager**
-   - Modify `RoundManager` to trigger leaderboard updates on game end
-   - Add hooks to notify LeaderboardManager of game completion
-   - **Files to modify**:
-     - `src/managers/round-manager.ts` (facade class)
-     - `src/managers/round/index.ts` (modular implementation)
-     - `src/managers/round/components/round-transition.ts` (for end-of-game triggers)
-     - Root game file: `index.ts` (for initialization and player join/leave events)
-
-4. **Create Leaderboard UI**
-   - Design simple UI components to display leaderboard data
-   - Implement UI updates when new scores are recorded
-   - Add key binding ('L') to toggle leaderboard display
-   - **Files to modify/reference**:
-     - `assets/ui/index.html` (add leaderboard section)
-     - `assets/ui/styles/` (add leaderboard styling)
-     - `src/scene-ui/scene-ui-manager.ts` (for UI updates)
-     - `src/managers/player-settings-manager.ts` (update to handle 'L' key binding)
-     - `index.ts` (add key binding event handler)
-     - Reference pattern in: `src/managers/round/components/round-ui.ts`
-
-## Technical Details
-
-### Using PersistenceManager
-
-```typescript
-// Examples of using the PersistenceManager
-
-// Getting global leaderboard
-const leaderboard = await PersistenceManager.instance.getGlobalData("astroBreaker_leaderboard") || { 
-  allTimeHighScores: [], 
-  roundHighScores: [] 
-};
-
-// Updating global leaderboard
-await PersistenceManager.instance.setGlobalData("astroBreaker_leaderboard", updatedLeaderboard);
-
-// Getting player data
-const playerData = await PersistenceManager.instance.getPlayerData(player) || {
-  personalBest: { totalScore: 0, highestRoundScore: 0, highestCombo: 0, date: "" },
-  gamesPlayed: 0,
-  totalWins: 0
-};
-
-// Updating player data
-await PersistenceManager.instance.setPlayerData(player, updatedPlayerData);
-```
-
-### Core File Structure for Implementation
-
-```
-src/
-  managers/
-    leaderboard-manager.ts  # New file for managing persistence
-    score-manager.ts        # Update to integrate with leaderboard
-    round-manager.ts        # Update to trigger high score updates
-    round/
-      index.ts              # Update for end-of-game hooks
-      components/
-        round-transition.ts # Update for leaderboard updates on game end
-  scene-ui/
-    scene-ui-manager.ts     # Update to support leaderboard UI
-assets/
-  ui/
-    index.html              # Update to include leaderboard panel
-    styles/                 # Add CSS for leaderboard
-```
-
-### Node Modules Reference
-
-Critical Hytopia documentation files:
-- `node_modules/hytopia/docs/server.persistencemanager.md` - Core API for persistence
-- `node_modules/hytopia/docs/server.persistencemanager.instance.md` - Singleton instance
-- `node_modules/hytopia/docs/server.persistencemanager.getglobaldata.md` - For leaderboard retrieval
-- `node_modules/hytopia/docs/server.persistencemanager.setglobaldata.md` - For leaderboard updates
-- `node_modules/hytopia/docs/server.persistencemanager.getplayerdata.md` - For player stats
-- `node_modules/hytopia/docs/server.persistencemanager.setplayerdata.md` - For player stats updates
-
-### Local Development
-
-Data will be stored in the `./dev/persistence` directory during local development and will persist between game sessions.
-
-### Required Imports
-
+**Core Implementation:**
 ```typescript
 // In leaderboard-manager.ts
 import { World, Player, PersistenceManager } from 'hytopia';
 import { ScoreManager } from './score-manager';
 
-// In index.ts (main game file)
-import { LeaderboardManager } from './src/managers/leaderboard-manager';
+export class LeaderboardManager {
+  private static instance: LeaderboardManager;
+  private world: World;
+  private leaderboardCache: GlobalLeaderboard | null = null;
+  private readonly LEADERBOARD_KEY = "astroBreaker_leaderboard";
+  
+  // Singleton pattern
+  public static getInstance(world: World): LeaderboardManager {
+    if (!LeaderboardManager.instance) {
+      LeaderboardManager.instance = new LeaderboardManager(world);
+    }
+    return LeaderboardManager.instance;
+  }
+  
+  private constructor(world: World) {
+    this.world = world;
+  }
+  
+  // Core persistence methods
+  public async getGlobalLeaderboard(): Promise<GlobalLeaderboard> {
+    try {
+      if (this.leaderboardCache) return this.leaderboardCache;
+      
+      const leaderboard = await PersistenceManager.instance.getGlobalData(this.LEADERBOARD_KEY) as GlobalLeaderboard || { 
+        allTimeHighScores: [], 
+        roundHighScores: [] 
+      };
+      
+      this.leaderboardCache = leaderboard;
+      return leaderboard;
+    } catch (error) {
+      console.error("Error retrieving leaderboard:", error);
+      return { allTimeHighScores: [], roundHighScores: [] };
+    }
+  }
+  
+  public async updateGlobalLeaderboard(updatedLeaderboard: GlobalLeaderboard): Promise<void> {
+    try {
+      await PersistenceManager.instance.setGlobalData(this.LEADERBOARD_KEY, updatedLeaderboard);
+      this.leaderboardCache = updatedLeaderboard;
+    } catch (error) {
+      console.error("Error updating leaderboard:", error);
+    }
+  }
+  
+  public async getPlayerData(player: Player): Promise<PlayerPersistentData> {
+    try {
+      const playerData = await PersistenceManager.instance.getPlayerData(player) as PlayerPersistentData || {
+        personalBest: { 
+          totalScore: 0, 
+          highestRoundScore: 0, 
+          highestCombo: 0, 
+          date: "" 
+        },
+        gamesPlayed: 0,
+        totalWins: 0,
+        showLeaderboard: true
+      };
+      
+      return playerData;
+    } catch (error) {
+      console.error("Error retrieving player data:", error);
+      return {
+        personalBest: { totalScore: 0, highestRoundScore: 0, highestCombo: 0, date: "" },
+        gamesPlayed: 0,
+        totalWins: 0,
+        showLeaderboard: true
+      };
+    }
+  }
+  
+  public async updatePlayerData(player: Player, updatedData: PlayerPersistentData): Promise<void> {
+    try {
+      await PersistenceManager.instance.setPlayerData(player, updatedData);
+    } catch (error) {
+      console.error("Error updating player data:", error);
+    }
+  }
+  
+  // Additional helper methods will be added in Phase 2
+}
 ```
 
-## Timeline
+**References:**
+- `node_modules/hytopia/docs/server.persistencemanager.md`
+- `node_modules/hytopia/docs/server.persistencemanager.instance.md`
+- `node_modules/hytopia/docs/server.persistencemanager.getglobaldata.md`
+- `node_modules/hytopia/docs/server.persistencemanager.setglobaldata.md`
+- `node_modules/hytopia/docs/server.persistencemanager.getplayerdata.md`
+- `node_modules/hytopia/docs/server.persistencemanager.setplayerdata.md`
 
-1. Create `LeaderboardManager` class - 1 day
-2. Integrate with `ScoreManager` and `RoundManager` - 1 day
-3. Update UI to display leaderboards - 1 day
-4. Testing and refinement - 1 day
+### Phase 2: Integration with Game Systems
 
-## User Interface Guidelines
+**Tasks:**
+- Integrate LeaderboardManager with ScoreManager
+- Add high score tracking to round completion
+- Update player data on game events
+- Normalize scores for solo vs. multiplayer
 
-1. **Keyboard Controls**:
-   - 'L' key to toggle leaderboard visibility
-   - ESC key should close the leaderboard if open
+**Files to Modify:**
+- `src/managers/score-manager.ts`
+- `src/managers/round-manager.ts`
+- `src/managers/round/index.ts`
+- `src/managers/round/components/round-transition.ts`
+- `index.ts` (Main game file)
 
-2. **UI Design**:
-   - Leaderboard overlay should be semi-transparent
-   - Include player names with scores
-   - Highlight the current player's scores
-   - Show a "Close" button for mouse users
-   - Design should match the existing game UI style
+**Key Implementation Details:**
 
-3. **Accessibility**:
-   - Clear color contrast for readability
-   - Text size sufficient for all players
-   - Keyboard and mouse navigation support
+1. **Score Normalization:**
+   ```typescript
+   // In leaderboard-manager.ts
+   private normalizeScore(score: number, gameMode: 'solo' | 'multiplayer'): number {
+     // Apply fixed multiplier for solo mode to balance with multiplayer
+     const SOLO_MULTIPLIER = 0.8;
+     return gameMode === 'solo' ? Math.round(score * SOLO_MULTIPLIER) : score;
+   }
+   ```
+
+2. **ScoreManager Integration:**
+   ```typescript
+   // In score-manager.ts - Modify handleRoundEnd
+   public handleRoundEnd(): { winnerId: string | null, placements: Array<{ playerId: string, points: number }> } {
+     // Existing code...
+     
+     // Add leaderboard update
+     const leaderboardManager = LeaderboardManager.getInstance(this.world);
+     const roundScores = Array.from(this.playerStats.entries())
+       .map(([playerId, stats]) => ({
+         playerId,
+         roundScore: stats.roundScore,
+         totalScore: stats.totalScore
+       }));
+     
+     // Update leaderboard asynchronously
+     this.updateLeaderboard(roundScores, this.getCurrentRound());
+     
+     return { winnerId, placements };
+   }
+   
+   private async updateLeaderboard(scores: Array<{playerId: string, roundScore: number, totalScore: number}>, roundNumber: number): Promise<void> {
+     // Implementation details for updating the leaderboard
+     // This will call the LeaderboardManager methods
+   }
+   ```
+
+3. **RoundManager Integration:**
+   ```typescript
+   // In round-manager.ts or src/managers/round/index.ts
+   private async handleGameEnd(): Promise<void> {
+     // Get final standings
+     const standings = this.getFinalStandings();
+     
+     // Update leaderboard with game results
+     const leaderboardManager = LeaderboardManager.getInstance(this.world);
+     await leaderboardManager.updateWithGameResults(standings, this.gameConfig.gameMode);
+     
+     // Display leaderboard to players
+     this.displayLeaderboard();
+   }
+   ```
+
+4. **Player Event Tracking:**
+   ```typescript
+   // In index.ts - Add to PlayerEvent.JOINED_WORLD handler
+   world.on(PlayerEvent.JOINED_WORLD, async ({ player }) => {
+     // Existing code...
+     
+     // Initialize player in LeaderboardManager
+     const leaderboardManager = LeaderboardManager.getInstance(world);
+     const playerData = await leaderboardManager.getPlayerData(player);
+     
+     // Update games played count
+     playerData.gamesPlayed++;
+     await leaderboardManager.updatePlayerData(player, playerData);
+   });
+   ```
+
+### Phase 3: UI Implementation
+
+**Tasks:**
+- Create leaderboard UI components
+- Add key binding for toggling leaderboard
+- Implement leaderboard display logic
+- Add leaderboard to settings menu
+
+**Files to Modify:**
+- `assets/ui/index.html`
+- `assets/ui/styles/`
+- `src/scene-ui/scene-ui-manager.ts`
+- `src/managers/player-settings-manager.ts`
+- `index.ts` (for key binding)
+
+**UI Components:**
+```html
+<!-- In assets/ui/index.html - Add leaderboard section -->
+<div id="leaderboard-panel" class="game-panel" style="display: none;">
+  <div class="panel-header">
+    <h2>Leaderboard</h2>
+    <button id="close-leaderboard" class="close-button">×</button>
+  </div>
+  
+  <div class="tab-container">
+    <button class="tab-button active" data-tab="all-time">All-Time High Scores</button>
+    <button class="tab-button" data-tab="round">Best Round Scores</button>
+    <button class="tab-button" data-tab="personal">Personal Bests</button>
+  </div>
+  
+  <div id="all-time-tab" class="tab-content active">
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player</th>
+          <th>Score</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="all-time-scores">
+        <!-- Dynamically populated -->
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Similar structure for round and personal tabs -->
+</div>
+```
+
+**Key Binding Implementation:**
+```typescript
+// In index.ts - Add to player join event
+world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
+  // Existing code...
+  
+  // Add key binding for leaderboard
+  player.on('playerInput', ({ input }) => {
+    // 'L' key pressed (key code 76)
+    if (input.keyDown && input.keyCode === 76) {
+      // Toggle leaderboard display
+      player.ui.sendData({
+        type: 'toggleLeaderboard'
+      });
+    }
+  });
+});
+```
+
+**Settings Integration:**
+```typescript
+// In player-settings-manager.ts - Update PlayerSettings interface
+export interface PlayerSettings {
+  crosshairColor: string;
+  bgmVolume: number;
+  gameMode: 'solo' | 'multiplayer';
+  showLeaderboardAfterRound: boolean; // New setting
+}
+
+// Initialize with default value
+public initializePlayer(playerId: string): void {
+  this.playerSettings.set(playerId, {
+    crosshairColor: '#ffff00',
+    bgmVolume: 0.1,
+    gameMode: 'multiplayer',
+    showLeaderboardAfterRound: true // Default to true
+  });
+}
+```
+
+**UI Display Logic:**
+```typescript
+// In scene-ui-manager.ts - Add leaderboard display methods
+public async showLeaderboard(player: Player, tabToShow: 'all-time' | 'round' | 'personal' = 'all-time'): Promise<void> {
+  const leaderboardManager = LeaderboardManager.getInstance(this.world);
+  const globalLeaderboard = await leaderboardManager.getGlobalLeaderboard();
+  const playerData = await leaderboardManager.getPlayerData(player);
+  
+  // Send leaderboard data to the UI
+  player.ui.sendData({
+    type: 'displayLeaderboard',
+    data: {
+      allTimeHighScores: globalLeaderboard.allTimeHighScores,
+      roundHighScores: globalLeaderboard.roundHighScores,
+      personalBest: playerData.personalBest,
+      activeTab: tabToShow,
+      playerId: player.id
+    }
+  });
+}
+```
+
+### Phase 4: Testing and Refinement
+
+**Tasks:**
+- Test persistence across game sessions
+- Verify leaderboard sorting and display
+- Test score normalization
+- Ensure smooth UI integration
+- Optimize performance
+
+**Testing Approach:**
+1. Create test scenarios for various game outcomes
+2. Verify data persistence between game sessions
+3. Test with multiple players
+4. Ensure proper error handling
+5. Optimize performance for larger leaderboards
+
+## Local Development Notes
+
+- Data will be stored in the `./dev/persistence` directory
+- In production, data will persist based on each unique user
+- Regularly backup the persistence directory during development
+
+## Code Style Guidelines
+
+- Use camelCase for variables and functions, PascalCase for classes
+- Group imports by source (external libraries first, then local modules)
+- Add proper JSDoc comments for all public methods
+- Handle errors with try/catch and provide fallback data
+- Follow existing code patterns in the codebase
 
 ## Future Enhancements (Post-MVP)
 
@@ -257,5 +397,5 @@ import { LeaderboardManager } from './src/managers/leaderboard-manager';
 3. Achievements system tied to persistent data
 4. Social features (friend comparisons, challenges)
 5. Seasonal leaderboards with rewards
-6. Leaderboard filtering and sorting options
-7. Player profile cards with stats and achievements
+6. Leaderboard filtering options
+7. Player profile cards with stats
