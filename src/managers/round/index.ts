@@ -116,8 +116,8 @@ export class RoundManager {
   /**
    * Handle mode selection from a player
    */
-  private handleModeSelection(mode: 'solo' | 'multiplayer', playerId: string): void {
-    console.log(`Player ${playerId} selected ${mode} mode`);
+  public handleModeSelection(mode: 'solo' | 'multiplayer', playerId?: string): void {
+    console.log(`Mode selected: ${mode}`);
     
     // Don't allow mode changes during active gameplay
     if (this.isRoundActive || this.gameInProgress) {
@@ -125,12 +125,14 @@ export class RoundManager {
     }
     
     // Get player entity to re-lock pointer
-    const playerEntities = this.world.entityManager.getAllPlayerEntities();
-    const playerEntity = playerEntities.find(entity => entity.player.id === playerId);
-    
-    if (playerEntity) {
-      // Lock the pointer again after mode selection
-      playerEntity.player.ui.lockPointer(true);
+    if (playerId) {
+      const playerEntities = this.world.entityManager.getAllPlayerEntities();
+      const playerEntity = playerEntities.find(entity => entity.player.id === playerId);
+      
+      if (playerEntity) {
+        // Lock the pointer again after mode selection
+        playerEntity.player.ui.lockPointer(true);
+      }
     }
     
     // Update game config mode
@@ -328,42 +330,102 @@ export class RoundManager {
 
   // Made public for testing purposes
   public actuallyStartRound(): void {
-    // Don't start if a round is already active
+    // Prevent starting a round if one is already active
     if (this.isRoundActive) {
+      console.warn('Attempted to start a round while one was already active');
       return;
     }
-
-    this.currentRound++;
     
-    // Make sure to set this flag first to allow shooting
+    // If we're beyond the maximum rounds, end the game
+    if (this.currentRound >= this.gameConfig.maxRounds) {
+      this.endGame();
+      return;
+    }
+    
+    // Get the next round number
+    this.currentRound += 1;
+    console.log(`Starting round ${this.currentRound}`);
+    
+    // Mark round as active
     this.isRoundActive = true;
     this.gameInProgress = true;
     this.roundStartTime = Date.now();
-
-    const config = this.getRoundConfig(this.currentRound);
-
-    // Reset scores for the new round
+    
+    // Get the configuration for this round
+    const roundConfig = this.getRoundConfig(this.currentRound);
+    
+    // Reset scores for the round
     this.scoreManager.startNewRound();
     
-    // Broadcast round start with full duration
+    // Display round start UI
     this.ui.displayRoundInfo(
       this.currentRound,
       this.gameConfig.maxRounds,
       this.getRemainingRounds(),
-      config.duration
+      roundConfig.duration
     );
-
-    // Start block spawning
-    this.spawner.startSpawning(config);
-
-    // Set round timer
+    
+    // Play round start sound if available
+    const audioManager = AudioManager.getInstance(this.world);
+    
+    // Start the spawning of blocks for this round
+    this.spawner.startSpawning(roundConfig);
+    
+    // Set a timer to end the round after the specified duration
     if (this.roundTimer) {
       clearTimeout(this.roundTimer);
     }
     
     this.roundTimer = setTimeout(() => {
       this.endRound();
-    }, config.duration);
+    }, roundConfig.duration);
+    
+    // Create an in-world leaderboard marker for this round if we have past scores
+    this.createInWorldLeaderboardMarker();
+  }
+
+  /**
+   * Creates an in-world leaderboard marker displaying the top scores
+   */
+  private async createInWorldLeaderboardMarker(): Promise<void> {
+    try {
+      // Import required modules
+      const { SceneUIManager } = await import('../../scene-ui/scene-ui-manager');
+      const leaderboardManager = LeaderboardManager.getInstance(this.world);
+      const leaderboardData = await leaderboardManager.getGlobalLeaderboard();
+      
+      // Only create marker if we have scores to display
+      if (leaderboardData.allTimeHighScores.length > 0) {
+        const sceneUIManager = SceneUIManager.getInstance(this.world);
+        
+        // Position the marker in a visible, but not distracting location
+        // Use different positions based on round number to add variety
+        const positions = [
+          { x: 15, y: 15, z: 15 },   // Position 1
+          { x: -15, y: 15, z: 15 },  // Position 2
+          { x: 15, y: 15, z: -15 },  // Position 3 
+          { x: -15, y: 15, z: -15 }  // Position 4
+        ];
+        
+        // Select position based on round number
+        const positionIndex = (this.currentRound - 1) % positions.length;
+        const markerPos = positions[positionIndex];
+        
+        // Format the scores for display
+        const displayScores = leaderboardData.allTimeHighScores
+          .slice(0, 5)
+          .map(entry => ({
+            playerName: entry.playerName,
+            score: entry.score
+          }));
+        
+        // Create the leaderboard marker with a generous view distance
+        sceneUIManager.createLeaderboardMarker(markerPos, displayScores, 60);
+        console.log(`Created in-world leaderboard marker for round ${this.currentRound}`);
+      }
+    } catch (error) {
+      console.error("Error creating in-world leaderboard marker:", error);
+    }
   }
 
   private getRoundConfig(round: number): RoundConfig {
@@ -489,6 +551,11 @@ export class RoundManager {
       // Save game results to persistent leaderboard (async, won't block)
       leaderboardManager.updateWithGameResults(leaderboardEntries, this.gameConfig.gameMode)
         .catch(error => console.error("Error updating final leaderboard:", error));
+      
+      // Display leaderboard to all players after a short delay
+      setTimeout(() => {
+        this.displayLeaderboardToAllPlayers();
+      }, 3000); // Show leaderboard 3 seconds after game end
     }
 
     // Reset game after delay (shorter for solo mode)
@@ -496,5 +563,37 @@ export class RoundManager {
     setTimeout(() => {
       this.resetGame();
     }, resetDelay);
+  }
+
+  /**
+   * Displays the leaderboard UI to all players in the game
+   */
+  private displayLeaderboardToAllPlayers(): void {
+    // Get all player entities and display leaderboard to each player
+    this.world.entityManager.getAllPlayerEntities().forEach(async (playerEntity) => {
+      try {
+        const player = playerEntity.player;
+        const leaderboardManager = LeaderboardManager.getInstance(this.world);
+        const leaderboardData = await leaderboardManager.getGlobalLeaderboard();
+        const playerData = await leaderboardManager.getPlayerData(player);
+        
+        // Only display if player preference allows it
+        if (playerData.showLeaderboard) {
+          // Send global leaderboard data
+          player.ui.sendData({
+            type: 'displayLeaderboard',
+            data: leaderboardData
+          });
+          
+          // Send personal stats data
+          player.ui.sendData({
+            type: 'personalStats',
+            data: playerData
+          });
+        }
+      } catch (error) {
+        console.error(`Error displaying leaderboard to player: ${error}`);
+      }
+    });
   }
 }

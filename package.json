@@ -15,9 +15,5 @@
   "dependencies": {
     "@hytopia.com/assets": "latest",
     "hytopia": "^0.3.6"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node"
   }
 }

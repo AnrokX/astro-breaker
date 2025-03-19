@@ -8,7 +8,8 @@ import {
   Vector3Like,
   PlayerEvent,
   BaseEntityControllerEvent,
-  PlayerUIEvent
+  PlayerUIEvent,
+  Player
 } from 'hytopia';
 
 import worldMap from './assets/map.json';
@@ -22,6 +23,11 @@ import { SceneUIManager } from './src/scene-ui/scene-ui-manager';
 import { AudioManager } from './src/managers/audio-manager';
 import { PlayerSettingsManager, UISettingsData } from './src/managers/player-settings-manager';
 import { LeaderboardManager } from './src/managers/leaderboard-manager';
+// Import test utilities
+import { addLeaderboardTestToMainMenu } from './src/__tests__/run-leaderboard-tests';
+
+// Track which players have already seen welcome messages
+const hasDisplayedWelcome = new Set<string>();
 
 // Platform spawn configuration
 const PLATFORM_SPAWNS = {
@@ -273,55 +279,45 @@ startServer(world => {
       player,
       name: 'Player',
       modelUri: 'models/players/player.gltf',
-      modelLoopedAnimations: [ 'idle' ],
+      modelLoopedAnimations: ['idle'],
       modelScale: 0.5,
     });
 
-    // Spawn the entity at random position
+    // Spawn the entity at the position
     playerEntity.spawn(world, spawnPos);
     console.log(`Player spawned at (${spawnPos.x.toFixed(2)}, ${spawnPos.y}, ${spawnPos.z.toFixed(2)})`);
-    
-    // Add key binding for leaderboard toggle using 'L' key
-    playerEntity.controller!.on(BaseEntityControllerEvent.TICK_WITH_PLAYER_INPUT, ({ entity, input, deltaTimeMs }) => {
-      // Check for 'L' key press - key events are handled through the 'l' property
-      if (input.l) {
-        // Toggle leaderboard display
-        player.ui.sendData({
-          type: 'toggleLeaderboard'
-        });
-        
-        // Consume the input to prevent repeated toggling
-        input.l = false;
-      }
-    });
-    
-    // Forward UI events to the round manager when a player sends UI data
-    player.ui.on(PlayerUIEvent.DATA, ({ playerUI, data }) => {
-      console.log('Received UI data:', data);
+
+    // Register UI event handlers directly on the player's UI
+    player.ui.on(PlayerUIEvent.DATA, ({ data }) => {
+      console.log(`[Player ${player.id}] UI event received:`, data);
       
-      // Handle solo mode selection
-      if (data.type === 'modeSelection' && data.mode === 'solo' && roundManager) {
-        console.log(`Starting solo mode`);
+      // Special handling for mode selection - with safety checks
+      if (data.type === 'modeSelection' && roundManager) {
+        console.log(`[Player ${player.id}] MODE SELECTION: ${data.mode}`);
         
-        // Ensure the player's pointer is locked again
-        player.ui.lockPointer(true);
-        
-        // Call handleModeSelection to start the game
-        roundManager.handleModeSelection('solo');
-        
-        // Force the round to start immediately
-        setTimeout(() => {
-          (roundManager as any).actuallyStartRound();
+        // Handle solo mode
+        if (data.mode === 'solo') {
+          // Ensure the player's pointer is locked
+          player.ui.lockPointer(true);
           
-          // Update projectile manager
-          if (projectileManager) {
-            (projectileManager as any).forceEnableShooting = true;
-          }
-        }, 300);
+          // Call the round manager to start solo mode
+          roundManager!.handleModeSelection('solo');
+          
+          // Force the round to start immediately
+          setTimeout(() => {
+            roundManager!.actuallyStartRound();
+            
+            // Update projectile manager
+            if (projectileManager) {
+              (projectileManager as any).forceEnableShooting = true;
+            }
+          }, 300);
+        }
       }
       
       // Handle leaderboard visibility events
       if (data.type === 'closeLeaderboard') {
+        console.log(`Player ${player.id} closed leaderboard UI`);
         const leaderboardManager = LeaderboardManager.getInstance(world);
         leaderboardManager.setLeaderboardVisibility(player, false)
           .catch(error => console.error("Error setting leaderboard visibility:", error));
@@ -329,6 +325,7 @@ startServer(world => {
       
       // Handle leaderboard toggle settings
       if (data.type === 'toggleLeaderboardSetting' && data.visible !== undefined) {
+        console.log(`Player ${player.id} set leaderboard visibility to: ${data.visible}`);
         // Update player settings
         settingsManager.updateSetting(player.id, 'showLeaderboard', data.visible);
         
@@ -336,6 +333,53 @@ startServer(world => {
         const leaderboardManager = LeaderboardManager.getInstance(world);
         leaderboardManager.setLeaderboardVisibility(player, data.visible)
           .catch(error => console.error("Error setting leaderboard visibility:", error));
+      }
+      
+      // Handle leaderboard display request
+      if (data.type === 'showLeaderboard') {
+        console.log(`Player ${player.id} requested leaderboard display`);
+        displayLeaderboardToPlayer(player);
+      }
+    });
+    
+    // Function to display leaderboard data to a player
+    async function displayLeaderboardToPlayer(player: Player) {
+      try {
+        const leaderboardManager = LeaderboardManager.getInstance(world);
+        const leaderboardData = await leaderboardManager.getGlobalLeaderboard();
+        const playerData = await leaderboardManager.getPlayerData(player);
+        
+        // Send global leaderboard data
+        player.ui.sendData({
+          type: 'displayLeaderboard',
+          data: leaderboardData
+        });
+        
+        // Send personal stats data
+        player.ui.sendData({
+          type: 'personalStats',
+          data: playerData
+        });
+      } catch (error) {
+        console.error("Error displaying leaderboard:", error);
+      }
+    }
+
+    // Add key binding for leaderboard toggle using 'L' key
+    playerEntity.controller!.on(BaseEntityControllerEvent.TICK_WITH_PLAYER_INPUT, ({ entity, input, deltaTimeMs }) => {
+      // Check for 'L' key press
+      if (input.l) {
+        console.log('Player pressed L key - toggling leaderboard');
+        // Toggle leaderboard display
+        player.ui.sendData({
+          type: 'toggleLeaderboard'
+        });
+        
+        // Also automatically load the data when toggled
+        displayLeaderboardToPlayer(player);
+        
+        // Consume the input to prevent repeated toggling
+        input.l = false;
       }
     });
     
@@ -356,7 +400,7 @@ startServer(world => {
     // Projectile count no longer needed as projectiles are unlimited
     
     // Configure first-person camera after spawning
-    playerEntity.player.camera.setMode(PlayerCameraMode.FIRST_PERSON);
+    player.camera.setMode(PlayerCameraMode.FIRST_PERSON);
     
     // Hide only the local player's model from their own view
     // This won't affect how other players see them
@@ -370,14 +414,14 @@ startServer(world => {
     ]);
     
     // Set camera to eye level and slightly forward
-    playerEntity.player.camera.setOffset({
+    player.camera.setOffset({
       x: 0,
       y: 1,  // Eye level height
       z: 0   // Slightly forward to avoid any model clipping
     });
 
     // Set a comfortable FOV for first-person gameplay (70 degrees is a common value)
-    playerEntity.player.camera.setFov(70);
+    player.camera.setFov(70);
   
     // Wire up projectile system to the SDK's input system
     playerEntity.controller!.on(BaseEntityControllerEvent.TICK_WITH_PLAYER_INPUT, ({ entity, input, cameraOrientation, deltaTimeMs }) => {
@@ -487,7 +531,7 @@ startServer(world => {
             }
             
             // Immediately start a new round in solo mode without showing UI messages
-            console.log('Starting new solo round');
+            // console.log('Starting new solo round');
             // Immediately start the round - no delays
             if (roundManager) {
               // Start the round
@@ -511,7 +555,6 @@ startServer(world => {
                 (projectileManager as any).forceEnableShooting = true;
               }
             }
-            
           } else {
             // Use multiplayer mode configuration
             console.log('Switching to multiplayer mode');
@@ -566,24 +609,60 @@ startServer(world => {
     }
 
     // Send appropriate welcome messages
-    world.chatManager.sendPlayerMessage(player, 'Welcome to the game!', '00FF00');
-    world.chatManager.sendPlayerMessage(player, 'Use WASD to move around.');
-    world.chatManager.sendPlayerMessage(player, 'Press space to jump.');
-    world.chatManager.sendPlayerMessage(player, 'Hold shift to sprint.');
-    world.chatManager.sendPlayerMessage(player, 'Left click to throw projectiles.');
-    world.chatManager.sendPlayerMessage(player, 'Press ESC, Tab, or P to open settings.', '00FF00');
-    
-    if (IS_TEST_MODE) {
-      world.chatManager.sendPlayerMessage(player, 'TEST MODE: One of each block type has been spawned', 'FFFF00');
-    } else {
-      world.chatManager.sendPlayerMessage(player, `Round ${roundManager!.getCurrentRound()} - Hit as many blocks as you can before time runs out!`, 'FFFF00');
-    }
-    
-    world.chatManager.sendPlayerMessage(player, 'Press \\ to enter or exit debug view.');
+    // Only show welcome messages when player first joins, not when switching to solo mode
+    if (!hasDisplayedWelcome.has(player.id)) {
+      world.chatManager.sendPlayerMessage(player, 'Welcome to the game!', '00FF00');
+      world.chatManager.sendPlayerMessage(player, 'Use WASD to move around.');
+      world.chatManager.sendPlayerMessage(player, 'Press space to jump.');
+      world.chatManager.sendPlayerMessage(player, 'Hold shift to sprint.');
+      world.chatManager.sendPlayerMessage(player, 'Left click to throw projectiles.');
+      world.chatManager.sendPlayerMessage(player, 'Press ESC, Tab, or P to open settings.', '00FF00');
+      
+      if (IS_TEST_MODE) {
+        world.chatManager.sendPlayerMessage(player, 'TEST MODE: One of each block type has been spawned', 'FFFF00');
+      } else {
+        world.chatManager.sendPlayerMessage(player, `Round ${roundManager!.getCurrentRound()} - Hit as many blocks as you can before time runs out!`, 'FFFF00');
+      }
+      
+      world.chatManager.sendPlayerMessage(player, 'Press \\ to enter or exit debug view.');
 
-    // Send help message for test mode
-    if (IS_TEST_MODE) {
-      world.chatManager.sendPlayerMessage(player, 'Type /testhelp to see available test commands', 'FFFF00');
+      // Send help message for test mode
+      if (IS_TEST_MODE) {
+        world.chatManager.sendPlayerMessage(player, 'Type /testhelp to see available test commands', 'FFFF00');
+      }
+      
+      // Mark that we've shown welcome messages for this player
+      hasDisplayedWelcome.add(player.id);
+    }
+
+    // Create in-world leaderboard markers at strategic locations
+    try {
+      const leaderboardManager = LeaderboardManager.getInstance(world);
+      leaderboardManager.getGlobalLeaderboard().then(leaderboardData => {
+        if (leaderboardData.allTimeHighScores.length > 0) {
+          // Create a leaderboard marker at a prominent location
+          const sceneUIManager = SceneUIManager.getInstance(world);
+          
+          // Position the marker at a visible location in the center of the map
+          const markerPos = { x: 0, y: 15, z: 0 };
+          
+          // Format the scores for display
+          const displayScores = leaderboardData.allTimeHighScores
+            .slice(0, 5)
+            .map(entry => ({
+              playerName: entry.playerName,
+              score: entry.score
+            }));
+          
+          // Create the leaderboard marker
+          sceneUIManager.createLeaderboardMarker(markerPos, displayScores, 50);
+          console.log('Created in-world leaderboard marker');
+        }
+      }).catch(error => {
+        console.error("Error creating leaderboard marker:", error);
+      });
+    } catch (error) {
+      console.error("Error setting up leaderboard:", error);
     }
   });
 
@@ -607,6 +686,9 @@ startServer(world => {
     // Clean up stored spawn position
     playerSpawnPositions.delete(player.id);
     
+    // Remove from welcome messages tracking
+    hasDisplayedWelcome.delete(player.id);
+    
     world.entityManager.getPlayerEntitiesByPlayer(player).forEach(entity => entity.despawn());
   });
 
@@ -615,4 +697,10 @@ startServer(world => {
   sceneUIManager.cleanup();
   audioManager.cleanup();
   settingsManager.cleanup();
+
+  // Setup leaderboard testing when not in production mode
+  if (process.env.NODE_ENV !== 'production') {
+    addLeaderboardTestToMainMenu(world);
+    console.log('🧪 Leaderboard testing tools enabled - Press the "Test Leaderboard" button in-game');
+  }
 });

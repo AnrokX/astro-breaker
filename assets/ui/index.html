@@ -1,6 +1,52 @@
 <!DOCTYPE html>
+<html>
+<head>
+  <style>
+    /* Base styles */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      color: #eee;
+      overflow: hidden;
+      background-color: transparent;
+    }
+    
+    /* Container for test buttons */
+    #test-buttons-container {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    
+    /* More styles... */
+  </style>
+</head>
+<body>
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  
+  <!-- Debug button for testing -->
+  <button id="run-leaderboard-tests" style="
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    z-index: 9999;
+    border: none;
+  ">Run Leaderboard Tests</button>
+  
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
   
@@ -3046,33 +3092,34 @@ hytopia.onData(data => {
 
 // Global keyboard shortcuts for mode selection
 document.addEventListener('keydown', (e) => {
-  // Only handle number keys when the mode selection is visible
-  const modeSelectionElement = document.getElementById('game-mode-selection');
-  if (modeSelectionElement && modeSelectionElement.style.display === 'block') {
-    console.log('Key pressed while mode selection is visible:', e.key);
+  // Process "1" key press regardless of mode selection visibility
+  if (e.key === '1') {
+    console.log('🎮 KEY PRESSED: "1" - Activating solo mode');
+    e.preventDefault(); // Prevent any default behavior
     
-    if (e.key === '1') {
-      console.log('Solo mode selected via key 1');
-      e.preventDefault(); // Prevent any default behavior
-      
-      // Add flash effect to the button
-      const soloButton = document.getElementById('solo-mode');
-      if (soloButton) {
-        soloButton.classList.add('button-flash');
-        setTimeout(() => {
-          soloButton.classList.remove('button-flash');
-        }, 200);
-      }
-      
-      // Immediately hide the selection UI
-      hideGameModeSelection();
-      
-      // Then send the data to start solo mode
-      hytopia.sendData({ 
-        type: 'modeSelection',
-        mode: 'solo'
-      });
+    // Add flash effect to the button if visible
+    const soloButton = document.getElementById('solo-mode');
+    if (soloButton) {
+      soloButton.classList.add('button-flash');
+      setTimeout(() => {
+        soloButton.classList.remove('button-flash');
+      }, 200);
     }
+    
+    // Hide the selection UI if it's visible
+    const modeSelectionElement = document.getElementById('game-mode-selection');
+    if (modeSelectionElement && modeSelectionElement.style.display === 'block') {
+      hideGameModeSelection();
+    }
+    
+    // Send the data to start solo mode - make this message stand out in logs
+    console.log('🚀 SENDING SOLO MODE REQUEST TO SERVER');
+    hytopia.sendData({ 
+      type: 'modeSelection',
+      mode: 'solo'
+    });
+    
+    return false; // Prevent default and stop propagation
   }
 });
 
@@ -3161,6 +3208,578 @@ function modeMultiplayer() {
 }
 </script>
 -->
+
+<div id="leaderboard-panel" class="game-panel" style="display: none;">
+  <div class="panel-header">
+    <h2>Leaderboard</h2>
+    <button id="close-leaderboard" class="close-button">×</button>
+  </div>
+  
+  <div class="tab-container">
+    <button class="tab-button active" data-tab="all-time">All-Time High Scores</button>
+    <button class="tab-button" data-tab="round">Best Round Scores</button>
+    <button class="tab-button" data-tab="personal">Personal Bests</button>
+  </div>
+  
+  <div id="all-time-tab" class="tab-content active">
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player</th>
+          <th>Score</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="all-time-scores">
+        <!-- Dynamically populated -->
+      </tbody>
+    </table>
+  </div>
+  
+  <div id="round-tab" class="tab-content">
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player</th>
+          <th>Round</th>
+          <th>Score</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="round-scores">
+        <!-- Dynamically populated -->
+      </tbody>
+    </table>
+  </div>
+  
+  <div id="personal-tab" class="tab-content">
+    <div class="personal-stats">
+      <div class="stat-row">
+        <span class="stat-label">Highest Score:</span>
+        <span class="stat-value" id="personal-highest-score">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Best Round Score:</span>
+        <span class="stat-value" id="personal-highest-round">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Highest Combo:</span>
+        <span class="stat-value" id="personal-highest-combo">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Games Played:</span>
+        <span class="stat-value" id="personal-games-played">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Total Wins:</span>
+        <span class="stat-value" id="personal-total-wins">0</span>
+      </div>
+      <div class="stat-row achievement-date">
+        <span class="stat-label">Last Updated:</span>
+        <span class="stat-value" id="personal-date">-</span>
+      </div>
+    </div>
+    
+    <div class="personal-settings">
+      <div class="setting-row">
+        <span class="setting-label">Show Leaderboard During Game:</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="show-leaderboard-setting" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add a template for in-world leaderboard display -->
+<template id="leaderboard-marker-template">
+  <div class="leaderboard-marker">
+    <div class="marker-title">High Scores</div>
+    <div class="marker-scores"></div>
+  </div>
+</template>
+
+<style>
+  /* Leaderboard styling */
+  .game-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.85);
+    border: 2px solid var(--matrix-green);
+    border-radius: 8px;
+    padding: 20px;
+    color: white;
+    width: 80%;
+    max-width: 600px;
+    max-height: 80%;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+  }
+  
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .panel-header h2 {
+    font-family: var(--title-font);
+    color: var(--matrix-green);
+    margin: 0;
+    font-size: 24px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 5px var(--matrix-green);
+  }
+  
+  .close-button {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+  }
+  
+  .close-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--matrix-green);
+  }
+  
+  .tab-container {
+    display: flex;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .tab-button {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 10px 15px;
+    cursor: pointer;
+    font-family: var(--text-font);
+    font-size: 16px;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+  }
+  
+  .tab-button.active {
+    color: var(--matrix-green);
+    border-bottom: 2px solid var(--matrix-green);
+  }
+  
+  .tab-content {
+    display: none;
+  }
+  
+  .tab-content.active {
+    display: block;
+  }
+  
+  .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--number-font);
+  }
+  
+  .leaderboard-table th {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--matrix-green);
+  }
+  
+  .leaderboard-table td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .leaderboard-table tr:hover td {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .personal-stats, .personal-settings {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .stat-row, .setting-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .stat-row:last-child, .setting-row:last-child {
+    border-bottom: none;
+  }
+  
+  .stat-label, .setting-label {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .stat-value {
+    font-family: var(--number-font);
+    color: var(--matrix-green);
+    font-weight: bold;
+  }
+  
+  .achievement-date {
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  /* Toggle switch styling */
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+  }
+  
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #333;
+    transition: .4s;
+    border-radius: 34px;
+  }
+  
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  
+  input:checked + .toggle-slider {
+    background-color: var(--matrix-green);
+  }
+  
+  input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+  }
+  
+  /* In-world leaderboard marker styling */
+  .leaderboard-marker {
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    padding: 12px;
+    color: white;
+    width: 200px;
+    border: 1px solid var(--matrix-green);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+  }
+  
+  .marker-title {
+    font-family: var(--title-font);
+    font-size: 14px;
+    color: var(--matrix-green);
+    text-align: center;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 4px;
+  }
+  
+  .marker-scores {
+    font-family: var(--number-font);
+  }
+  
+  .marker-score {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+  }
+  
+  .marker-score .rank {
+    width: 25px;
+    opacity: 0.8;
+  }
+  
+  .marker-score .name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0 5px;
+  }
+  
+  .marker-score .score {
+    font-weight: bold;
+    color: var(--matrix-green);
+  }
+</style>
+
+<script>
+  // Handle data from the server
+  hytopia.onData(data => {
+    // Log all incoming messages
+    console.log('📩 UI received data from server:', data);
+    
+    if (data.type === 'toggleLeaderboard') {
+      const panel = document.getElementById('leaderboard-panel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+    else if (data.type === 'displayLeaderboard') {
+      displayLeaderboardData(data.data);
+    }
+    else if (data.type === 'personalStats') {
+      displayPersonalStats(data.data);
+    }
+    else if (data.type === 'addTestButton') {
+      // Add test button to the UI
+      addTestButton(data.label, data.action);
+    }
+    else if (data.type === 'injectHTML') {
+      // Inject HTML directly into the page
+      const container = document.createElement('div');
+      container.innerHTML = data.html;
+      document.body.appendChild(container.firstElementChild);
+    }
+    else if (data.type === 'showNotification') {
+      // Show a temporary notification
+      showTemporaryNotification(data.message, data.duration || 5000);
+    }
+    else if (data.type === 'systemMessage') {
+      // Show a system message as a notification as well
+      showTemporaryNotification(data.message, 5000);
+    }
+  });
+
+  // Function to show a temporary notification message
+  function showTemporaryNotification(message, duration) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      text-align: center;
+    `;
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Remove after duration
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, duration);
+  }
+
+  // Send data to the server when closing the leaderboard
+  document.getElementById('close-leaderboard').addEventListener('click', () => {
+    document.getElementById('leaderboard-panel').style.display = 'none';
+    hytopia.sendData({ type: 'closeLeaderboard' });
+  });
+
+  // Tab switching functionality
+  document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', () => {
+      // Switch active tab
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+      
+      // Show corresponding content
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(`${button.dataset.tab}-tab`).classList.add('active');
+    });
+  });
+
+  // Toggle leaderboard visibility setting
+  document.getElementById('show-leaderboard-setting').addEventListener('change', (e) => {
+    hytopia.sendData({ 
+      type: 'toggleLeaderboardSetting', 
+      visible: e.target.checked 
+    });
+  });
+
+  // Register scene UI template for in-world leaderboard markers
+  hytopia.registerSceneUITemplate('leaderboard-marker', (id, onState) => {
+    const template = document.getElementById('leaderboard-marker-template');
+    const clone = template.content.cloneNode(true);
+    const scoresElement = clone.querySelector('.marker-scores');
+    
+    onState(state => {
+      if (!state || !state.scores) return;
+      
+      scoresElement.innerHTML = state.scores
+        .map((score, index) => `
+          <div class="marker-score">
+            <span class="rank">${index + 1}</span>
+            <span class="name">${score.playerName}</span>
+            <span class="score">${score.score}</span>
+          </div>
+        `)
+        .join('');
+    });
+    
+    return clone;
+  });
+
+  function displayLeaderboardData(data) {
+    const panel = document.getElementById('leaderboard-panel');
+    panel.style.display = 'block';
+    
+    // Display all-time high scores
+    document.getElementById('all-time-scores').innerHTML = data.allTimeHighScores
+      .map((score, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${score.playerName}</td>
+          <td>${score.score}</td>
+          <td>${new Date(score.date).toLocaleDateString()}</td>
+        </tr>
+      `)
+      .join('');
+    
+    // Display round high scores
+    document.getElementById('round-scores').innerHTML = data.roundHighScores
+      .map((score, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${score.playerName}</td>
+          <td>${score.roundNumber}</td>
+          <td>${score.roundScore}</td>
+          <td>${new Date(score.date).toLocaleDateString()}</td>
+        </tr>
+      `)
+      .join('');
+  }
+
+  function displayPersonalStats(data) {
+    // Update personal best stats
+    document.getElementById('personal-highest-score').textContent = data.personalBest.totalScore;
+    document.getElementById('personal-highest-round').textContent = data.personalBest.highestRoundScore;
+    document.getElementById('personal-highest-combo').textContent = data.personalBest.highestCombo;
+    document.getElementById('personal-games-played').textContent = data.gamesPlayed;
+    document.getElementById('personal-total-wins').textContent = data.totalWins;
+    
+    const dateElement = document.getElementById('personal-date');
+    if (data.personalBest.date) {
+      const date = new Date(data.personalBest.date);
+      dateElement.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    } else {
+      dateElement.textContent = '-';
+    }
+    
+    // Update toggle switch for leaderboard visibility
+    document.getElementById('show-leaderboard-setting').checked = data.showLeaderboard;
+  }
+</script>
+
+<!-- Add keyboard shortcut for leaderboard -->
+<script>
+document.addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 'l') {
+    console.log('Leaderboard toggled via L key');
+    e.preventDefault(); // Prevent default behavior
+    
+    const panel = document.getElementById('leaderboard-panel');
+    const newVisibility = panel.style.display === 'none' ? 'block' : 'none';
+    panel.style.display = newVisibility;
+    
+    // If showing the leaderboard, request data
+    if (newVisibility === 'block') {
+      hytopia.sendData({ type: 'showLeaderboard' });
+    } else {
+      // If hiding, notify server
+      hytopia.sendData({ type: 'closeLeaderboard' });
+    }
+  }
+  
+  // T key to run leaderboard tests
+  if (e.key.toLowerCase() === 'b') {
+    console.log('Running leaderboard tests via B key');
+    e.preventDefault(); // Prevent default behavior
+    
+    // Show a message that tests are running
+    showTemporaryNotification('Running leaderboard tests...', 3000);
+    
+    // Send message to server to run tests
+    hytopia.sendData({ type: 'runLeaderboardTests' });
+  }
+});
+</script>
+
+<!-- Add global event logging -->
+<script>
+  // Log all data received from the server
+  hytopia.onData(data => {
+    console.log('📩 UI received data from server:', data);
+    // Process the data below...
+  });
+</script>
+
+<!-- Process specific event types -->
+<script>
+  // Handle data from the server
+  hytopia.onData(data => {
+    if (data.type === 'toggleLeaderboard') {
+      const panel = document.getElementById('leaderboard-panel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+    // ... rest of the handler code ...
+  });
+</script>
+
+<!-- Add event handlers for buttons -->
+<script>
+  // Button to run leaderboard tests
+  document.getElementById('run-leaderboard-tests').addEventListener('click', () => {
+    console.log('Running leaderboard tests via button click');
+    
+    // Show a message that tests are running
+    showTemporaryNotification('Running leaderboard tests...', 3000);
+    
+    // Send message to server to run tests
+    hytopia.sendData({ type: 'runLeaderboardTests' });
+  });
+</script>
 </body>
 </html>
   

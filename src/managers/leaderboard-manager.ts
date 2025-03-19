@@ -272,7 +272,11 @@ export class LeaderboardManager {
     }
   }
 
-  // Helper method to set leaderboard visibility preference
+  /**
+   * Updates a player's leaderboard visibility preference
+   * @param player The player to update settings for
+   * @param visible Whether the leaderboard should be visible
+   */
   public async setLeaderboardVisibility(player: Player, visible: boolean): Promise<void> {
     try {
       const playerData = await this.getPlayerData(player);

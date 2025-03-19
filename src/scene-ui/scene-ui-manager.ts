@@ -1,4 +1,4 @@
-import { World, Vector3Like, Player } from 'hytopia';
+import { World, Vector3Like, Player, SceneUI } from 'hytopia';
 
 export class SceneUIManager {
   private static instance: SceneUIManager;
@@ -180,6 +180,29 @@ export class SceneUIManager {
       --score-value: ${score};
       --intensity: ${colorInfo.intensity};
     `;
+  }
+
+  /**
+   * Creates a leaderboard marker in the world showing high scores
+   * @param position Position in the world where to place the marker
+   * @param scores Array of score entries to display
+   * @param viewDistance Maximum distance from which the marker is visible (default: 20)
+   * @returns The created SceneUI instance
+   */
+  public createLeaderboardMarker(
+    position: Vector3Like,
+    scores: Array<{playerName: string, score: number}>,
+    viewDistance: number = 20
+  ): SceneUI {
+    const leaderboardMarker = new SceneUI({
+      templateId: 'leaderboard-marker',
+      state: { scores: scores.slice(0, 5) }, // Show top 5 scores
+      viewDistance,
+      position
+    });
+    
+    leaderboardMarker.load(this.world);
+    return leaderboardMarker;
   }
 
   public cleanup(): void {
