@@ -262,9 +262,9 @@ export class LeaderboardManager {
 - `src/managers/player-settings-manager.ts`
 - `index.ts` (for key binding)
 
-**UI Components:**
+**UI Components inside index.html:**
 ```html
-<!-- In assets/ui/index.html - Add leaderboard section -->
+<!-- Note: In Hytopia UI files, don't use <html>, <body>, or <head> tags -->
 <div id="leaderboard-panel" class="game-panel" style="display: none;">
   <div class="panel-header">
     <h2>Leaderboard</h2>
@@ -295,6 +295,108 @@ export class LeaderboardManager {
   
   <!-- Similar structure for round and personal tabs -->
 </div>
+
+<!-- Add a template for in-world leaderboard display -->
+<template id="leaderboard-marker-template">
+  <div class="leaderboard-marker">
+    <div class="marker-title">High Scores</div>
+    <div class="marker-scores"></div>
+  </div>
+</template>
+
+<script>
+  // Handle data from the server
+  hytopia.onData(data => {
+    if (data.type === 'toggleLeaderboard') {
+      const panel = document.getElementById('leaderboard-panel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+    else if (data.type === 'displayLeaderboard') {
+      displayLeaderboardData(data.data);
+    }
+  });
+
+  // Send data to the server when closing the leaderboard
+  document.getElementById('close-leaderboard').addEventListener('click', () => {
+    document.getElementById('leaderboard-panel').style.display = 'none';
+    hytopia.sendData({ type: 'closeLeaderboard' });
+  });
+
+  // Tab switching functionality
+  document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', () => {
+      // Switch active tab
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+      
+      // Show corresponding content
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(`${button.dataset.tab}-tab`).classList.add('active');
+    });
+  });
+
+  // Register scene UI template for in-world leaderboard markers
+  hytopia.registerSceneUITemplate('leaderboard-marker', (id, onState) => {
+    const template = document.getElementById('leaderboard-marker-template');
+    const clone = template.content.cloneNode(true);
+    const scoresElement = clone.querySelector('.marker-scores');
+    
+    onState(state => {
+      if (!state || !state.scores) return;
+      
+      scoresElement.innerHTML = state.scores
+        .map((score, index) => `
+          <div class="marker-score">
+            <span class="rank">${index + 1}</span>
+            <span class="name">${score.playerName}</span>
+            <span class="score">${score.score}</span>
+          </div>
+        `)
+        .join('');
+    });
+    
+    return clone;
+  });
+
+  function displayLeaderboardData(data) {
+    const panel = document.getElementById('leaderboard-panel');
+    panel.style.display = 'block';
+    
+    // Display all-time high scores
+    document.getElementById('all-time-scores').innerHTML = data.allTimeHighScores
+      .map((score, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${score.playerName}</td>
+          <td>${score.score}</td>
+          <td>${score.date}</td>
+        </tr>
+      `)
+      .join('');
+    
+    // Similar implementation for round and personal tabs
+  }
+</script>
+
+<style>
+  /* Leaderboard styling */
+  .game-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 8px;
+    padding: 20px;
+    color: white;
+    width: 80%;
+    max-width: 600px;
+    max-height: 80%;
+    overflow-y: auto;
+  }
+  
+  /* Additional styling */
+</style>
 ```
 
 **Key Binding Implementation:**
@@ -303,59 +405,45 @@ export class LeaderboardManager {
 world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
   // Existing code...
   
-  // Add key binding for leaderboard
-  player.on('playerInput', ({ input }) => {
+  // Load the UI for the player
+  player.ui.load('ui/index.html');
+  
+  // Add key binding for leaderboard using proper event handling
+  player.controller?.on(BaseEntityControllerEvent.TICK_WITH_PLAYER_INPUT, ({ entity, input, deltaTimeMs }) => {
     // 'L' key pressed (key code 76)
     if (input.keyDown && input.keyCode === 76) {
       // Toggle leaderboard display
       player.ui.sendData({
         type: 'toggleLeaderboard'
       });
+      
+      // Consume the input to prevent repeated toggling
+      input.keyDown = false;
     }
   });
 });
+
+// Add UI event handler to the world
+world.on(PlayerUIEvent.DATA, ({ playerUI, data }) => {
+  if (data.type === 'closeLeaderboard') {
+    // Handle any server-side actions when leaderboard is closed
+  }
+});
 ```
 
-**Settings Integration:**
+**Creating In-World Leaderboard Display:**
 ```typescript
-// In player-settings-manager.ts - Update PlayerSettings interface
-export interface PlayerSettings {
-  crosshairColor: string;
-  bgmVolume: number;
-  gameMode: 'solo' | 'multiplayer';
-  showLeaderboardAfterRound: boolean; // New setting
-}
-
-// Initialize with default value
-public initializePlayer(playerId: string): void {
-  this.playerSettings.set(playerId, {
-    crosshairColor: '#ffff00',
-    bgmVolume: 0.1,
-    gameMode: 'multiplayer',
-    showLeaderboardAfterRound: true // Default to true
+// In scene-ui-manager.ts - Add method to create in-world leaderboard markers
+public createLeaderboardMarker(position: Vector3Like, scores: Array<{playerName: string, score: number}>): SceneUI {
+  const leaderboardMarker = new SceneUI({
+    templateId: 'leaderboard-marker',
+    state: { scores: scores.slice(0, 5) },  // Show top 5 scores
+    viewDistance: 10,
+    position
   });
-}
-```
-
-**UI Display Logic:**
-```typescript
-// In scene-ui-manager.ts - Add leaderboard display methods
-public async showLeaderboard(player: Player, tabToShow: 'all-time' | 'round' | 'personal' = 'all-time'): Promise<void> {
-  const leaderboardManager = LeaderboardManager.getInstance(this.world);
-  const globalLeaderboard = await leaderboardManager.getGlobalLeaderboard();
-  const playerData = await leaderboardManager.getPlayerData(player);
   
-  // Send leaderboard data to the UI
-  player.ui.sendData({
-    type: 'displayLeaderboard',
-    data: {
-      allTimeHighScores: globalLeaderboard.allTimeHighScores,
-      roundHighScores: globalLeaderboard.roundHighScores,
-      personalBest: playerData.personalBest,
-      activeTab: tabToShow,
-      playerId: player.id
-    }
-  });
+  leaderboardMarker.load(this.world);
+  return leaderboardMarker;
 }
 ```
 
