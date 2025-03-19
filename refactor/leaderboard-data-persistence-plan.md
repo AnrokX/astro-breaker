@@ -1,4 +1,4 @@
-# Leaderboard and High Score Data Persistence Plan
+# Leaderboard and High Score Data Persistence Plan (MVP)
 
 ## Overview
 
@@ -51,6 +51,7 @@ interface PlayerPersistentData {
   };
   gamesPlayed: number;
   totalWins: number;
+  showLeaderboard: boolean;  // Player preference for showing the leaderboard
 }
 ```
 
@@ -82,6 +83,20 @@ Create a new `LeaderboardManager` class that will:
   - All-time high scores
   - Personal bests for the current player
   - Best round scores
+  
+- **Leaderboard Access Methods**:
+  1. **Key Binding**: Add an 'L' key binding to toggle the leaderboard display
+  2. **Menu Button**: Add "Leaderboard" button to the game menu/settings panel
+  3. **Round End**: Automatically show after completing a round/game
+  
+- **UI States**:
+  - The leaderboard will be an overlay that can be toggled on/off
+  - Should be accessible during gameplay and between rounds
+  - Will automatically appear briefly at the end of a game
+
+- **Player Setting Integration**:
+  - Update `PlayerSettings` interface to include leaderboard display preference
+  - Add toggle in settings menu for auto-display of leaderboard after rounds
 
 ### 5. Score Normalization (Handle Solo vs Multiplayer)
 
@@ -103,18 +118,40 @@ Two approaches to consider:
      - Getting/updating global leaderboard
      - Getting/updating player stats
      - Normalizing scores across game modes
+   - **Files to reference**:
+     - Create new file: `src/managers/leaderboard-manager.ts`
+     - Import from: `node_modules/hytopia/docs/server.persistencemanager.md`
+     - Import types from: `src/types.ts`
+     - Use patterns from: `src/managers/score-manager.ts`
 
 2. **Integrate with ScoreManager**
    - Modify `ScoreManager.handleRoundEnd()` to update persistent data
    - Add methods to save scores to LeaderboardManager
+   - **Files to modify**:
+     - `src/managers/score-manager.ts` (primarily the `handleRoundEnd()` method)
+     - Ensure integration with: `src/managers/round-manager.ts`
+     - Update interface: `src/managers/round/interfaces/round-interfaces.ts` to include high score data
 
 3. **Update RoundManager**
    - Modify `RoundManager` to trigger leaderboard updates on game end
    - Add hooks to notify LeaderboardManager of game completion
+   - **Files to modify**:
+     - `src/managers/round-manager.ts` (facade class)
+     - `src/managers/round/index.ts` (modular implementation)
+     - `src/managers/round/components/round-transition.ts` (for end-of-game triggers)
+     - Root game file: `index.ts` (for initialization and player join/leave events)
 
 4. **Create Leaderboard UI**
    - Design simple UI components to display leaderboard data
    - Implement UI updates when new scores are recorded
+   - Add key binding ('L') to toggle leaderboard display
+   - **Files to modify/reference**:
+     - `assets/ui/index.html` (add leaderboard section)
+     - `assets/ui/styles/` (add leaderboard styling)
+     - `src/scene-ui/scene-ui-manager.ts` (for UI updates)
+     - `src/managers/player-settings-manager.ts` (update to handle 'L' key binding)
+     - `index.ts` (add key binding event handler)
+     - Reference pattern in: `src/managers/round/components/round-ui.ts`
 
 ## Technical Details
 
@@ -143,9 +180,50 @@ const playerData = await PersistenceManager.instance.getPlayerData(player) || {
 await PersistenceManager.instance.setPlayerData(player, updatedPlayerData);
 ```
 
+### Core File Structure for Implementation
+
+```
+src/
+  managers/
+    leaderboard-manager.ts  # New file for managing persistence
+    score-manager.ts        # Update to integrate with leaderboard
+    round-manager.ts        # Update to trigger high score updates
+    round/
+      index.ts              # Update for end-of-game hooks
+      components/
+        round-transition.ts # Update for leaderboard updates on game end
+  scene-ui/
+    scene-ui-manager.ts     # Update to support leaderboard UI
+assets/
+  ui/
+    index.html              # Update to include leaderboard panel
+    styles/                 # Add CSS for leaderboard
+```
+
+### Node Modules Reference
+
+Critical Hytopia documentation files:
+- `node_modules/hytopia/docs/server.persistencemanager.md` - Core API for persistence
+- `node_modules/hytopia/docs/server.persistencemanager.instance.md` - Singleton instance
+- `node_modules/hytopia/docs/server.persistencemanager.getglobaldata.md` - For leaderboard retrieval
+- `node_modules/hytopia/docs/server.persistencemanager.setglobaldata.md` - For leaderboard updates
+- `node_modules/hytopia/docs/server.persistencemanager.getplayerdata.md` - For player stats
+- `node_modules/hytopia/docs/server.persistencemanager.setplayerdata.md` - For player stats updates
+
 ### Local Development
 
 Data will be stored in the `./dev/persistence` directory during local development and will persist between game sessions.
+
+### Required Imports
+
+```typescript
+// In leaderboard-manager.ts
+import { World, Player, PersistenceManager } from 'hytopia';
+import { ScoreManager } from './score-manager';
+
+// In index.ts (main game file)
+import { LeaderboardManager } from './src/managers/leaderboard-manager';
+```
 
 ## Timeline
 
@@ -154,6 +232,24 @@ Data will be stored in the `./dev/persistence` directory during local developmen
 3. Update UI to display leaderboards - 1 day
 4. Testing and refinement - 1 day
 
+## User Interface Guidelines
+
+1. **Keyboard Controls**:
+   - 'L' key to toggle leaderboard visibility
+   - ESC key should close the leaderboard if open
+
+2. **UI Design**:
+   - Leaderboard overlay should be semi-transparent
+   - Include player names with scores
+   - Highlight the current player's scores
+   - Show a "Close" button for mouse users
+   - Design should match the existing game UI style
+
+3. **Accessibility**:
+   - Clear color contrast for readability
+   - Text size sufficient for all players
+   - Keyboard and mouse navigation support
+
 ## Future Enhancements (Post-MVP)
 
 1. Separate leaderboards for solo and multiplayer modes
@@ -161,3 +257,5 @@ Data will be stored in the `./dev/persistence` directory during local developmen
 3. Achievements system tied to persistent data
 4. Social features (friend comparisons, challenges)
 5. Seasonal leaderboards with rewards
+6. Leaderboard filtering and sorting options
+7. Player profile cards with stats and achievements
