@@ -304,4 +304,160 @@ export class LeaderboardManager {
       return false;
     }
   }
+
+  // Helper method to normalize scores based on game mode
+  private normalizeScore(score: number, gameMode: 'solo' | 'multiplayer'): number {
+    // Apply fixed multiplier for solo mode to balance with multiplayer
+    const SOLO_MULTIPLIER = 0.8;
+    return gameMode === 'solo' ? Math.round(score * SOLO_MULTIPLIER) : score;
+  }
+
+  // Update leaderboard with round scores - called during round completion
+  public async updateWithRoundScores(
+    scores: Array<{playerId: string, playerName?: string, roundScore: number}>,
+    roundNumber: number,
+    gameMode: 'solo' | 'multiplayer' = 'multiplayer'
+  ): Promise<void> {
+    try {
+      const leaderboard = await this.getGlobalLeaderboard();
+      const maxEntries = 10;
+      
+      // Process each player's score
+      for (const scoreData of scores) {
+        // Skip zero or negative scores
+        if (scoreData.roundScore <= 0) continue;
+        
+        // Normalize score based on game mode
+        const normalizedScore = this.normalizeScore(scoreData.roundScore, gameMode);
+        
+        // Create new round high score entry
+        const newEntry = {
+          playerName: scoreData.playerName || scoreData.playerId,
+          playerId: scoreData.playerId,
+          roundScore: normalizedScore,
+          roundNumber: roundNumber,
+          date: new Date().toISOString()
+        };
+        
+        // Add entry to the array
+        leaderboard.roundHighScores.push(newEntry);
+      }
+      
+      // Sort in descending order by round score
+      leaderboard.roundHighScores.sort((a, b) => b.roundScore - a.roundScore);
+      
+      // Trim to maximum number of entries
+      if (leaderboard.roundHighScores.length > maxEntries) {
+        leaderboard.roundHighScores = leaderboard.roundHighScores.slice(0, maxEntries);
+      }
+      
+      // Update the leaderboard
+      await this.updateGlobalLeaderboard(leaderboard);
+    } catch (error) {
+      console.error("Error updating round scores:", error);
+    }
+  }
+  
+  // Update leaderboard with game results - called at game end
+  public async updateWithGameResults(
+    finalStandings: Array<{
+      playerId: string;
+      playerName?: string;
+      totalScore: number;
+      wins?: number;
+    }>,
+    gameMode: 'solo' | 'multiplayer' = 'multiplayer'
+  ): Promise<void> {
+    try {
+      const leaderboard = await this.getGlobalLeaderboard();
+      const maxEntries = 10;
+      
+      // Process each player's final score
+      for (const playerData of finalStandings) {
+        // Skip zero or negative scores
+        if (playerData.totalScore <= 0) continue;
+        
+        // Normalize score based on game mode
+        const normalizedScore = this.normalizeScore(playerData.totalScore, gameMode);
+        
+        // Create new all-time high score entry
+        const newEntry = {
+          playerName: playerData.playerName || playerData.playerId,
+          playerId: playerData.playerId,
+          score: normalizedScore,
+          date: new Date().toISOString()
+        };
+        
+        // Add the entry to the array
+        leaderboard.allTimeHighScores.push(newEntry);
+      }
+      
+      // Sort in descending order by score
+      leaderboard.allTimeHighScores.sort((a, b) => b.score - a.score);
+      
+      // Trim to maximum number of entries
+      if (leaderboard.allTimeHighScores.length > maxEntries) {
+        leaderboard.allTimeHighScores = leaderboard.allTimeHighScores.slice(0, maxEntries);
+      }
+      
+      // Update the leaderboard
+      await this.updateGlobalLeaderboard(leaderboard);
+      
+      // Also update player-specific data
+      for (const playerData of finalStandings) {
+        // Get the player instance - we need this to update player-specific data
+        const playerEntities = this.world.entityManager.getAllPlayerEntities();
+        const playerEntity = playerEntities.find(entity => entity.player.id === playerData.playerId);
+        
+        if (playerEntity) {
+          await this.updatePlayerBest(playerEntity.player, {
+            totalScore: playerData.totalScore,
+            wins: playerData.wins || 0
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating game results:", error);
+    }
+  }
+  
+  // Helper method to update a player's personal best
+  private async updatePlayerBest(player: Player, gameStats: {
+    totalScore: number;
+    highestRoundScore?: number;
+    highestCombo?: number;
+    wins?: number;
+  }): Promise<void> {
+    try {
+      // Get existing player data
+      const playerData = await this.getPlayerData(player);
+      
+      // Update only if the new score is better than the previous best
+      if (gameStats.totalScore > (playerData.personalBest.totalScore || 0)) {
+        playerData.personalBest.totalScore = gameStats.totalScore;
+        playerData.personalBest.date = new Date().toISOString();
+      }
+      
+      // Update highest round score if provided and better than the previous best
+      if (gameStats.highestRoundScore && gameStats.highestRoundScore > (playerData.personalBest.highestRoundScore || 0)) {
+        playerData.personalBest.highestRoundScore = gameStats.highestRoundScore;
+      }
+      
+      // Update highest combo if provided and better than the previous best
+      if (gameStats.highestCombo && gameStats.highestCombo > (playerData.personalBest.highestCombo || 0)) {
+        playerData.personalBest.highestCombo = gameStats.highestCombo;
+      }
+      
+      // Update games played and wins
+      playerData.gamesPlayed++;
+      if (gameStats.wins) {
+        playerData.totalWins += gameStats.wins;
+      }
+      
+      // Update the player data
+      await this.updatePlayerData(player, playerData);
+    } catch (error) {
+      console.error("Error updating player best:", error);
+    }
+  }
 }

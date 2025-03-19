@@ -5,6 +5,7 @@ import { MovingBlockEntity, MOVING_BLOCK_CONFIG } from '../moving_blocks/moving-
 import { ProjectileEntity } from '../entities/projectile-entity';
 import { SceneUIManager } from '../scene-ui/scene-ui-manager';
 import { AudioManager } from './audio-manager';
+import { LeaderboardManager } from './leaderboard-manager';
 
 export interface ScoreOptions {
   score: number;
@@ -170,6 +171,35 @@ export class ScoreManager extends Entity {
         const stats = this.playerStats.get(winnerId)!;
         stats.wins++;
         this.playerStats.set(winnerId, stats);
+    }
+
+    // Update leaderboard asynchronously with round scores
+    if (this.world) {
+        const leaderboardManager = LeaderboardManager.getInstance(this.world);
+        
+        // Create round scores array for the leaderboard
+        const roundScores = Array.from(this.playerStats.entries())
+            .map(([playerId, stats]) => ({
+                playerId,
+                roundScore: stats.roundScore
+            }));
+            
+        // Get current round from the entity name (format: ScoreManager-Round-X)
+        let currentRound = 1;
+        if (this.name) {
+            const roundMatch = this.name.match(/Round-(\d+)/);
+            if (roundMatch && roundMatch[1]) {
+                currentRound = parseInt(roundMatch[1], 10);
+            }
+        }
+            
+        // Determine game mode
+        // Check the actual player count to infer game mode
+        const gameMode = this.playerStats.size <= 1 ? 'solo' : 'multiplayer';
+            
+        // Update the leaderboard (this is async and won't block)
+        leaderboardManager.updateWithRoundScores(roundScores, currentRound, gameMode)
+            .catch(error => console.error("Error updating leaderboard:", error));
     }
 
     return { winnerId, placements };

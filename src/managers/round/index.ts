@@ -2,6 +2,7 @@ import { World } from 'hytopia';
 import { MovingBlockManager } from '../../moving_blocks/moving-block-entity';
 import { ScoreManager } from '../score-manager';
 import { AudioManager } from '../audio-manager';
+import { LeaderboardManager } from '../leaderboard-manager';
 import { RoundTransition } from './components/round-transition';
 import { RoundSpawner } from './components/round-spawner';
 import { PlayerTracker } from './components/player-tracker';
@@ -474,6 +475,20 @@ export class RoundManager {
           });
         });
       }
+      
+      // Update leaderboard with final game results
+      const leaderboardManager = LeaderboardManager.getInstance(this.world);
+      
+      // Convert final standings to format expected by leaderboard manager
+      const leaderboardEntries = finalStandings.map(standing => ({
+        playerId: standing.playerId,
+        totalScore: standing.totalScore,
+        wins: standing.wins
+      }));
+      
+      // Save game results to persistent leaderboard (async, won't block)
+      leaderboardManager.updateWithGameResults(leaderboardEntries, this.gameConfig.gameMode)
+        .catch(error => console.error("Error updating final leaderboard:", error));
     }
 
     // Reset game after delay (shorter for solo mode)

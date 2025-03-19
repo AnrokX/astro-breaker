@@ -21,6 +21,7 @@ import { TestBlockSpawner } from './src/utils/test-spawner';
 import { SceneUIManager } from './src/scene-ui/scene-ui-manager';
 import { AudioManager } from './src/managers/audio-manager';
 import { PlayerSettingsManager, UISettingsData } from './src/managers/player-settings-manager';
+import { LeaderboardManager } from './src/managers/leaderboard-manager';
 
 // Platform spawn configuration
 const PLATFORM_SPAWNS = {
@@ -245,8 +246,54 @@ startServer(world => {
     projectileManager.initializePlayer(player.id);
     settingsManager.initializePlayer(player.id);
     
+    // Initialize player in LeaderboardManager
+    const leaderboardManager = LeaderboardManager.getInstance(world);
+    leaderboardManager.getPlayerData(player)
+      .then(playerData => {
+        // Update games played count (this happens asynchronously)
+        playerData.gamesPlayed++;
+        return leaderboardManager.updatePlayerData(player, playerData);
+      })
+      .catch(error => console.error("Error updating player leaderboard data:", error));
+    
     // Load the UI first
     player.ui.load('ui/index.html');
+    
+    // Generate spawn position based on player count
+    const playerCount = world.entityManager.getAllPlayerEntities().length;
+    const isEvenPlayer = playerCount % 2 === 0;
+    const spawnPos = isEvenPlayer ? 
+      getNextSpawnPosition('LEFT') :
+      getNextSpawnPosition('RIGHT');
+
+    // Store the spawn position for this player
+    playerSpawnPositions.set(player.id, spawnPos);
+
+    const playerEntity = new PlayerEntity({
+      player,
+      name: 'Player',
+      modelUri: 'models/players/player.gltf',
+      modelLoopedAnimations: [ 'idle' ],
+      modelScale: 0.5,
+    });
+
+    // Spawn the entity at random position
+    playerEntity.spawn(world, spawnPos);
+    console.log(`Player spawned at (${spawnPos.x.toFixed(2)}, ${spawnPos.y}, ${spawnPos.z.toFixed(2)})`);
+    
+    // Add key binding for leaderboard toggle using 'L' key
+    playerEntity.controller!.on(BaseEntityControllerEvent.TICK_WITH_PLAYER_INPUT, ({ entity, input, deltaTimeMs }) => {
+      // Check for 'L' key press - key events are handled through the 'l' property
+      if (input.l) {
+        // Toggle leaderboard display
+        player.ui.sendData({
+          type: 'toggleLeaderboard'
+        });
+        
+        // Consume the input to prevent repeated toggling
+        input.l = false;
+      }
+    });
     
     // Forward UI events to the round manager when a player sends UI data
     player.ui.on(PlayerUIEvent.DATA, ({ playerUI, data }) => {
@@ -272,6 +319,24 @@ startServer(world => {
           }
         }, 300);
       }
+      
+      // Handle leaderboard visibility events
+      if (data.type === 'closeLeaderboard') {
+        const leaderboardManager = LeaderboardManager.getInstance(world);
+        leaderboardManager.setLeaderboardVisibility(player, false)
+          .catch(error => console.error("Error setting leaderboard visibility:", error));
+      }
+      
+      // Handle leaderboard toggle settings
+      if (data.type === 'toggleLeaderboardSetting' && data.visible !== undefined) {
+        // Update player settings
+        settingsManager.updateSetting(player.id, 'showLeaderboard', data.visible);
+        
+        // Update persistent data
+        const leaderboardManager = LeaderboardManager.getInstance(world);
+        leaderboardManager.setLeaderboardVisibility(player, data.visible)
+          .catch(error => console.error("Error setting leaderboard visibility:", error));
+      }
     });
     
     // Initialize audio with player's settings
@@ -290,28 +355,6 @@ startServer(world => {
     
     // Projectile count no longer needed as projectiles are unlimited
     
-    // Generate spawn position based on player count
-    const playerCount = world.entityManager.getAllPlayerEntities().length;
-    const isEvenPlayer = playerCount % 2 === 0;
-    const spawnPos = isEvenPlayer ? 
-      getNextSpawnPosition('LEFT') :
-      getNextSpawnPosition('RIGHT');
-
-    // Store the spawn position for this player
-    playerSpawnPositions.set(player.id, spawnPos);
-
-    const playerEntity = new PlayerEntity({
-      player,
-      name: 'Player',
-      modelUri: 'models/players/player.gltf',
-      modelLoopedAnimations: [ 'idle' ],
-      modelScale: 0.5,
-    });
-
-    // Spawn the entity at random position
-    playerEntity.spawn(world, spawnPos);
-    console.log(`Player spawned at (${spawnPos.x.toFixed(2)}, ${spawnPos.y}, ${spawnPos.z.toFixed(2)})`);
-
     // Configure first-person camera after spawning
     playerEntity.player.camera.setMode(PlayerCameraMode.FIRST_PERSON);
     
