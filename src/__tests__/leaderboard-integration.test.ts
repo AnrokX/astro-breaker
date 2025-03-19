@@ -91,11 +91,13 @@ describe('Leaderboard Integration Tests', () => {
         totalScore: 500, 
         highestRoundScore: 200, 
         highestCombo: 5, 
-        date: '2023-01-01' 
+        date: '2023-01-01',
+        totalScoreDate: '2023-01-01',
+        highestRoundScoreDate: '2023-01-01',
+        highestComboDate: '2023-01-01'
       },
       gamesPlayed: 10,
-      totalWins: 3,
-      showLeaderboard: true
+      totalWins: 3
     };
     
     // Setup mock to return data
@@ -189,11 +191,13 @@ describe('Leaderboard Integration Tests', () => {
         totalScore: 300, 
         highestRoundScore: 100, 
         highestCombo: 3, 
-        date: '2023-01-01' 
+        date: '2023-01-01',
+        totalScoreDate: '2023-01-01',
+        highestRoundScoreDate: '2023-01-01',
+        highestComboDate: '2023-01-01'
       },
       gamesPlayed: 5,
-      totalWins: 1,
-      showLeaderboard: true
+      totalWins: 1
     };
     
     (PersistenceManager.instance.getPlayerData as jest.Mock).mockResolvedValue(initialPlayerData);
@@ -302,10 +306,17 @@ describe('Leaderboard Integration Tests', () => {
   test('Games played counter is incremented correctly', async () => {
     // Setup initial player data
     const initialPlayerData: PlayerPersistentData = {
-      personalBest: { totalScore: 0, highestRoundScore: 0, highestCombo: 0, date: '' },
+      personalBest: { 
+        totalScore: 0, 
+        highestRoundScore: 0, 
+        highestCombo: 0, 
+        date: '',
+        totalScoreDate: '',
+        highestRoundScoreDate: '',
+        highestComboDate: ''
+      },
       gamesPlayed: 5,
-      totalWins: 1,
-      showLeaderboard: true
+      totalWins: 1
     };
     
     (PersistenceManager.instance.getPlayerData as jest.Mock).mockResolvedValue(initialPlayerData);
@@ -326,10 +337,17 @@ describe('Leaderboard Integration Tests', () => {
   test('Wins counter is incremented correctly', async () => {
     // Setup initial player data
     const initialPlayerData: PlayerPersistentData = {
-      personalBest: { totalScore: 0, highestRoundScore: 0, highestCombo: 0, date: '' },
+      personalBest: { 
+        totalScore: 0, 
+        highestRoundScore: 0, 
+        highestCombo: 0, 
+        date: '',
+        totalScoreDate: '',
+        highestRoundScoreDate: '',
+        highestComboDate: ''
+      },
       gamesPlayed: 5,
-      totalWins: 3,
-      showLeaderboard: true
+      totalWins: 3
     };
     
     (PersistenceManager.instance.getPlayerData as jest.Mock).mockResolvedValue(initialPlayerData);
@@ -346,28 +364,11 @@ describe('Leaderboard Integration Tests', () => {
     );
   });
   
-  // 12. Test leaderboard visibility preference
-  test('Leaderboard visibility preference is stored correctly', async () => {
-    // Setup initial player data
-    const initialPlayerData: PlayerPersistentData = {
-      personalBest: { totalScore: 0, highestRoundScore: 0, highestCombo: 0, date: '' },
-      gamesPlayed: 0,
-      totalWins: 0,
-      showLeaderboard: true  // Initially visible
-    };
-    
-    (PersistenceManager.instance.getPlayerData as jest.Mock).mockResolvedValue(initialPlayerData);
-    
-    // Update visibility to false
-    await leaderboardManager.setLeaderboardVisibility(mockPlayer, false);
-    
-    // Verify visibility was updated
-    expect(PersistenceManager.instance.setPlayerData).toHaveBeenCalledWith(
-      mockPlayer,
-      expect.objectContaining({
-        showLeaderboard: false  // Updated to false
-      })
-    );
+  // 12. Test leaderboard visibility preference - SKIPPED (feature removed)
+  test.skip('Leaderboard visibility preference is stored correctly', async () => {
+    // This test is skipped because the showLeaderboard property has been removed
+    // from the PlayerPersistentData interface in Phase 1.4 of the refactoring plan
+    expect(true).toBe(true);
   });
   
   // 13. Test leaderboard qualifier check

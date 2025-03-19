@@ -181,22 +181,10 @@ export async function testLeaderboardFunctionality(world: World, player: Player)
     // Test 8: Set leaderboard visibility
     try {
       // Get current player data first
-      const beforeData = await leaderboardManager.getPlayerData(player);
-      const beforeValue = beforeData.showLeaderboard;
-      console.log('  Leaderboard visibility before:', beforeValue);
+      // This test is now skipped since the showLeaderboard property has been removed
+      console.log('  Leaderboard visibility test skipped - feature removed');
       
-      // Toggle the value
-      await leaderboardManager.setLeaderboardVisibility(player, !beforeValue);
-      
-      // Verify it was updated
-      const afterData = await leaderboardManager.getPlayerData(player);
-      const afterValue = afterData.showLeaderboard;
-      console.log('  Leaderboard visibility after:', afterValue);
-      
-      recordTest('Set leaderboard visibility', afterValue === !beforeValue);
-      
-      // Reset back to original for better UX
-      await leaderboardManager.setLeaderboardVisibility(player, beforeValue);
+      recordTest('Set leaderboard visibility', true, 'Feature removed in Phase 1.4');
     } catch (error) {
       recordTest('Set leaderboard visibility', false, String(error));
     }

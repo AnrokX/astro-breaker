@@ -50,6 +50,9 @@ export class ScoreManager extends Entity {
   // Map to hold scores and stats for each player by their ID
   private playerStats = new Map<string, PlayerStats>();
   private playerCount = 0;
+  
+  // Track the current round number, initialized to 1
+  private _currentRound: number = 1;
 
   constructor() {
     super({
@@ -107,7 +110,9 @@ export class ScoreManager extends Entity {
   }
 
   // Add a win for the player with the highest score in the round
-  public handleRoundEnd(): { winnerId: string | null, placements: Array<{ playerId: string, points: number }> } {
+  public handleRoundEnd(currentRoundNumber?: number): { winnerId: string | null, placements: Array<{ playerId: string, points: number }> } {
+    // Store the provided round number for leaderboard updates
+    this._currentRound = currentRoundNumber || 1;
     // Update previous ranks before calculating new ones
     // Store current ranks as previous ranks
     for (const [playerId, stats] of this.playerStats.entries()) {
@@ -184,14 +189,16 @@ export class ScoreManager extends Entity {
                 roundScore: stats.roundScore
             }));
             
-        // Get current round from the entity name (format: ScoreManager-Round-X)
-        let currentRound = 1;
-        if (this.name) {
-            const roundMatch = this.name.match(/Round-(\d+)/);
-            if (roundMatch && roundMatch[1]) {
-                currentRound = parseInt(roundMatch[1], 10);
-            }
-        }
+        // Use the current round number that was passed to handleRoundEnd
+        const currentRound = this._currentRound || 1;
+        
+        console.log(`Updating leaderboard with round scores for round ${currentRound} (from ScoreManager)`);
+        
+        // Cannot update entity name since it's read-only, just log the current round
+        console.log(`ScoreManager processing round ${currentRound}`);
+        
+        // Store the current round number in a debug property that can be accessed for troubleshooting
+        (this as any)._debugRoundNumber = currentRound;
             
         // Determine game mode
         // Check the actual player count to infer game mode
@@ -532,5 +539,10 @@ export class ScoreManager extends Entity {
   // Add this new method to get placement points
   public getLeaderboardPoints(playerId: string): number {
     return this.playerStats.get(playerId)?.placementPoints ?? 0;
+  }
+  
+  // Get the current round number
+  public getCurrentRound(): number {
+    return this._currentRound || 1;
   }
 } 

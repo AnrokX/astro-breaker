@@ -91,11 +91,13 @@ export class LeaderboardManager {
           totalScore: 0, 
           highestRoundScore: 0, 
           highestCombo: 0, 
-          date: "" 
+          date: "",
+          totalScoreDate: "",
+          highestRoundScoreDate: "",
+          highestComboDate: ""
         },
         gamesPlayed: 0,
-        totalWins: 0,
-        showLeaderboard: true
+        totalWins: 0
       };
       
       const data = await PersistenceManager.instance.getPlayerData(player);
@@ -106,17 +108,20 @@ export class LeaderboardManager {
           // Try to parse it as PlayerPersistentData
           const rawData = data as Record<string, unknown>;
           const personalBestRaw = rawData.personalBest as Record<string, unknown> || {};
+          const currentDate = new Date().toISOString();
           
           return {
             personalBest: {
               totalScore: Number(personalBestRaw.totalScore) || 0,
               highestRoundScore: Number(personalBestRaw.highestRoundScore) || 0,
               highestCombo: Number(personalBestRaw.highestCombo) || 0,
-              date: String(personalBestRaw.date) || new Date().toISOString()
+              date: String(personalBestRaw.date) || currentDate,
+              totalScoreDate: String(personalBestRaw.totalScoreDate) || currentDate,
+              highestRoundScoreDate: String(personalBestRaw.highestRoundScoreDate) || currentDate,
+              highestComboDate: String(personalBestRaw.highestComboDate) || currentDate
             },
             gamesPlayed: Number(rawData.gamesPlayed) || 0,
-            totalWins: Number(rawData.totalWins) || 0,
-            showLeaderboard: Boolean(rawData.showLeaderboard !== undefined ? rawData.showLeaderboard : true)
+            totalWins: Number(rawData.totalWins) || 0
           };
         } catch (parseError) {
           console.error("Error parsing player data:", parseError);
@@ -128,22 +133,35 @@ export class LeaderboardManager {
     } catch (error) {
       console.error("Error retrieving player data:", error);
       return {
-        personalBest: { totalScore: 0, highestRoundScore: 0, highestCombo: 0, date: "" },
+        personalBest: { 
+          totalScore: 0, 
+          highestRoundScore: 0, 
+          highestCombo: 0, 
+          date: "",
+          totalScoreDate: "",
+          highestRoundScoreDate: "",
+          highestComboDate: ""
+        },
         gamesPlayed: 0,
-        totalWins: 0,
-        showLeaderboard: true
+        totalWins: 0
       };
     }
   }
   
   public async updatePlayerData(player: Player, updatedData: PlayerPersistentData): Promise<void> {
     try {
+      // Data validation
+      if (updatedData.gamesPlayed < 0) updatedData.gamesPlayed = 0;
+      if (updatedData.totalWins < 0) updatedData.totalWins = 0;
+      if (updatedData.personalBest.totalScore < 0) updatedData.personalBest.totalScore = 0;
+      if (updatedData.personalBest.highestRoundScore < 0) updatedData.personalBest.highestRoundScore = 0;
+      if (updatedData.personalBest.highestCombo < 0) updatedData.personalBest.highestCombo = 0;
+      
       // Convert to Record<string, unknown> for Hytopia's API
       const dataToSave: Record<string, unknown> = {
         personalBest: updatedData.personalBest,
         gamesPlayed: updatedData.gamesPlayed,
-        totalWins: updatedData.totalWins,
-        showLeaderboard: updatedData.showLeaderboard
+        totalWins: updatedData.totalWins
       };
       
       await PersistenceManager.instance.setPlayerData(player, dataToSave);
@@ -156,17 +174,35 @@ export class LeaderboardManager {
   public async addAllTimeHighScore(
     player: Player, 
     score: number, 
-    maxEntries: number = 10
+    maxEntries: number = 10,
+    gameMode: 'solo' | 'multiplayer' = 'multiplayer'
   ): Promise<void> {
     try {
+      // Skip scores of 0 or less
+      if (score <= 0) return;
+
       const leaderboard = await this.getGlobalLeaderboard();
+      
+      // Check if score qualifies for leaderboard before adding
+      if (leaderboard.allTimeHighScores.length >= maxEntries) {
+        const lowestScore = [...leaderboard.allTimeHighScores]
+          .sort((a, b) => a.score - b.score)[0].score;
+        if (score <= lowestScore) {
+          console.log(`Score ${score} does not qualify for leaderboard (minimum: ${lowestScore})`);
+          return;
+        }
+      }
+
+      // Normalize score based on game mode
+      const normalizedScore = this.normalizeScore(score, gameMode);
       
       // Create a new high score entry
       const newEntry = {
         playerName: player.id, // Use player ID since name property doesn't exist
         playerId: player.id,
-        score: score,
-        date: new Date().toISOString()
+        score: normalizedScore,
+        date: new Date().toISOString(),
+        gameMode: gameMode
       };
       
       // Add the new entry to the array
@@ -192,18 +228,59 @@ export class LeaderboardManager {
     player: Player, 
     roundScore: number,
     roundNumber: number,
-    maxEntries: number = 10
+    maxEntries: number = 10,
+    gameMode: 'solo' | 'multiplayer' = 'multiplayer'
   ): Promise<void> {
     try {
+      // Skip scores of 0 or less
+      if (roundScore <= 0) return;
+
       const leaderboard = await this.getGlobalLeaderboard();
+
+      // Filter existing entries for this round number
+      const roundScores = leaderboard.roundHighScores.filter(
+        entry => entry.roundNumber === roundNumber
+      );
+      
+      // Check if score qualifies for this specific round's leaderboard
+      const entriesPerRound = maxEntries / 2; // Limit entries per round
+      if (roundScores.length >= entriesPerRound) {
+        const lowestRoundScore = [...roundScores]
+          .sort((a, b) => a.roundScore - b.roundScore)[0].roundScore;
+        if (roundScore <= lowestRoundScore) {
+          console.log(`Round score ${roundScore} for round ${roundNumber} does not qualify (minimum: ${lowestRoundScore})`);
+          return;
+        }
+      }
+      
+      // Check if player already has an entry for this round
+      const existingPlayerEntry = roundScores.find(entry => entry.playerId === player.id);
+      if (existingPlayerEntry) {
+        // Only update if the new score is better
+        if (roundScore <= existingPlayerEntry.roundScore) {
+          console.log(`Player already has a higher score (${existingPlayerEntry.roundScore}) for round ${roundNumber}`);
+          return;
+        }
+        // Remove the old entry
+        const index = leaderboard.roundHighScores.findIndex(
+          e => e.playerId === player.id && e.roundNumber === roundNumber
+        );
+        if (index !== -1) {
+          leaderboard.roundHighScores.splice(index, 1);
+        }
+      }
+
+      // Normalize score based on game mode
+      const normalizedScore = this.normalizeScore(roundScore, gameMode);
       
       // Create a new round high score entry
       const newEntry = {
         playerName: player.id, // Use player ID since name property doesn't exist
         playerId: player.id,
-        roundScore: roundScore,
+        roundScore: normalizedScore,
         roundNumber: roundNumber,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        gameMode: gameMode
       };
       
       // Add the new entry to the array
@@ -233,14 +310,37 @@ export class LeaderboardManager {
   ): Promise<void> {
     try {
       const playerData = await this.getPlayerData(player);
+      const currentDate = new Date().toISOString();
       
-      // Only update if the new scores are better than the existing ones
-      const newPersonalBest = {
-        totalScore: Math.max(playerData.personalBest.totalScore, totalScore),
-        highestRoundScore: Math.max(playerData.personalBest.highestRoundScore, highestRoundScore),
-        highestCombo: Math.max(playerData.personalBest.highestCombo, highestCombo),
-        date: new Date().toISOString()
-      };
+      // Create a copy of the existing personal best
+      const newPersonalBest = { ...playerData.personalBest };
+      
+      // Only update total score if the new score is better
+      if (totalScore > playerData.personalBest.totalScore) {
+        newPersonalBest.totalScore = totalScore;
+        newPersonalBest.totalScoreDate = currentDate;
+      }
+      
+      // Only update highest round score if the new score is better
+      if (highestRoundScore > playerData.personalBest.highestRoundScore) {
+        newPersonalBest.highestRoundScore = highestRoundScore;
+        newPersonalBest.highestRoundScoreDate = currentDate;
+      }
+      
+      // Only update highest combo if the new combo is better
+      if (highestCombo > playerData.personalBest.highestCombo) {
+        newPersonalBest.highestCombo = highestCombo;
+        newPersonalBest.highestComboDate = currentDate;
+      }
+      
+      // Always update the general date field if any value was updated
+      if (
+        newPersonalBest.totalScore !== playerData.personalBest.totalScore ||
+        newPersonalBest.highestRoundScore !== playerData.personalBest.highestRoundScore ||
+        newPersonalBest.highestCombo !== playerData.personalBest.highestCombo
+      ) {
+        newPersonalBest.date = currentDate;
+      }
       
       // Update the player data
       playerData.personalBest = newPersonalBest;
@@ -272,20 +372,7 @@ export class LeaderboardManager {
     }
   }
 
-  /**
-   * Updates a player's leaderboard visibility preference
-   * @param player The player to update settings for
-   * @param visible Whether the leaderboard should be visible
-   */
-  public async setLeaderboardVisibility(player: Player, visible: boolean): Promise<void> {
-    try {
-      const playerData = await this.getPlayerData(player);
-      playerData.showLeaderboard = visible;
-      await this.updatePlayerData(player, playerData);
-    } catch (error) {
-      console.error("Error setting leaderboard visibility:", error);
-    }
-  }
+  // setLeaderboardVisibility method has been removed as part of Phase 1.4 of the refactoring plan
 
   // Helper method to check if a score qualifies for the leaderboard
   public async isLeaderboardQualifier(score: number): Promise<boolean> {
@@ -311,9 +398,15 @@ export class LeaderboardManager {
 
   // Helper method to normalize scores based on game mode
   private normalizeScore(score: number, gameMode: 'solo' | 'multiplayer'): number {
-    // Apply fixed multiplier for solo mode to balance with multiplayer
-    const SOLO_MULTIPLIER = 0.8;
-    return gameMode === 'solo' ? Math.round(score * SOLO_MULTIPLIER) : score;
+    // Skip normalization for invalid scores
+    if (score <= 0) return 0;
+    
+    // REMOVED NORMALIZATION - we now return the original score as requested by user
+    // Just log for debugging purposes
+    console.log(`Score received: ${score}, mode=${gameMode} (no normalization applied)`);
+      
+    // Ensure we don't return negative scores
+    return Math.max(0, score);
   }
 
   // Update leaderboard with round scores - called during round completion
@@ -331,6 +424,24 @@ export class LeaderboardManager {
         // Skip zero or negative scores
         if (scoreData.roundScore <= 0) continue;
         
+        // Check if player already has an entry for this round
+        const existingEntryIndex = leaderboard.roundHighScores.findIndex(
+          entry => entry.playerId === scoreData.playerId && entry.roundNumber === roundNumber
+        );
+        
+        // If player already has an entry, only update if the new score is better
+        if (existingEntryIndex !== -1) {
+          const existingEntry = leaderboard.roundHighScores[existingEntryIndex];
+          
+          if (scoreData.roundScore <= existingEntry.roundScore) {
+            console.log(`Player ${scoreData.playerId} already has a higher score (${existingEntry.roundScore}) for round ${roundNumber}`);
+            continue;
+          }
+          
+          // Remove the existing entry
+          leaderboard.roundHighScores.splice(existingEntryIndex, 1);
+        }
+        
         // Normalize score based on game mode
         const normalizedScore = this.normalizeScore(scoreData.roundScore, gameMode);
         
@@ -340,20 +451,47 @@ export class LeaderboardManager {
           playerId: scoreData.playerId,
           roundScore: normalizedScore,
           roundNumber: roundNumber,
-          date: new Date().toISOString()
+          date: new Date().toISOString(),
+          gameMode: gameMode
         };
         
         // Add entry to the array
         leaderboard.roundHighScores.push(newEntry);
       }
       
-      // Sort in descending order by round score
-      leaderboard.roundHighScores.sort((a, b) => b.roundScore - a.roundScore);
-      
-      // Trim to maximum number of entries
-      if (leaderboard.roundHighScores.length > maxEntries) {
-        leaderboard.roundHighScores = leaderboard.roundHighScores.slice(0, maxEntries);
+      // Filter to limit entries per round
+      // Group by round number and ensure we don't have more than maxEntries/2 per round
+      const entriesByRound = new Map<number, Array<any>>();
+      for (const entry of leaderboard.roundHighScores) {
+        if (!entriesByRound.has(entry.roundNumber)) {
+          entriesByRound.set(entry.roundNumber, []);
+        }
+        entriesByRound.get(entry.roundNumber)!.push(entry);
       }
+      
+      // Keep top entries for each round
+      let newRoundHighScores: any[] = [];
+      const entriesPerRound = Math.floor(maxEntries / 2);
+      
+      for (const [roundNum, entries] of entriesByRound.entries()) {
+        // Sort by score and take top entries
+        const topEntries = entries
+          .sort((a, b) => b.roundScore - a.roundScore)
+          .slice(0, entriesPerRound);
+          
+        newRoundHighScores = newRoundHighScores.concat(topEntries);
+      }
+      
+      // Sort in descending order by round score
+      newRoundHighScores.sort((a, b) => b.roundScore - a.roundScore);
+      
+      // Ensure we don't exceed the total max entries
+      if (newRoundHighScores.length > maxEntries) {
+        newRoundHighScores = newRoundHighScores.slice(0, maxEntries);
+      }
+      
+      // Update the leaderboard with the filtered entries
+      leaderboard.roundHighScores = newRoundHighScores;
       
       // Update the leaderboard
       await this.updateGlobalLeaderboard(leaderboard);
@@ -373,27 +511,85 @@ export class LeaderboardManager {
     gameMode: 'solo' | 'multiplayer' = 'multiplayer'
   ): Promise<void> {
     try {
+      console.log(`updateWithGameResults called with ${finalStandings.length} players, mode: ${gameMode}`);
+      console.log(`Final standings: ${JSON.stringify(finalStandings)}`);
+      
       const leaderboard = await this.getGlobalLeaderboard();
+      console.log(`Current leaderboard: ${JSON.stringify(leaderboard)}`);
+      
       const maxEntries = 10;
       
       // Process each player's final score
       for (const playerData of finalStandings) {
+        console.log(`Processing player ${playerData.playerId} with score ${playerData.totalScore}`);
+        
         // Skip zero or negative scores
-        if (playerData.totalScore <= 0) continue;
+        if (playerData.totalScore <= 0) {
+          console.log(`Skipping player ${playerData.playerId} - score is zero or negative`);
+          continue;
+        }
         
-        // Normalize score based on game mode
-        const normalizedScore = this.normalizeScore(playerData.totalScore, gameMode);
+        // For solo mode, we'll always add the score to provide better feedback
+        let qualifiesForLeaderboard = gameMode === 'solo';
         
-        // Create new all-time high score entry
-        const newEntry = {
-          playerName: playerData.playerName || playerData.playerId,
-          playerId: playerData.playerId,
-          score: normalizedScore,
-          date: new Date().toISOString()
-        };
+        // For multiplayer, check qualification
+        if (gameMode === 'multiplayer' && leaderboard.allTimeHighScores.length >= maxEntries) {
+          const sortedScores = [...leaderboard.allTimeHighScores].sort((a, b) => a.score - b.score);
+          const lowestScore = sortedScores[0].score;
+            
+          // Check if score qualifies
+          qualifiesForLeaderboard = playerData.totalScore > lowestScore;
+          
+          if (!qualifiesForLeaderboard) {
+            console.log(`Score ${playerData.totalScore} by player ${playerData.playerId} doesn't qualify for leaderboard (minimum: ${lowestScore})`);
+          }
+        } else {
+          // If we have fewer than max entries, any score qualifies
+          qualifiesForLeaderboard = true;
+        }
         
-        // Add the entry to the array
-        leaderboard.allTimeHighScores.push(newEntry);
+        if (qualifiesForLeaderboard) {
+          // Check if player already has an entry with a higher score
+          const existingEntryIndex = leaderboard.allTimeHighScores.findIndex(
+            entry => entry.playerId === playerData.playerId
+          );
+          
+          let shouldAddEntry = true;
+          
+          if (existingEntryIndex !== -1) {
+            const existingEntry = leaderboard.allTimeHighScores[existingEntryIndex];
+            
+            // For solo mode, always update the player's entry
+            // For multiplayer, only replace if the new score is higher
+            if (gameMode === 'multiplayer' && playerData.totalScore <= existingEntry.score) {
+              console.log(`Player ${playerData.playerId} already has a higher score (${existingEntry.score})`);
+              shouldAddEntry = false;
+            } else {
+              // Remove the existing entry
+              console.log(`Removing existing entry for player ${playerData.playerId}`);
+              leaderboard.allTimeHighScores.splice(existingEntryIndex, 1);
+            }
+          }
+          
+          if (shouldAddEntry) {
+            // Normalize score based on game mode
+            const normalizedScore = this.normalizeScore(playerData.totalScore, gameMode);
+            
+            // Create new all-time high score entry
+            const newEntry = {
+              playerName: playerData.playerName || playerData.playerId,
+              playerId: playerData.playerId,
+              score: normalizedScore,
+              date: new Date().toISOString(),
+              gameMode: gameMode
+            };
+            
+            console.log(`Adding new entry to all-time high scores: ${JSON.stringify(newEntry)}`);
+            
+            // Add the entry to the array
+            leaderboard.allTimeHighScores.push(newEntry);
+          }
+        }
       }
       
       // Sort in descending order by score
@@ -404,20 +600,27 @@ export class LeaderboardManager {
         leaderboard.allTimeHighScores = leaderboard.allTimeHighScores.slice(0, maxEntries);
       }
       
+      console.log(`Updated leaderboard: ${JSON.stringify(leaderboard)}`);
+      
       // Update the leaderboard
       await this.updateGlobalLeaderboard(leaderboard);
       
       // Also update player-specific data
       for (const playerData of finalStandings) {
+        // Process player data even with zero scores so we can update games played
+        
         // Get the player instance - we need this to update player-specific data
         const playerEntities = this.world.entityManager.getAllPlayerEntities();
         const playerEntity = playerEntities.find(entity => entity.player.id === playerData.playerId);
         
         if (playerEntity) {
+          console.log(`Updating player best data for ${playerData.playerId}`);
           await this.updatePlayerBest(playerEntity.player, {
             totalScore: playerData.totalScore,
             wins: playerData.wins || 0
           });
+        } else {
+          console.log(`Could not find player entity for ${playerData.playerId}`);
         }
       }
     } catch (error) {
@@ -433,33 +636,65 @@ export class LeaderboardManager {
     wins?: number;
   }): Promise<void> {
     try {
+      // Data validation
+      if (gameStats.totalScore < 0) gameStats.totalScore = 0;
+      if (gameStats.highestRoundScore !== undefined && gameStats.highestRoundScore < 0) gameStats.highestRoundScore = 0;
+      if (gameStats.highestCombo !== undefined && gameStats.highestCombo < 0) gameStats.highestCombo = 0;
+      if (gameStats.wins !== undefined && gameStats.wins < 0) gameStats.wins = 0;
+      
       // Get existing player data
       const playerData = await this.getPlayerData(player);
+      const currentDate = new Date().toISOString();
+      let dataUpdated = false;
       
-      // Update only if the new score is better than the previous best
-      if (gameStats.totalScore > (playerData.personalBest.totalScore || 0)) {
+      console.log(`Updating player best data: existing=${JSON.stringify(playerData.personalBest)}, new total=${gameStats.totalScore}`);
+      
+      // Update total score - always update in solo mode to provide better feedback
+      // In solo mode, we want to always update the score for each game
+      if (gameStats.totalScore > 0) {
         playerData.personalBest.totalScore = gameStats.totalScore;
-        playerData.personalBest.date = new Date().toISOString();
+        playerData.personalBest.totalScoreDate = currentDate;
+        dataUpdated = true;
+        console.log(`Updated total score to ${gameStats.totalScore}`);
       }
       
       // Update highest round score if provided and better than the previous best
       if (gameStats.highestRoundScore && gameStats.highestRoundScore > (playerData.personalBest.highestRoundScore || 0)) {
         playerData.personalBest.highestRoundScore = gameStats.highestRoundScore;
+        playerData.personalBest.highestRoundScoreDate = currentDate;
+        dataUpdated = true;
+        console.log(`Updated highest round score to ${gameStats.highestRoundScore}`);
       }
       
       // Update highest combo if provided and better than the previous best
       if (gameStats.highestCombo && gameStats.highestCombo > (playerData.personalBest.highestCombo || 0)) {
         playerData.personalBest.highestCombo = gameStats.highestCombo;
+        playerData.personalBest.highestComboDate = currentDate;
+        dataUpdated = true;
+        console.log(`Updated highest combo to ${gameStats.highestCombo}`);
       }
       
-      // Update games played and wins
-      playerData.gamesPlayed++;
+      // Update the main date field only if any records were broken
+      if (dataUpdated) {
+        playerData.personalBest.date = currentDate;
+      }
+      
+      // Update games played (increment by 1 to avoid double-counting)
+      // Only increment if this is a new game, not just a stats update
+      if (gameStats.wins !== undefined) {
+        playerData.gamesPlayed++;
+        console.log(`Incremented games played to ${playerData.gamesPlayed}`);
+      }
+      
+      // Update wins if provided
       if (gameStats.wins) {
         playerData.totalWins += gameStats.wins;
+        console.log(`Incremented total wins to ${playerData.totalWins}`);
       }
       
       // Update the player data
       await this.updatePlayerData(player, playerData);
+      console.log(`Player data updated successfully`);
     } catch (error) {
       console.error("Error updating player best:", error);
     }

@@ -318,21 +318,15 @@ startServer(world => {
       // Handle leaderboard visibility events
       if (data.type === 'closeLeaderboard') {
         console.log(`Player ${player.id} closed leaderboard UI`);
-        const leaderboardManager = LeaderboardManager.getInstance(world);
-        leaderboardManager.setLeaderboardVisibility(player, false)
-          .catch(error => console.error("Error setting leaderboard visibility:", error));
+        // This now only updates the in-memory settings, not persistent data
+        settingsManager.updateSetting(player.id, 'showLeaderboard', false);
       }
       
       // Handle leaderboard toggle settings
       if (data.type === 'toggleLeaderboardSetting' && data.visible !== undefined) {
         console.log(`Player ${player.id} set leaderboard visibility to: ${data.visible}`);
-        // Update player settings
+        // Update player settings in memory only
         settingsManager.updateSetting(player.id, 'showLeaderboard', data.visible);
-        
-        // Update persistent data
-        const leaderboardManager = LeaderboardManager.getInstance(world);
-        leaderboardManager.setLeaderboardVisibility(player, data.visible)
-          .catch(error => console.error("Error setting leaderboard visibility:", error));
       }
       
       // Handle leaderboard display request

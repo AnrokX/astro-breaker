@@ -232,8 +232,17 @@ export class RoundManager {
     // Set round as inactive immediately to prevent double-ending
     this.isRoundActive = false;
 
-    // Get round results with placements
-    const { winnerId, placements } = this.scoreManager.handleRoundEnd();
+    // Set the current round in the score manager for better tracking
+    try {
+      // Instead of updating the entity name (which is read-only), 
+      // directly tell the score manager about our current round
+      console.log(`Round manager passing current round ${this.currentRound} to score manager`);
+    } catch (error) {
+      console.error("Error updating score manager:", error);
+    }
+    
+    // Get round results with placements and pass current round number
+    const { winnerId, placements } = this.scoreManager.handleRoundEnd(this.currentRound);
     
     // Play victory sound if there's a winner
     if (winnerId && this.world) {
@@ -544,9 +553,13 @@ export class RoundManager {
       // Convert final standings to format expected by leaderboard manager
       const leaderboardEntries = finalStandings.map(standing => ({
         playerId: standing.playerId,
+        playerName: standing.playerId, // Use playerId as playerName since we don't have separate names
         totalScore: standing.totalScore,
         wins: standing.wins
       }));
+      
+      // Log the entries being sent to the leaderboard for debugging
+      console.log(`Updating game results with entries:`, JSON.stringify(leaderboardEntries));
       
       // Save game results to persistent leaderboard (async, won't block)
       leaderboardManager.updateWithGameResults(leaderboardEntries, this.gameConfig.gameMode)
@@ -577,20 +590,18 @@ export class RoundManager {
         const leaderboardData = await leaderboardManager.getGlobalLeaderboard();
         const playerData = await leaderboardManager.getPlayerData(player);
         
-        // Only display if player preference allows it
-        if (playerData.showLeaderboard) {
-          // Send global leaderboard data
-          player.ui.sendData({
-            type: 'displayLeaderboard',
-            data: leaderboardData
-          });
-          
-          // Send personal stats data
-          player.ui.sendData({
-            type: 'personalStats',
-            data: playerData
-          });
-        }
+        // Always display leaderboard (preference setting has been removed)
+        // Send global leaderboard data
+        player.ui.sendData({
+          type: 'displayLeaderboard',
+          data: leaderboardData
+        });
+        
+        // Send personal stats data
+        player.ui.sendData({
+          type: 'personalStats',
+          data: playerData
+        });
       } catch (error) {
         console.error(`Error displaying leaderboard to player: ${error}`);
       }

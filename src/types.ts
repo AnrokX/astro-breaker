@@ -9,6 +9,7 @@ export interface GlobalLeaderboard {
     playerId: string;
     score: number;
     date: string;
+    gameMode?: 'solo' | 'multiplayer';  // Indicator of which game mode the score was achieved in
   }[];
   
   roundHighScores: {
@@ -17,6 +18,7 @@ export interface GlobalLeaderboard {
     roundScore: number;
     roundNumber: number;
     date: string;
+    gameMode?: 'solo' | 'multiplayer';  // Indicator of which game mode the score was achieved in
   }[];
 }
 
@@ -27,8 +29,10 @@ export interface PlayerPersistentData {
     highestRoundScore: number;
     highestCombo: number;
     date: string;
+    totalScoreDate?: string;  // Date when highest total score was achieved
+    highestRoundScoreDate?: string;  // Date when highest round score was achieved
+    highestComboDate?: string;  // Date when highest combo was achieved
   };
   gamesPlayed: number;
   totalWins: number;
-  showLeaderboard: boolean;  // Player preference for showing the leaderboard
 }

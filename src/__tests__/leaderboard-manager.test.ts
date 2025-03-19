@@ -93,19 +93,33 @@ describe('LeaderboardManager', () => {
     const result = await leaderboardManager.getPlayerData(mockPlayer);
     
     expect(result).toEqual({
-      personalBest: { totalScore: 0, highestRoundScore: 0, highestCombo: 0, date: '' },
+      personalBest: { 
+        totalScore: 0, 
+        highestRoundScore: 0, 
+        highestCombo: 0, 
+        date: '',
+        totalScoreDate: '',
+        highestRoundScoreDate: '',
+        highestComboDate: ''
+      },
       gamesPlayed: 0,
-      totalWins: 0,
-      showLeaderboard: true
+      totalWins: 0
     });
   });
 
   test('updatePlayerData saves player data correctly', async () => {
     const playerData: PlayerPersistentData = {
-      personalBest: { totalScore: 1000, highestRoundScore: 500, highestCombo: 10, date: '2023-01-01' },
+      personalBest: { 
+        totalScore: 1000, 
+        highestRoundScore: 500, 
+        highestCombo: 10, 
+        date: '2023-01-01',
+        totalScoreDate: '2023-01-01',
+        highestRoundScoreDate: '2023-01-01',
+        highestComboDate: '2023-01-01'
+      },
       gamesPlayed: 5,
-      totalWins: 2,
-      showLeaderboard: true
+      totalWins: 2
     };
     
     await leaderboardManager.updatePlayerData(mockPlayer, playerData);
@@ -115,8 +129,7 @@ describe('LeaderboardManager', () => {
       expect.objectContaining({
         personalBest: playerData.personalBest,
         gamesPlayed: 5,
-        totalWins: 2,
-        showLeaderboard: true
+        totalWins: 2
       })
     );
   });

@@ -100,6 +100,12 @@ export class RoundUI {
     this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
       const currentPlayerId = playerEntity.player.id;
       
+      // Find this player's specific score from standings
+      const playerStanding = standings.find(s => s.playerId === currentPlayerId);
+      const playerScore = playerStanding ? playerStanding.totalScore : 0;
+      
+      console.log(`Sending game end UI for player ${currentPlayerId}, score: ${playerScore}`);
+      
       // Send game end data with currentPlayerId
       playerEntity.player.ui.sendData({
         type: 'gameEnd',
@@ -118,11 +124,21 @@ export class RoundUI {
       
       // Different messages for solo vs multiplayer mode
       if (this.isSoloMode) {
-        // In solo mode, just show completion message
+        // In solo mode, show completion message with player's own score
         playerEntity.player.ui.sendData({
           type: 'systemMessage',
-          message: `🏆 Game complete! Your final score: ${winner.totalScore}`,
+          message: `🏆 Game complete! Your final score: ${playerScore}`,
           color: 'FFD700' // Gold color
+        });
+        
+        // Also send an extra message to update the UI directly
+        playerEntity.player.ui.sendData({
+          type: 'updateFinalScore',
+          data: {
+            totalScore: playerScore,
+            wins: playerStanding ? playerStanding.wins || 0 : 0,
+            points: playerStanding ? playerStanding.placementPoints || 0 : 0
+          }
         });
       } else {
         // In multiplayer, show congratulatory message to winner
@@ -137,7 +153,7 @@ export class RoundUI {
         // Use player number for clearer winner announcement
         playerEntity.player.ui.sendData({
           type: 'systemMessage',
-          message: `Game Over! Player ${winner.playerNumber} wins!`,
+          message: `Game Over! Player ${winner.playerNumber} wins with ${winner.totalScore} points!`,
           color: 'FFD700'
         });
       }
