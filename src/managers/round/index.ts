@@ -553,10 +553,13 @@ export class RoundManager {
         const playerData = await leaderboardManager.getPlayerData(player);
         
         // Always display leaderboard (preference setting has been removed)
-        // Send global leaderboard data
+        // Send global leaderboard data with total rounds information
         player.ui.sendData({
           type: 'displayLeaderboard',
-          data: leaderboardData
+          data: {
+            ...leaderboardData,
+            totalRounds: this.gameConfig.maxRounds // Add total rounds information for round selector
+          }
         });
         
         // Send personal stats data

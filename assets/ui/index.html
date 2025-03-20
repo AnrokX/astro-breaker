@@ -3707,6 +3707,9 @@ function modeMultiplayer() {
     const panel = document.getElementById('leaderboard-panel');
     panel.style.display = 'block';
     
+    // Store leaderboard data globally for access by other functions
+    window.leaderboardData = data;
+    
     // Display all-time high scores
     document.getElementById('all-time-scores').innerHTML = data.allTimeHighScores
       .map((score, index) => `
@@ -3720,7 +3723,8 @@ function modeMultiplayer() {
       .join('');
       
     // Populate round selector based on total rounds
-    populateRoundSelector(data.totalRounds || 3);
+    // Use at least 10 rounds since we know the game has 10 rounds
+    populateRoundSelector(Math.max(data.totalRounds || 10, 10));
     
     // Display round scores
     displayRoundScores(1, data.roundHighScores); // Default to round 1
@@ -3736,8 +3740,11 @@ function modeMultiplayer() {
     // Clear existing options
     selector.innerHTML = '';
     
+    // Ensure totalRounds is at least 10 (the default max rounds)
+    const maxRounds = Math.max(totalRounds || 10, 10);
+    
     // Create an option for each round
-    for (let i = 1; i <= totalRounds; i++) {
+    for (let i = 1; i <= maxRounds; i++) {
       const option = document.createElement('option');
       option.value = i.toString();
       option.textContent = `Round ${i}`;
@@ -3745,7 +3752,7 @@ function modeMultiplayer() {
     }
     
     // Restore selection if valid, otherwise select round 1
-    if (currentSelection && currentSelection <= totalRounds) {
+    if (currentSelection && currentSelection <= maxRounds) {
       selector.value = currentSelection.toString();
     } else {
       selector.value = "1";
@@ -3755,25 +3762,11 @@ function modeMultiplayer() {
     selector.addEventListener('change', () => {
       const selectedRound = parseInt(selector.value);
       
-      // Get the currently displayed round scores from the DOM
-      const roundScoresContainer = document.getElementById('round-scores');
-      const rows = Array.from(roundScoresContainer.querySelectorAll('tr'));
-      const scores = rows.map(row => {
-        const cells = Array.from(row.querySelectorAll('td'));
-        if (cells.length >= 5) {
-          return {
-            playerName: cells[1].textContent,
-            playerId: cells[1].dataset.playerId || cells[1].textContent,
-            roundNumber: parseInt(cells[2].textContent),
-            roundScore: parseInt(cells[3].textContent),
-            date: cells[4].dataset.date || new Date().toISOString()
-          };
-        }
-        return null;
-      }).filter(Boolean);
+      // Instead of getting scores from DOM, get them from the global data
+      const leaderboardData = window.leaderboardData || { roundHighScores: [] };
       
       // Display filtered scores for the selected round
-      displayRoundScores(selectedRound, scores);
+      displayRoundScores(selectedRound, leaderboardData.roundHighScores);
     });
   }
   
@@ -3785,18 +3778,29 @@ function modeMultiplayer() {
     // Sort by score (highest first)
     roundScores.sort((a, b) => b.roundScore - a.roundScore);
     
-    // Display in the table
-    document.getElementById('round-scores').innerHTML = roundScores
-      .map((score, index) => `
+    if (roundScores.length === 0) {
+      // Display a message when no scores are available for this round
+      document.getElementById('round-scores').innerHTML = `
         <tr>
-          <td>${index + 1}</td>
-          <td data-player-id="${score.playerId}">${score.playerName}</td>
-          <td>${score.roundNumber}</td>
-          <td>${score.roundScore}</td>
-          <td data-date="${score.date}">${new Date(score.date).toLocaleDateString()}</td>
+          <td colspan="5" style="text-align: center; padding: 20px;">
+            No scores available for Round ${roundNumber}
+          </td>
         </tr>
-      `)
-      .join('');
+      `;
+    } else {
+      // Display the scores
+      document.getElementById('round-scores').innerHTML = roundScores
+        .map((score, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td data-player-id="${score.playerId}">${score.playerName}</td>
+            <td>${score.roundNumber}</td>
+            <td>${score.roundScore}</td>
+            <td data-date="${score.date}">${new Date(score.date).toLocaleDateString()}</td>
+          </tr>
+        `)
+        .join('');
+    }
   }
 
   function displayPersonalStats(data) {
