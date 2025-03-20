@@ -95,12 +95,8 @@ describe('LeaderboardManager', () => {
     expect(result).toEqual({
       personalBest: { 
         totalScore: 0, 
-        highestRoundScore: 0, 
-        highestCombo: 0, 
-        date: '',
-        totalScoreDate: '',
-        highestRoundScoreDate: '',
-        highestComboDate: ''
+        roundScores: {},
+        date: ''
       },
       gamesPlayed: 0,
       totalWins: 0

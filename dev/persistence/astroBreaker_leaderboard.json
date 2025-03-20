@@ -3,70 +3,91 @@
     {
       "playerName": "player-1",
       "playerId": "player-1",
-      "score": 101,
-      "date": "2025-03-20T04:56:56.227Z"
+      "score": 834,
+      "date": "2025-03-20T05:17:24.592Z",
+      "gameMode": "multiplayer"
     }
   ],
   "roundHighScores": [
     {
       "playerName": "player-1",
       "playerId": "player-1",
-      "roundScore": 170,
-      "roundNumber": 9,
-      "date": "2025-03-19T21:05:13.787Z"
-    },
-    {
-      "playerName": "player-1",
-      "playerId": "player-1",
-      "roundScore": 150,
-      "roundNumber": 3,
-      "date": "2025-03-20T05:02:40.639Z",
-      "gameMode": "solo"
-    },
-    {
-      "playerName": "player-1",
-      "playerId": "player-1",
-      "roundScore": 101,
-      "roundNumber": 10,
-      "date": "2025-03-20T04:56:56.226Z"
-    },
-    {
-      "playerName": "player-1",
-      "playerId": "player-1",
-      "roundScore": 97,
-      "roundNumber": 6,
-      "date": "2025-03-20T05:03:22.653Z",
-      "gameMode": "solo"
-    },
-    {
-      "playerName": "player-1",
-      "playerId": "player-1",
-      "roundScore": 69,
+      "roundScore": 210,
       "roundNumber": 5,
-      "date": "2025-03-20T05:03:08.664Z",
+      "date": "2025-03-20T05:16:14.561Z",
       "gameMode": "solo"
     },
     {
       "playerName": "player-1",
       "playerId": "player-1",
-      "roundScore": 36,
-      "roundNumber": 4,
-      "date": "2025-03-20T05:02:54.636Z",
+      "roundScore": 140,
+      "roundNumber": 10,
+      "date": "2025-03-20T05:17:24.590Z",
       "gameMode": "solo"
     },
     {
       "playerName": "player-1",
       "playerId": "player-1",
-      "roundScore": 34,
-      "roundNumber": 1,
-      "date": "2025-03-19T21:03:21.788Z"
+      "roundScore": 134,
+      "roundNumber": 8,
+      "date": "2025-03-20T05:16:56.578Z",
+      "gameMode": "solo"
     },
     {
       "playerName": "player-1",
       "playerId": "player-1",
-      "roundScore": 16,
+      "roundScore": 87,
+      "roundNumber": 9,
+      "date": "2025-03-20T05:17:10.572Z",
+      "gameMode": "solo"
+    },
+    {
+      "playerName": "player-1",
+      "playerId": "player-1",
+      "roundScore": 79,
+      "roundNumber": 6,
+      "date": "2025-03-20T05:16:28.569Z",
+      "gameMode": "solo"
+    },
+    {
+      "playerName": "player-1",
+      "playerId": "player-1",
+      "roundScore": 75,
+      "roundNumber": 7,
+      "date": "2025-03-20T05:16:42.584Z",
+      "gameMode": "solo"
+    },
+    {
+      "playerName": "player-1",
+      "playerId": "player-1",
+      "roundScore": 45,
       "roundNumber": 2,
-      "date": "2025-03-19T21:03:35.777Z"
+      "date": "2025-03-20T05:15:32.535Z",
+      "gameMode": "solo"
+    },
+    {
+      "playerName": "player-1",
+      "playerId": "player-1",
+      "roundScore": 35,
+      "roundNumber": 3,
+      "date": "2025-03-20T05:15:46.553Z",
+      "gameMode": "solo"
+    },
+    {
+      "playerName": "player-1",
+      "playerId": "player-1",
+      "roundScore": 22,
+      "roundNumber": 4,
+      "date": "2025-03-20T05:16:00.550Z",
+      "gameMode": "solo"
+    },
+    {
+      "playerName": "player-1",
+      "playerId": "player-1",
+      "roundScore": 7,
+      "roundNumber": 1,
+      "date": "2025-03-20T05:15:18.527Z",
+      "gameMode": "solo"
     }
   ]
 }

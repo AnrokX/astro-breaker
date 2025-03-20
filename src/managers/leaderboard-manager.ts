@@ -533,10 +533,22 @@ export class LeaderboardManager {
       
       // Process each player's final score
       for (const playerData of finalStandings) {
-        console.log(`Processing player ${playerData.playerId} with score ${playerData.totalScore}`);
+        // Calculate total score as sum of all round scores for this player
+        const playerRoundScores = leaderboard.roundHighScores
+          .filter(entry => entry.playerId === playerData.playerId)
+          .map(entry => entry.roundScore);
+        
+        // Sum up all round scores to get the true total score
+        const sumOfRoundScores = playerRoundScores.reduce((sum, score) => sum + score, 0);
+        
+        // Use the sum of round scores instead of the provided totalScore
+        const calculatedTotalScore = Math.max(sumOfRoundScores, playerData.totalScore);
+        
+        console.log(`Processing player ${playerData.playerId} with original score ${playerData.totalScore}`);
+        console.log(`Calculated total score (sum of rounds): ${calculatedTotalScore}`);
         
         // Skip zero or negative scores
-        if (playerData.totalScore <= 0) {
+        if (calculatedTotalScore <= 0) {
           console.log(`Skipping player ${playerData.playerId} - score is zero or negative`);
           continue;
         }
@@ -550,10 +562,10 @@ export class LeaderboardManager {
           const lowestScore = sortedScores[0].score;
             
           // Check if score qualifies
-          qualifiesForLeaderboard = playerData.totalScore > lowestScore;
+          qualifiesForLeaderboard = calculatedTotalScore > lowestScore;
           
           if (!qualifiesForLeaderboard) {
-            console.log(`Score ${playerData.totalScore} by player ${playerData.playerId} doesn't qualify for leaderboard (minimum: ${lowestScore})`);
+            console.log(`Score ${calculatedTotalScore} by player ${playerData.playerId} doesn't qualify for leaderboard (minimum: ${lowestScore})`);
           }
         } else {
           // If we have fewer than max entries, any score qualifies
@@ -573,7 +585,7 @@ export class LeaderboardManager {
             
             // For solo mode, always update the player's entry
             // For multiplayer, only replace if the new score is higher
-            if (gameMode === 'multiplayer' && playerData.totalScore <= existingEntry.score) {
+            if (gameMode === 'multiplayer' && calculatedTotalScore <= existingEntry.score) {
               console.log(`Player ${playerData.playerId} already has a higher score (${existingEntry.score})`);
               shouldAddEntry = false;
             } else {
@@ -585,7 +597,7 @@ export class LeaderboardManager {
           
           if (shouldAddEntry) {
             // Normalize score based on game mode
-            const normalizedScore = this.normalizeScore(playerData.totalScore, gameMode);
+            const normalizedScore = this.normalizeScore(calculatedTotalScore, gameMode);
             
             // Create new all-time high score entry
             const newEntry = {
@@ -627,8 +639,17 @@ export class LeaderboardManager {
         
         if (playerEntity) {
           console.log(`Updating player best data for ${playerData.playerId}`);
+          
+          // Calculate total score as sum of all round scores for this player again
+          const playerRoundScores = leaderboard.roundHighScores
+            .filter(entry => entry.playerId === playerData.playerId)
+            .map(entry => entry.roundScore);
+            
+          const sumOfRoundScores = playerRoundScores.reduce((sum, score) => sum + score, 0);
+          
+          // Use the sum rather than the passed in totalScore
           await this.updatePlayerBest(playerEntity.player, {
-            totalScore: playerData.totalScore,
+            totalScore: sumOfRoundScores > 0 ? sumOfRoundScores : playerData.totalScore,
             wins: playerData.wins || 0
           });
         } else {
@@ -663,14 +684,38 @@ export class LeaderboardManager {
         playerData.personalBest.roundScores = {};
       }
       
-      // Update total score
-      if (gameStats.totalScore > 0) {
-        // Only update if better than existing score
-        if (gameStats.totalScore > playerData.personalBest.totalScore) {
-          playerData.personalBest.totalScore = gameStats.totalScore;
-          dataUpdated = true;
-          console.log(`Updated total score to ${gameStats.totalScore}`);
+      // Calculate sum of all round scores from global leaderboard
+      let sumOfRoundScores = gameStats.totalScore; // Default to provided score
+      
+      try {
+        // Get the global leaderboard to access all round scores
+        const leaderboard = await this.getGlobalLeaderboard();
+        
+        // Find all round scores for this player
+        const playerRoundScores = leaderboard.roundHighScores
+          .filter(entry => entry.playerId === player.id)
+          .map(entry => entry.roundScore);
+        
+        // Calculate sum of all round scores
+        if (playerRoundScores.length > 0) {
+          sumOfRoundScores = playerRoundScores.reduce((sum, score) => sum + score, 0);
+          console.log(`Calculated sum of all round scores: ${sumOfRoundScores}`);
         }
+      } catch (e) {
+        console.error("Error calculating sum of round scores:", e);
+      }
+      
+      // Update total score with the calculated sum
+      if (sumOfRoundScores > 0) {
+        // Always update with the sum of round scores, as this is the new behavior
+        playerData.personalBest.totalScore = sumOfRoundScores;
+        dataUpdated = true;
+        console.log(`Updated total score to ${sumOfRoundScores} (sum of all round scores)`);
+      } else if (gameStats.totalScore > 0 && gameStats.totalScore > playerData.personalBest.totalScore) {
+        // Fallback to provided score if we couldn't calculate the sum
+        playerData.personalBest.totalScore = gameStats.totalScore;
+        dataUpdated = true;
+        console.log(`Updated total score to ${gameStats.totalScore} (provided score)`);
       }
       
       // Update round scores if provided
