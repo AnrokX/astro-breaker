@@ -3238,6 +3238,12 @@ function modeMultiplayer() {
   </div>
   
   <div id="round-tab" class="tab-content">
+    <div class="round-selector">
+      <label for="round-select">Select Round:</label>
+      <select id="round-select">
+        <!-- Dynamically populated based on total rounds -->
+      </select>
+    </div>
     <table class="leaderboard-table">
       <thead>
         <tr>
@@ -3249,25 +3255,24 @@ function modeMultiplayer() {
         </tr>
       </thead>
       <tbody id="round-scores">
-        <!-- Dynamically populated -->
+        <!-- Dynamically populated based on selected round -->
       </tbody>
     </table>
   </div>
   
   <div id="personal-tab" class="tab-content">
+    <div class="personal-total">
+      <h3>Total High Score</h3>
+      <div id="personal-total-score" class="stat-value">0</div>
+      <div id="personal-total-date" class="stat-date">Never</div>
+    </div>
+    
+    <h3>Round High Scores</h3>
+    <div id="personal-round-scores" class="personal-rounds">
+      <!-- Dynamically populated -->
+    </div>
+    
     <div class="personal-stats">
-      <div class="stat-row">
-        <span class="stat-label">Highest Score:</span>
-        <span class="stat-value" id="personal-highest-score">0</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Best Round Score:</span>
-        <span class="stat-value" id="personal-highest-round">0</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Highest Combo:</span>
-        <span class="stat-value" id="personal-highest-combo">0</span>
-      </div>
       <div class="stat-row">
         <span class="stat-label">Games Played:</span>
         <span class="stat-value" id="personal-games-played">0</span>
@@ -3294,13 +3299,7 @@ function modeMultiplayer() {
   </div>
 </div>
 
-<!-- Add a template for in-world leaderboard display -->
-<template id="leaderboard-marker-template">
-  <div class="leaderboard-marker">
-    <div class="marker-title">High Scores</div>
-    <div class="marker-scores"></div>
-  </div>
-</template>
+<!-- Removed in-world leaderboard marker -->
 
 <style>
   /* Leaderboard styling */
@@ -3426,6 +3425,90 @@ function modeMultiplayer() {
     justify-content: space-between;
     padding: 8px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Round selector styling */
+  .round-selector {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+  }
+  
+  .round-selector label {
+    margin-right: 10px;
+    font-weight: bold;
+    color: var(--matrix-green);
+  }
+  
+  .round-selector select {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: 1px solid #555;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    outline: none;
+  }
+  
+  .round-selector select:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+  
+  /* Personal best round scores */
+  .personal-total {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .personal-total h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--matrix-green);
+  }
+  
+  #personal-total-score {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .stat-date, #personal-total-date {
+    font-size: 12px;
+    color: #aaa;
+  }
+  
+  .personal-rounds {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    margin: 15px 0 30px 0;
+  }
+  
+  .round-score {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+  }
+  
+  .round-label {
+    font-weight: bold;
+    color: var(--matrix-green);
+    margin-bottom: 8px;
+  }
+  
+  .round-value {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .round-date {
+    font-size: 11px;
+    color: #aaa;
   }
   
   .stat-row:last-child, .setting-row:last-child {
@@ -3639,27 +3722,7 @@ function modeMultiplayer() {
   });
 
   // Register scene UI template for in-world leaderboard markers
-  hytopia.registerSceneUITemplate('leaderboard-marker', (id, onState) => {
-    const template = document.getElementById('leaderboard-marker-template');
-    const clone = template.content.cloneNode(true);
-    const scoresElement = clone.querySelector('.marker-scores');
-    
-    onState(state => {
-      if (!state || !state.scores) return;
-      
-      scoresElement.innerHTML = state.scores
-        .map((score, index) => `
-          <div class="marker-score">
-            <span class="rank">${index + 1}</span>
-            <span class="name">${score.playerName}</span>
-            <span class="score">${score.score}</span>
-          </div>
-        `)
-        .join('');
-    });
-    
-    return clone;
-  });
+  // Removed leaderboard marker template registration
 
   function displayLeaderboardData(data) {
     const panel = document.getElementById('leaderboard-panel');
@@ -3676,26 +3739,116 @@ function modeMultiplayer() {
         </tr>
       `)
       .join('');
+      
+    // Populate round selector based on total rounds
+    populateRoundSelector(data.totalRounds || 3);
     
-    // Display round high scores
-    document.getElementById('round-scores').innerHTML = data.roundHighScores
+    // Display round scores
+    displayRoundScores(1, data.roundHighScores); // Default to round 1
+  }
+  
+  // Function to populate the round selector
+  function populateRoundSelector(totalRounds) {
+    const selector = document.getElementById('round-select');
+    
+    // Save current selection if any
+    const currentSelection = selector.value ? parseInt(selector.value) : 1;
+    
+    // Clear existing options
+    selector.innerHTML = '';
+    
+    // Create an option for each round
+    for (let i = 1; i <= totalRounds; i++) {
+      const option = document.createElement('option');
+      option.value = i.toString();
+      option.textContent = `Round ${i}`;
+      selector.appendChild(option);
+    }
+    
+    // Restore selection if valid, otherwise select round 1
+    if (currentSelection && currentSelection <= totalRounds) {
+      selector.value = currentSelection.toString();
+    } else {
+      selector.value = "1";
+    }
+    
+    // Add event listener to update displayed scores when selection changes
+    selector.addEventListener('change', () => {
+      const selectedRound = parseInt(selector.value);
+      
+      // Get the currently displayed round scores from the DOM
+      const roundScoresContainer = document.getElementById('round-scores');
+      const rows = Array.from(roundScoresContainer.querySelectorAll('tr'));
+      const scores = rows.map(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        if (cells.length >= 5) {
+          return {
+            playerName: cells[1].textContent,
+            playerId: cells[1].dataset.playerId || cells[1].textContent,
+            roundNumber: parseInt(cells[2].textContent),
+            roundScore: parseInt(cells[3].textContent),
+            date: cells[4].dataset.date || new Date().toISOString()
+          };
+        }
+        return null;
+      }).filter(Boolean);
+      
+      // Display filtered scores for the selected round
+      displayRoundScores(selectedRound, scores);
+    });
+  }
+  
+  // Display scores for a specific round
+  function displayRoundScores(roundNumber, allRoundScores) {
+    // Filter scores for the selected round
+    const roundScores = allRoundScores.filter(score => score.roundNumber === roundNumber);
+    
+    // Sort by score (highest first)
+    roundScores.sort((a, b) => b.roundScore - a.roundScore);
+    
+    // Display in the table
+    document.getElementById('round-scores').innerHTML = roundScores
       .map((score, index) => `
         <tr>
           <td>${index + 1}</td>
-          <td>${score.playerName}</td>
+          <td data-player-id="${score.playerId}">${score.playerName}</td>
           <td>${score.roundNumber}</td>
           <td>${score.roundScore}</td>
-          <td>${new Date(score.date).toLocaleDateString()}</td>
+          <td data-date="${score.date}">${new Date(score.date).toLocaleDateString()}</td>
         </tr>
       `)
       .join('');
   }
 
   function displayPersonalStats(data) {
-    // Update personal best stats
-    document.getElementById('personal-highest-score').textContent = data.personalBest.totalScore;
-    document.getElementById('personal-highest-round').textContent = data.personalBest.highestRoundScore;
-    document.getElementById('personal-highest-combo').textContent = data.personalBest.highestCombo;
+    // Update personal total score
+    document.getElementById('personal-total-score').textContent = data.personalBest.totalScore;
+    document.getElementById('personal-total-date').textContent = data.personalBest.date ? new Date(data.personalBest.date).toLocaleDateString() : 'Never';
+    
+    // Display individual round scores
+    const roundScoresContainer = document.getElementById('personal-round-scores');
+    roundScoresContainer.innerHTML = '';
+    
+    if (data.personalBest.roundScores) {
+      // Sort round numbers numerically
+      const roundNumbers = Object.keys(data.personalBest.roundScores)
+        .map(Number)
+        .sort((a, b) => a - b);
+      
+      // Display each round score
+      roundNumbers.forEach(round => {
+        const scoreData = data.personalBest.roundScores[round];
+        roundScoresContainer.innerHTML += `
+          <div class="round-score">
+            <div class="round-label">Round ${round}</div>
+            <div class="round-value">${scoreData.score}</div>
+            <div class="round-date">${new Date(scoreData.date).toLocaleDateString()}</div>
+          </div>
+        `;
+      });
+    }
+    
+    // Update games played and wins
     document.getElementById('personal-games-played').textContent = data.gamesPlayed;
     document.getElementById('personal-total-wins').textContent = data.totalWins;
     

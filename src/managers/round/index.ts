@@ -389,52 +389,16 @@ export class RoundManager {
       this.endRound();
     }, roundConfig.duration);
     
-    // Create an in-world leaderboard marker for this round if we have past scores
-    this.createInWorldLeaderboardMarker();
+    // In-world leaderboard markers have been disabled
+    // this.createInWorldLeaderboardMarker();
   }
 
   /**
-   * Creates an in-world leaderboard marker displaying the top scores
+   * Placeholder for the removed in-world leaderboard marker functionality
    */
   private async createInWorldLeaderboardMarker(): Promise<void> {
-    try {
-      // Import required modules
-      const { SceneUIManager } = await import('../../scene-ui/scene-ui-manager');
-      const leaderboardManager = LeaderboardManager.getInstance(this.world);
-      const leaderboardData = await leaderboardManager.getGlobalLeaderboard();
-      
-      // Only create marker if we have scores to display
-      if (leaderboardData.allTimeHighScores.length > 0) {
-        const sceneUIManager = SceneUIManager.getInstance(this.world);
-        
-        // Position the marker in a visible, but not distracting location
-        // Use different positions based on round number to add variety
-        const positions = [
-          { x: 15, y: 15, z: 15 },   // Position 1
-          { x: -15, y: 15, z: 15 },  // Position 2
-          { x: 15, y: 15, z: -15 },  // Position 3 
-          { x: -15, y: 15, z: -15 }  // Position 4
-        ];
-        
-        // Select position based on round number
-        const positionIndex = (this.currentRound - 1) % positions.length;
-        const markerPos = positions[positionIndex];
-        
-        // Format the scores for display
-        const displayScores = leaderboardData.allTimeHighScores
-          .slice(0, 5)
-          .map(entry => ({
-            playerName: entry.playerName,
-            score: entry.score
-          }));
-        
-        // Create the leaderboard marker with a generous view distance
-        sceneUIManager.createLeaderboardMarker(markerPos, displayScores, 60);
-        console.log(`Created in-world leaderboard marker for round ${this.currentRound}`);
-      }
-    } catch (error) {
-      console.error("Error creating in-world leaderboard marker:", error);
-    }
+    // Functionality removed as per user request
+    console.log("In-world leaderboard markers disabled");
   }
 
   private getRoundConfig(round: number): RoundConfig {

@@ -3,8 +3,8 @@
     {
       "playerName": "player-1",
       "playerId": "player-1",
-      "score": 68,
-      "date": "2025-03-19T21:05:27.798Z"
+      "score": 101,
+      "date": "2025-03-20T04:56:56.227Z"
     }
   ],
   "roundHighScores": [
@@ -18,23 +18,41 @@
     {
       "playerName": "player-1",
       "playerId": "player-1",
-      "roundScore": 96,
-      "roundNumber": 6,
-      "date": "2025-03-19T21:04:31.783Z"
-    },
-    {
-      "playerName": "player-1",
-      "playerId": "player-1",
-      "roundScore": 70,
+      "roundScore": 150,
       "roundNumber": 3,
-      "date": "2025-03-19T21:03:49.783Z"
+      "date": "2025-03-20T05:02:40.639Z",
+      "gameMode": "solo"
     },
     {
       "playerName": "player-1",
       "playerId": "player-1",
-      "roundScore": 68,
+      "roundScore": 101,
       "roundNumber": 10,
-      "date": "2025-03-19T21:05:27.796Z"
+      "date": "2025-03-20T04:56:56.226Z"
+    },
+    {
+      "playerName": "player-1",
+      "playerId": "player-1",
+      "roundScore": 97,
+      "roundNumber": 6,
+      "date": "2025-03-20T05:03:22.653Z",
+      "gameMode": "solo"
+    },
+    {
+      "playerName": "player-1",
+      "playerId": "player-1",
+      "roundScore": 69,
+      "roundNumber": 5,
+      "date": "2025-03-20T05:03:08.664Z",
+      "gameMode": "solo"
+    },
+    {
+      "playerName": "player-1",
+      "playerId": "player-1",
+      "roundScore": 36,
+      "roundNumber": 4,
+      "date": "2025-03-20T05:02:54.636Z",
+      "gameMode": "solo"
     },
     {
       "playerName": "player-1",
@@ -42,13 +60,6 @@
       "roundScore": 34,
       "roundNumber": 1,
       "date": "2025-03-19T21:03:21.788Z"
-    },
-    {
-      "playerName": "player-1",
-      "playerId": "player-1",
-      "roundScore": 20,
-      "roundNumber": 5,
-      "date": "2025-03-19T21:04:17.777Z"
     },
     {
       "playerName": "player-1",

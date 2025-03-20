@@ -1,13 +1,9 @@
 {
   "personalBest": {
-    "totalScore": 68,
-    "highestRoundScore": 0,
-    "highestCombo": 0,
-    "date": "2025-03-19T21:05:27.809Z",
-    "totalScoreDate": "2025-03-19T21:05:27.809Z",
-    "highestRoundScoreDate": "2025-03-19T20:52:37.830Z",
-    "highestComboDate": "2025-03-19T20:52:37.830Z"
+    "totalScore": 101,
+    "roundScores": {},
+    "date": "2025-03-20T04:56:56.244Z"
   },
-  "gamesPlayed": 5,
-  "totalWins": 20
+  "gamesPlayed": 14,
+  "totalWins": 50
 }

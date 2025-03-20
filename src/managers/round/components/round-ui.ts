@@ -141,21 +141,7 @@ export class RoundUI {
           }
         });
       } else {
-        // In multiplayer, show congratulatory message to winner
-        if (currentPlayerId === winner.playerId) {
-          playerEntity.player.ui.sendData({
-            type: 'systemMessage',
-            message: `🏆 Congratulations! You won the game with ${winner.placementPoints} placement points!`,
-            color: 'FFD700' // Gold color
-          });
-        }
-        
-        // Use player number for clearer winner announcement
-        playerEntity.player.ui.sendData({
-          type: 'systemMessage',
-          message: `Game Over! Player ${winner.playerNumber} wins with ${winner.totalScore} points!`,
-          color: 'FFD700'
-        });
+        // No completion message
       }
     });
   }

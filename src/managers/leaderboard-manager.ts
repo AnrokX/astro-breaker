@@ -424,7 +424,7 @@ export class LeaderboardManager {
   public async updateWithRoundScores(
     scores: Array<{playerId: string, playerName?: string, roundScore: number}>,
     roundNumber: number,
-    totalRounds: number,  // Added total rounds parameter for UI filtering
+    totalRounds: number = 3,  // Added total rounds parameter for UI filtering
     gameMode: 'solo' | 'multiplayer' = 'multiplayer'
   ): Promise<void> {
     try {
