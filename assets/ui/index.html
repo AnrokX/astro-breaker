@@ -3277,25 +3277,10 @@ function modeMultiplayer() {
         <span class="stat-label">Games Played:</span>
         <span class="stat-value" id="personal-games-played">0</span>
       </div>
-      <div class="stat-row">
-        <span class="stat-label">Total Wins:</span>
-        <span class="stat-value" id="personal-total-wins">0</span>
-      </div>
-      <div class="stat-row achievement-date">
-        <span class="stat-label">Last Updated:</span>
-        <span class="stat-value" id="personal-date">-</span>
-      </div>
+      <!-- Total Wins and Last Updated sections removed -->
     </div>
     
-    <div class="personal-settings">
-      <div class="setting-row">
-        <span class="setting-label">Show Leaderboard During Game:</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="show-leaderboard-setting" checked>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-    </div>
+    <!-- Leaderboard settings section removed -->
   </div>
 </div>
 
@@ -3713,13 +3698,7 @@ function modeMultiplayer() {
     });
   });
 
-  // Toggle leaderboard visibility setting
-  document.getElementById('show-leaderboard-setting').addEventListener('change', (e) => {
-    hytopia.sendData({ 
-      type: 'toggleLeaderboardSetting', 
-      visible: e.target.checked 
-    });
-  });
+  // Leaderboard visibility setting removed
 
   // Register scene UI template for in-world leaderboard markers
   // Removed leaderboard marker template registration
@@ -3848,20 +3827,8 @@ function modeMultiplayer() {
       });
     }
     
-    // Update games played and wins
+    // Update games played
     document.getElementById('personal-games-played').textContent = data.gamesPlayed;
-    document.getElementById('personal-total-wins').textContent = data.totalWins;
-    
-    const dateElement = document.getElementById('personal-date');
-    if (data.personalBest.date) {
-      const date = new Date(data.personalBest.date);
-      dateElement.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    } else {
-      dateElement.textContent = '-';
-    }
-    
-    // Update toggle switch for leaderboard visibility
-    document.getElementById('show-leaderboard-setting').checked = data.showLeaderboard;
   }
 </script>
 

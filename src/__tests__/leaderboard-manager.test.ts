@@ -95,11 +95,9 @@ describe('LeaderboardManager', () => {
     expect(result).toEqual({
       personalBest: { 
         totalScore: 0, 
-        roundScores: {},
-        date: ''
+        roundScores: {}
       },
-      gamesPlayed: 0,
-      totalWins: 0
+      gamesPlayed: 0
     });
   });
 
@@ -107,15 +105,13 @@ describe('LeaderboardManager', () => {
     const playerData: PlayerPersistentData = {
       personalBest: { 
         totalScore: 1000, 
-        highestRoundScore: 500, 
-        highestCombo: 10, 
-        date: '2023-01-01',
-        totalScoreDate: '2023-01-01',
-        highestRoundScoreDate: '2023-01-01',
-        highestComboDate: '2023-01-01'
+        roundScores: {
+          1: { score: 500, date: '2023-01-01' },
+          2: { score: 300, date: '2023-01-01' },
+          3: { score: 200, date: '2023-01-01' }
+        }
       },
-      gamesPlayed: 5,
-      totalWins: 2
+      gamesPlayed: 5
     };
     
     await leaderboardManager.updatePlayerData(mockPlayer, playerData);
@@ -124,8 +120,7 @@ describe('LeaderboardManager', () => {
       mockPlayer,
       expect.objectContaining({
         personalBest: playerData.personalBest,
-        gamesPlayed: 5,
-        totalWins: 2
+        gamesPlayed: 5
       })
     );
   });

@@ -4,7 +4,6 @@ export interface PlayerSettings {
     crosshairColor: string;
     bgmVolume: number;
     gameMode: 'solo' | 'multiplayer';
-    showLeaderboard: boolean; // Whether to show the leaderboard
 }
 
 export interface UISettingsData {
@@ -33,8 +32,7 @@ export class PlayerSettingsManager {
         this.playerSettings.set(playerId, {
             crosshairColor: '#ffff00',
             bgmVolume: 0.1, // Default background music volume
-            gameMode: 'multiplayer', // Default to multiplayer
-            showLeaderboard: true // Default to showing the leaderboard
+            gameMode: 'multiplayer' // Default to multiplayer
         });
     }
 
@@ -51,9 +49,7 @@ export class PlayerSettingsManager {
             // Ensure exact 0 when muting
             const normalizedVolume = value / 100;
             settings.bgmVolume = normalizedVolume === 0 ? 0 : Math.max(0, Math.min(1, normalizedVolume));
-        } else if (setting === 'showLeaderboard') {
-            // Ensure value is boolean
-            settings.showLeaderboard = value === true;
+        // showLeaderboard setting removed
         } else {
             // For other settings like crosshairColor and gameMode
             settings[setting] = value;

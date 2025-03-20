@@ -32,8 +32,6 @@ export interface PlayerPersistentData {
         date: string;
       }
     };
-    date: string;        // Last updated date
   };
   gamesPlayed: number;
-  totalWins: number;
 }

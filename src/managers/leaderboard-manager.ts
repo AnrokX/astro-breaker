@@ -89,11 +89,9 @@ export class LeaderboardManager {
       const defaultData: PlayerPersistentData = {
         personalBest: { 
           totalScore: 0, 
-          roundScores: {},
-          date: ""
+          roundScores: {}
         },
-        gamesPlayed: 0,
-        totalWins: 0
+        gamesPlayed: 0
       };
       
       const data = await PersistenceManager.instance.getPlayerData(player);
@@ -104,8 +102,6 @@ export class LeaderboardManager {
           // Try to parse it as PlayerPersistentData
           const rawData = data as Record<string, unknown>;
           const personalBestRaw = rawData.personalBest as Record<string, unknown> || {};
-          const currentDate = new Date().toISOString();
-          
           // Convert old format to new format if needed
           let roundScores: {[roundNumber: number]: {score: number, date: string}} = {};
           
@@ -122,18 +118,16 @@ export class LeaderboardManager {
             // Add a single entry for round 1 (assuming it was from round 1)
             roundScores[1] = {
               score: Number(personalBestRaw.highestRoundScore) || 0,
-              date: String(personalBestRaw.highestRoundScoreDate) || currentDate
+              date: String(personalBestRaw.highestRoundScoreDate) || new Date().toISOString()
             };
           }
           
           return {
             personalBest: {
               totalScore: Number(personalBestRaw.totalScore) || 0,
-              roundScores: roundScores,
-              date: String(personalBestRaw.date) || currentDate
+              roundScores: roundScores
             },
-            gamesPlayed: Number(rawData.gamesPlayed) || 0,
-            totalWins: Number(rawData.totalWins) || 0
+            gamesPlayed: Number(rawData.gamesPlayed) || 0
           };
         } catch (parseError) {
           console.error("Error parsing player data:", parseError);
@@ -147,11 +141,9 @@ export class LeaderboardManager {
       return {
         personalBest: { 
           totalScore: 0, 
-          roundScores: {},
-          date: ""
+          roundScores: {}
         },
-        gamesPlayed: 0,
-        totalWins: 0
+        gamesPlayed: 0
       };
     }
   }
@@ -160,7 +152,6 @@ export class LeaderboardManager {
     try {
       // Data validation
       if (updatedData.gamesPlayed < 0) updatedData.gamesPlayed = 0;
-      if (updatedData.totalWins < 0) updatedData.totalWins = 0;
       if (updatedData.personalBest.totalScore < 0) updatedData.personalBest.totalScore = 0;
       
       // Validate round scores
@@ -175,8 +166,7 @@ export class LeaderboardManager {
       // Convert to Record<string, unknown> for Hytopia's API
       const dataToSave: Record<string, unknown> = {
         personalBest: updatedData.personalBest,
-        gamesPlayed: updatedData.gamesPlayed,
-        totalWins: updatedData.totalWins
+        gamesPlayed: updatedData.gamesPlayed
       };
       
       await PersistenceManager.instance.setPlayerData(player, dataToSave);
@@ -338,7 +328,6 @@ export class LeaderboardManager {
       // Only update total score if the new score is better
       if (totalScore > playerData.personalBest.totalScore) {
         newPersonalBest.totalScore = totalScore;
-        newPersonalBest.date = currentDate;
       }
       
       // Update round score if it's a new high score for this round
@@ -348,9 +337,6 @@ export class LeaderboardManager {
           score: roundScore,
           date: currentDate
         };
-        
-        // Also update the general date field
-        newPersonalBest.date = currentDate;
       }
       
       // Update the player data
@@ -372,16 +358,8 @@ export class LeaderboardManager {
     }
   }
 
-  // Helper method to increment wins counter
-  public async incrementWins(player: Player): Promise<void> {
-    try {
-      const playerData = await this.getPlayerData(player);
-      playerData.totalWins++;
-      await this.updatePlayerData(player, playerData);
-    } catch (error) {
-      console.error("Error incrementing wins:", error);
-    }
-  }
+  // Helper method to increment wins counter - REMOVED
+  // This method has been removed as totalWins is no longer tracked
 
   // setLeaderboardVisibility method has been removed as part of Phase 1.4 of the refactoring plan
 
@@ -649,8 +627,7 @@ export class LeaderboardManager {
           
           // Use the sum rather than the passed in totalScore
           await this.updatePlayerBest(playerEntity.player, {
-            totalScore: sumOfRoundScores > 0 ? sumOfRoundScores : playerData.totalScore,
-            wins: playerData.wins || 0
+            totalScore: sumOfRoundScores > 0 ? sumOfRoundScores : playerData.totalScore
           });
         } else {
           console.log(`Could not find player entity for ${playerData.playerId}`);
@@ -670,12 +647,10 @@ export class LeaderboardManager {
     try {
       // Data validation
       if (gameStats.totalScore < 0) gameStats.totalScore = 0;
-      if (gameStats.wins !== undefined && gameStats.wins < 0) gameStats.wins = 0;
       
       // Get existing player data
       const playerData = await this.getPlayerData(player);
       const currentDate = new Date().toISOString();
-      let dataUpdated = false;
       
       console.log(`Updating player best data: existing=${JSON.stringify(playerData.personalBest)}, new total=${gameStats.totalScore}`);
       
@@ -709,12 +684,10 @@ export class LeaderboardManager {
       if (sumOfRoundScores > 0) {
         // Always update with the sum of round scores, as this is the new behavior
         playerData.personalBest.totalScore = sumOfRoundScores;
-        dataUpdated = true;
         console.log(`Updated total score to ${sumOfRoundScores} (sum of all round scores)`);
       } else if (gameStats.totalScore > 0 && gameStats.totalScore > playerData.personalBest.totalScore) {
         // Fallback to provided score if we couldn't calculate the sum
         playerData.personalBest.totalScore = gameStats.totalScore;
-        dataUpdated = true;
         console.log(`Updated total score to ${gameStats.totalScore} (provided score)`);
       }
       
@@ -733,15 +706,9 @@ export class LeaderboardManager {
               score: score,
               date: currentDate
             };
-            dataUpdated = true;
             console.log(`Updated round ${roundNum} score to ${score}`);
           }
         }
-      }
-      
-      // Update the main date field only if any records were broken
-      if (dataUpdated) {
-        playerData.personalBest.date = currentDate;
       }
       
       // Update games played (increment by 1 to avoid double-counting)
@@ -749,12 +716,6 @@ export class LeaderboardManager {
       if (gameStats.wins !== undefined) {
         playerData.gamesPlayed++;
         console.log(`Incremented games played to ${playerData.gamesPlayed}`);
-      }
-      
-      // Update wins if provided
-      if (gameStats.wins) {
-        playerData.totalWins += gameStats.wins;
-        console.log(`Incremented total wins to ${playerData.totalWins}`);
       }
       
       // Update the player data

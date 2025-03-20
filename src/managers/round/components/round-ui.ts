@@ -136,7 +136,6 @@ export class RoundUI {
           type: 'updateFinalScore',
           data: {
             totalScore: playerScore,
-            wins: playerStanding ? playerStanding.wins || 0 : 0,
             points: playerStanding ? playerStanding.placementPoints || 0 : 0
           }
         });

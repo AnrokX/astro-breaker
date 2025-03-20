@@ -30,7 +30,6 @@ export interface GameEndStanding {
     playerNumber?: number;
     playerColor?: string;
     placementPoints: number;
-    wins: number;
     totalScore: number;
 }
 

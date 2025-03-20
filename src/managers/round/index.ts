@@ -463,7 +463,6 @@ export class RoundManager {
         playerNumber,
         playerColor,
         placementPoints: this.scoreManager.getLeaderboardPoints(playerId),
-        wins: this.scoreManager.getWins(playerId),
         totalScore: this.scoreManager.getScore(playerId)
       });
     });
@@ -518,8 +517,7 @@ export class RoundManager {
       const leaderboardEntries = finalStandings.map(standing => ({
         playerId: standing.playerId,
         playerName: standing.playerId, // Use playerId as playerName since we don't have separate names
-        totalScore: standing.totalScore,
-        wins: standing.wins
+        totalScore: standing.totalScore
       }));
       
       // Log the entries being sent to the leaderboard for debugging
