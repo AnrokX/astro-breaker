@@ -25,13 +25,14 @@ export interface GlobalLeaderboard {
 // Player-specific persistence data
 export interface PlayerPersistentData {
   personalBest: {
-    totalScore: number;
-    highestRoundScore: number;
-    highestCombo: number;
-    date: string;
-    totalScoreDate?: string;  // Date when highest total score was achieved
-    highestRoundScoreDate?: string;  // Date when highest round score was achieved
-    highestComboDate?: string;  // Date when highest combo was achieved
+    totalScore: number;  // Total high score across all rounds
+    roundScores: {       // Individual high scores for each round
+      [roundNumber: number]: {
+        score: number;
+        date: string;
+      }
+    };
+    date: string;        // Last updated date
   };
   gamesPlayed: number;
   totalWins: number;

@@ -89,12 +89,8 @@ export class LeaderboardManager {
       const defaultData: PlayerPersistentData = {
         personalBest: { 
           totalScore: 0, 
-          highestRoundScore: 0, 
-          highestCombo: 0, 
-          date: "",
-          totalScoreDate: "",
-          highestRoundScoreDate: "",
-          highestComboDate: ""
+          roundScores: {},
+          date: ""
         },
         gamesPlayed: 0,
         totalWins: 0
@@ -110,15 +106,31 @@ export class LeaderboardManager {
           const personalBestRaw = rawData.personalBest as Record<string, unknown> || {};
           const currentDate = new Date().toISOString();
           
+          // Convert old format to new format if needed
+          let roundScores: {[roundNumber: number]: {score: number, date: string}} = {};
+          
+          // Try to get round scores from new format first
+          if (personalBestRaw.roundScores) {
+            try {
+              roundScores = personalBestRaw.roundScores as {[roundNumber: number]: {score: number, date: string}};
+            } catch (e) {
+              console.error("Error parsing round scores:", e);
+            }
+          } 
+          // If no round scores in new format, try to migrate from old format
+          else if (personalBestRaw.highestRoundScore) {
+            // Add a single entry for round 1 (assuming it was from round 1)
+            roundScores[1] = {
+              score: Number(personalBestRaw.highestRoundScore) || 0,
+              date: String(personalBestRaw.highestRoundScoreDate) || currentDate
+            };
+          }
+          
           return {
             personalBest: {
               totalScore: Number(personalBestRaw.totalScore) || 0,
-              highestRoundScore: Number(personalBestRaw.highestRoundScore) || 0,
-              highestCombo: Number(personalBestRaw.highestCombo) || 0,
-              date: String(personalBestRaw.date) || currentDate,
-              totalScoreDate: String(personalBestRaw.totalScoreDate) || currentDate,
-              highestRoundScoreDate: String(personalBestRaw.highestRoundScoreDate) || currentDate,
-              highestComboDate: String(personalBestRaw.highestComboDate) || currentDate
+              roundScores: roundScores,
+              date: String(personalBestRaw.date) || currentDate
             },
             gamesPlayed: Number(rawData.gamesPlayed) || 0,
             totalWins: Number(rawData.totalWins) || 0
@@ -135,12 +147,8 @@ export class LeaderboardManager {
       return {
         personalBest: { 
           totalScore: 0, 
-          highestRoundScore: 0, 
-          highestCombo: 0, 
-          date: "",
-          totalScoreDate: "",
-          highestRoundScoreDate: "",
-          highestComboDate: ""
+          roundScores: {},
+          date: ""
         },
         gamesPlayed: 0,
         totalWins: 0
@@ -154,8 +162,15 @@ export class LeaderboardManager {
       if (updatedData.gamesPlayed < 0) updatedData.gamesPlayed = 0;
       if (updatedData.totalWins < 0) updatedData.totalWins = 0;
       if (updatedData.personalBest.totalScore < 0) updatedData.personalBest.totalScore = 0;
-      if (updatedData.personalBest.highestRoundScore < 0) updatedData.personalBest.highestRoundScore = 0;
-      if (updatedData.personalBest.highestCombo < 0) updatedData.personalBest.highestCombo = 0;
+      
+      // Validate round scores
+      if (updatedData.personalBest.roundScores) {
+        for (const roundNum in updatedData.personalBest.roundScores) {
+          if (updatedData.personalBest.roundScores[roundNum].score < 0) {
+            updatedData.personalBest.roundScores[roundNum].score = 0;
+          }
+        }
+      }
       
       // Convert to Record<string, unknown> for Hytopia's API
       const dataToSave: Record<string, unknown> = {
@@ -305,8 +320,8 @@ export class LeaderboardManager {
   public async updatePlayerPersonalBest(
     player: Player,
     totalScore: number,
-    highestRoundScore: number,
-    highestCombo: number
+    roundNumber: number,
+    roundScore: number
   ): Promise<void> {
     try {
       const playerData = await this.getPlayerData(player);
@@ -315,30 +330,26 @@ export class LeaderboardManager {
       // Create a copy of the existing personal best
       const newPersonalBest = { ...playerData.personalBest };
       
+      // Ensure roundScores object exists
+      if (!newPersonalBest.roundScores) {
+        newPersonalBest.roundScores = {};
+      }
+      
       // Only update total score if the new score is better
       if (totalScore > playerData.personalBest.totalScore) {
         newPersonalBest.totalScore = totalScore;
-        newPersonalBest.totalScoreDate = currentDate;
+        newPersonalBest.date = currentDate;
       }
       
-      // Only update highest round score if the new score is better
-      if (highestRoundScore > playerData.personalBest.highestRoundScore) {
-        newPersonalBest.highestRoundScore = highestRoundScore;
-        newPersonalBest.highestRoundScoreDate = currentDate;
-      }
-      
-      // Only update highest combo if the new combo is better
-      if (highestCombo > playerData.personalBest.highestCombo) {
-        newPersonalBest.highestCombo = highestCombo;
-        newPersonalBest.highestComboDate = currentDate;
-      }
-      
-      // Always update the general date field if any value was updated
-      if (
-        newPersonalBest.totalScore !== playerData.personalBest.totalScore ||
-        newPersonalBest.highestRoundScore !== playerData.personalBest.highestRoundScore ||
-        newPersonalBest.highestCombo !== playerData.personalBest.highestCombo
-      ) {
+      // Update round score if it's a new high score for this round
+      const currentRoundBest = playerData.personalBest.roundScores[roundNumber]?.score || 0;
+      if (roundScore > currentRoundBest) {
+        newPersonalBest.roundScores[roundNumber] = {
+          score: roundScore,
+          date: currentDate
+        };
+        
+        // Also update the general date field
         newPersonalBest.date = currentDate;
       }
       
@@ -413,6 +424,7 @@ export class LeaderboardManager {
   public async updateWithRoundScores(
     scores: Array<{playerId: string, playerName?: string, roundScore: number}>,
     roundNumber: number,
+    totalRounds: number,  // Added total rounds parameter for UI filtering
     gameMode: 'solo' | 'multiplayer' = 'multiplayer'
   ): Promise<void> {
     try {
@@ -631,15 +643,12 @@ export class LeaderboardManager {
   // Helper method to update a player's personal best
   private async updatePlayerBest(player: Player, gameStats: {
     totalScore: number;
-    highestRoundScore?: number;
-    highestCombo?: number;
+    roundScores?: {[roundNumber: number]: number};
     wins?: number;
   }): Promise<void> {
     try {
       // Data validation
       if (gameStats.totalScore < 0) gameStats.totalScore = 0;
-      if (gameStats.highestRoundScore !== undefined && gameStats.highestRoundScore < 0) gameStats.highestRoundScore = 0;
-      if (gameStats.highestCombo !== undefined && gameStats.highestCombo < 0) gameStats.highestCombo = 0;
       if (gameStats.wins !== undefined && gameStats.wins < 0) gameStats.wins = 0;
       
       // Get existing player data
@@ -649,29 +658,40 @@ export class LeaderboardManager {
       
       console.log(`Updating player best data: existing=${JSON.stringify(playerData.personalBest)}, new total=${gameStats.totalScore}`);
       
-      // Update total score - always update in solo mode to provide better feedback
-      // In solo mode, we want to always update the score for each game
+      // Ensure roundScores object exists
+      if (!playerData.personalBest.roundScores) {
+        playerData.personalBest.roundScores = {};
+      }
+      
+      // Update total score
       if (gameStats.totalScore > 0) {
-        playerData.personalBest.totalScore = gameStats.totalScore;
-        playerData.personalBest.totalScoreDate = currentDate;
-        dataUpdated = true;
-        console.log(`Updated total score to ${gameStats.totalScore}`);
+        // Only update if better than existing score
+        if (gameStats.totalScore > playerData.personalBest.totalScore) {
+          playerData.personalBest.totalScore = gameStats.totalScore;
+          dataUpdated = true;
+          console.log(`Updated total score to ${gameStats.totalScore}`);
+        }
       }
       
-      // Update highest round score if provided and better than the previous best
-      if (gameStats.highestRoundScore && gameStats.highestRoundScore > (playerData.personalBest.highestRoundScore || 0)) {
-        playerData.personalBest.highestRoundScore = gameStats.highestRoundScore;
-        playerData.personalBest.highestRoundScoreDate = currentDate;
-        dataUpdated = true;
-        console.log(`Updated highest round score to ${gameStats.highestRoundScore}`);
-      }
-      
-      // Update highest combo if provided and better than the previous best
-      if (gameStats.highestCombo && gameStats.highestCombo > (playerData.personalBest.highestCombo || 0)) {
-        playerData.personalBest.highestCombo = gameStats.highestCombo;
-        playerData.personalBest.highestComboDate = currentDate;
-        dataUpdated = true;
-        console.log(`Updated highest combo to ${gameStats.highestCombo}`);
+      // Update round scores if provided
+      if (gameStats.roundScores) {
+        for (const [roundNumber, score] of Object.entries(gameStats.roundScores)) {
+          const roundNum = parseInt(roundNumber);
+          if (isNaN(roundNum) || score <= 0) continue;
+          
+          // Get current best for this round
+          const currentBest = playerData.personalBest.roundScores[roundNum]?.score || 0;
+          
+          // Only update if new score is better
+          if (score > currentBest) {
+            playerData.personalBest.roundScores[roundNum] = {
+              score: score,
+              date: currentDate
+            };
+            dataUpdated = true;
+            console.log(`Updated round ${roundNum} score to ${score}`);
+          }
+        }
       }
       
       // Update the main date field only if any records were broken

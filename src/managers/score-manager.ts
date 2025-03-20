@@ -204,8 +204,20 @@ export class ScoreManager extends Entity {
         // Check the actual player count to infer game mode
         const gameMode = this.playerStats.size <= 1 ? 'solo' : 'multiplayer';
             
+        // Get the total number of rounds from the round manager if possible
+        let totalRounds = 3; // Default if we can't determine
+        try {
+            // Try to get the total number of rounds from the round manager
+            const roundManager = (this.world as any).roundManager;
+            if (roundManager && roundManager.config && roundManager.config.totalRounds) {
+                totalRounds = roundManager.config.totalRounds;
+            }
+        } catch (e) {
+            console.warn("Could not determine total rounds:", e);
+        }
+            
         // Update the leaderboard (this is async and won't block)
-        leaderboardManager.updateWithRoundScores(roundScores, currentRound, gameMode)
+        leaderboardManager.updateWithRoundScores(roundScores, currentRound, totalRounds, gameMode)
             .catch(error => console.error("Error updating leaderboard:", error));
     }
 
