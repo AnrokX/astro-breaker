@@ -110,15 +110,17 @@
       top: 100px;
       left: 40px;
       background: rgba(0, 0, 0, 0.7);
-      padding: 15px;
-      border-radius: 8px;
+      padding: 18px;
+      border-radius: 10px;
       color: #ffffff;
       font-family: var(--text-font);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-      min-width: 260px;
+      min-width: 312px;
       z-index: 100;
+      transform: scale(1.2);
+      transform-origin: top left;
       will-change: transform; /* Optimize for performance */
       transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), 
                   opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1);
@@ -126,7 +128,7 @@
     }
 
     .scoreboard.hidden {
-      transform: translateX(-120%);
+      transform: translateX(-120%) scale(1.2);
       opacity: 0;
       pointer-events: none;
     }
@@ -515,10 +517,10 @@
 
     .scores-title {
       font-family: var(--title-font);
-      font-size: 20px;
+      font-size: 24px;
       color: #ffffff;
-      margin-bottom: 15px;
-      padding-bottom: 8px;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
       text-align: center;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -550,10 +552,10 @@
       justify-content: space-between;
       align-items: center;
       background: rgba(0, 0, 0, 0.3);
-      margin: 6px 0;
-      padding: 10px 12px;
-      border-radius: 4px;
-      border-left: 3px solid transparent;
+      margin: 7px 0;
+      padding: 12px 14px;
+      border-radius: 5px;
+      border-left: 4px solid transparent;
       transition: background 0.2s ease, transform 0.3s ease, opacity 0.3s ease;
       position: relative;
       opacity: 1;
@@ -591,17 +593,17 @@
     }
     
     .player-label {
-      font-size: 16px;
+      font-size: 19px;
       letter-spacing: 0.5px;
       text-shadow: none;
     }
     
     .player-you-tag {
-      font-size: 10px;
+      font-size: 12px;
       background: rgba(255, 255, 255, 0.15);
-      padding: 1px 4px;
-      border-radius: 2px;
-      margin-left: 5px;
+      padding: 2px 5px;
+      border-radius: 3px;
+      margin-left: 6px;
       color: white;
       font-weight: bold;
     }
@@ -610,23 +612,23 @@
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .score-value {
       font-family: var(--number-font);
-      font-size: 22px;
-      letter-spacing: 0.5px;
+      font-size: 26px;
+      letter-spacing: 0.6px;
       font-weight: bold;
       position: relative;
     }
     
     .round-score {
-      font-size: 16px;
+      font-size: 19px;
       opacity: 0.7;
       color: rgba(255, 255, 255, 0.8);
       animation: pulseScore 1.5s ease-out;
-      margin-left: 4px;
+      margin-left: 5px;
     }
     
     @keyframes pulseScore {
