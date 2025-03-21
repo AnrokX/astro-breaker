@@ -42,8 +42,8 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     // Round 3 - 100% Sine Wave
     3: {
         duration: 10000,  // 10 seconds (was 30000)
-        minBlockCount: 3,
-        maxBlockCount: 6,
+        minBlockCount: 1,  // Reduced from 3 to 1 (50% reduction)
+        maxBlockCount: 3,  // Reduced from 6 to 3 (50% reduction)
         blockSpawnInterval: 500,
         speedMultiplier: 0.65,
         blockTypes: {
@@ -61,8 +61,8 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     // Round 4 - 100% Vertical Wave
     4: {
         duration: 10000,  // 10 seconds (was 25000)
-        minBlockCount: 2,
-        maxBlockCount: 6,
+        minBlockCount: 1,  // Reduced from 2 to 1 (50% reduction)
+        maxBlockCount: 3,  // Reduced from 6 to 3 (50% reduction)
         blockSpawnInterval: 500,
         speedMultiplier: 0.7,
         blockTypes: {
@@ -80,8 +80,8 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     // Round 5 - 100% Parabolic
     5: {
         duration: 10000,  // 10 seconds (was 25000)
-        minBlockCount: 2,
-        maxBlockCount: 4,
+        minBlockCount: 1,  // Reduced from 2 to 1 (50% reduction)
+        maxBlockCount: 2,  // Reduced from 4 to 2 (50% reduction)
         blockSpawnInterval: 500,
         speedMultiplier: 0.85,
         blockTypes: {
