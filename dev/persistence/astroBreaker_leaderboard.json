@@ -74,9 +74,10 @@
     {
       "playerName": "player-1",
       "playerId": "player-1",
-      "roundScore": 7,
+      "roundScore": 8,
       "roundNumber": 1,
-      "date": "2025-03-20T05:15:18.527Z"
+      "date": "2025-03-21T01:37:55.699Z",
+      "gameMode": "solo"
     }
   ]
 }

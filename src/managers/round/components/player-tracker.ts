@@ -74,6 +74,20 @@ export class PlayerTracker {
       }
     }
     
+    // If a second player joins and the UI is showing, hide it
+    if (currentPlayerCount === 2 && this.previousPlayerCount === 1 && this.hasShownModeSelection) {
+      // Hide the waiting UI since another player joined
+      const firstPlayer = this.world.entityManager.getAllPlayerEntities()[0]?.player;
+      if (firstPlayer) {
+        console.log('Second player joined, hiding waiting for player UI');
+        
+        // Send message to hide the UI
+        firstPlayer.ui.sendData({
+          type: 'hideGameModeSelection'
+        });
+      }
+    }
+    
     this.previousPlayerCount = currentPlayerCount;
   }
 
@@ -127,6 +141,9 @@ export class PlayerTracker {
   
   // Reset the mode selection shown flag for a new game
   public resetModeSelection(): void {
-    this.hasShownModeSelection = false;
+    // Only reset if there's exactly one player, otherwise keep it dismissed
+    if (this.getPlayerCount() === 1) {
+      this.hasShownModeSelection = false;
+    }
   }
 }

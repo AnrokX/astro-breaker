@@ -2209,6 +2209,9 @@ hytopia.onData(data => {
   } else if (data.type === 'showModeSelection') {
     console.log('Received showModeSelection event from server, showing game mode selection UI');
     showGameModeSelection();
+  } else if (data.type === 'hideGameModeSelection') {
+    console.log('Received hideGameModeSelection event from server, hiding game mode selection UI');
+    hideGameModeSelection();
   } else if (data.type === 'systemMessage') {
     // Display system message
     showSystemMessage(data.message, data.color || 'FFFFFF');
@@ -3047,6 +3050,18 @@ function hideGameModeSelection() {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Setting up game mode buttons...');
   const soloButton = document.getElementById('solo-mode');
+  const dismissButton = document.getElementById('dismiss-mode-selection');
+  
+  if (dismissButton) {
+    console.log('Dismiss button found, adding click handler');
+    dismissButton.addEventListener('click', function() {
+      console.log('Dismiss button clicked');
+      // Just hide the selection UI
+      hideGameModeSelection();
+    });
+  } else {
+    console.log('Dismiss button not found!');
+  }
   
   if (soloButton) {
     console.log('Solo button found, adding click handler');
@@ -3092,7 +3107,7 @@ hytopia.onData(data => {
 
 // Global keyboard shortcuts for mode selection
 document.addEventListener('keydown', (e) => {
-  // Process "1" key press regardless of mode selection visibility
+  // Process "1" key press to activate solo mode
   if (e.key === '1') {
     console.log('🎮 KEY PRESSED: "1" - Activating solo mode');
     e.preventDefault(); // Prevent any default behavior
@@ -3118,6 +3133,29 @@ document.addEventListener('keydown', (e) => {
       type: 'modeSelection',
       mode: 'solo'
     });
+    
+    return false; // Prevent default and stop propagation
+  }
+  
+  // Process "2" key press to dismiss the mode selection UI
+  else if (e.key === '2') {
+    console.log('🎮 KEY PRESSED: "2" - Dismissing mode selection');
+    e.preventDefault(); // Prevent any default behavior
+    
+    // Add flash effect to the dismiss button if visible
+    const dismissButton = document.getElementById('dismiss-mode-selection');
+    if (dismissButton) {
+      dismissButton.style.opacity = '1';
+      setTimeout(() => {
+        dismissButton.style.opacity = '0.7';
+      }, 200);
+    }
+    
+    // Hide the selection UI if it's visible
+    const modeSelectionElement = document.getElementById('game-mode-selection');
+    if (modeSelectionElement && modeSelectionElement.style.display === 'block') {
+      hideGameModeSelection();
+    }
     
     return false; // Prevent default and stop propagation
   }
@@ -3172,6 +3210,7 @@ function showSystemMessage(message, color = 'FFFFFF') {
     <button id="solo-mode" style="display: flex; flex-direction: column; align-items: center; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 30px 50px; min-width: 350px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);">
       <div class="button-main-text" style="font-size: 42px; font-weight: bold; color: #ffffff; margin-bottom: 15px;">START SOLO</div>
       <div style="font-family: var(--text-font); font-size: 24px; color: #ffffff; opacity: 0.8;">PRESS 1 TO START</div>
+      <div id="dismiss-mode-selection" style="font-family: var(--text-font); font-size: 18px; color: #ffffff; opacity: 0.7; cursor: pointer; margin-top: 15px;">PRESS 2 TO DISMISS</div>
     </button>
   </div>
 </div>
