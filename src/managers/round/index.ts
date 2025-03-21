@@ -463,6 +463,7 @@ export class RoundManager {
         playerNumber,
         playerColor,
         placementPoints: this.scoreManager.getLeaderboardPoints(playerId),
+        wins: this.scoreManager.getWins(playerId),
         totalScore: this.scoreManager.getScore(playerId)
       });
     });
