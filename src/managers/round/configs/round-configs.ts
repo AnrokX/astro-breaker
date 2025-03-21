@@ -151,43 +151,5 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
             parabolic: 0,
             pendulum: 1.0
         }
-    },
-
-    // Round 9 - "Up and Down" Mix (Vertical Wave, Rising, and Popup)
-    9: {
-        duration: 10000,  // 10 seconds (was 30000)
-        minBlockCount: 2,
-        maxBlockCount: 6,
-        blockSpawnInterval: 500,
-        speedMultiplier: 0.95,
-        blockTypes: {
-            normal: 0,
-            sineWave: 0,
-            static: 0,
-            verticalWave: 0.4,  // 40% vertical wave
-            popup: 0.3,         // 30% popup
-            rising: 0.3,        // 30% rising
-            parabolic: 0,
-            pendulum: 0
-        }
-    },
-
-    // Round 10 - "Chaos" Mix (Pendulum, Parabolic, and Sine Wave)
-    10: {
-        duration: 10000,  // 10 seconds (was 30000)
-        minBlockCount: 4,
-        maxBlockCount: 6,
-        blockSpawnInterval: 500,
-        speedMultiplier: 1.0,
-        blockTypes: {
-            normal: 0,
-            sineWave: 0.3,     // 30% sine wave
-            static: 0,
-            verticalWave: 0,
-            popup: 0,
-            rising: 0,
-            parabolic: 0.4,    // 40% parabolic
-            pendulum: 0.3      // 30% pendulum
-        }
     }
 };

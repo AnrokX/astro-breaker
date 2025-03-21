@@ -50,8 +50,8 @@ describe('RoundUI', () => {
   test('displayRoundInfo should send round update to all players', () => {
     // Set up test data
     const round = 1;
-    const totalRounds = 10;
-    const remainingRounds = 9;
+    const totalRounds = 8;
+    const remainingRounds = 7;
     const remainingTime = 60000;
     
     // Call method
@@ -75,7 +75,7 @@ describe('RoundUI', () => {
   test('displayRoundEnd should send round end information to all players', () => {
     // Set up test data
     const round = 1;
-    const totalRounds = 10;
+    const totalRounds = 8;
     const winnerId = 'player1';
     const placements: RoundEndPlacement[] = [
       { playerId: 'player1', points: 100, playerNumber: 1, playerColor: '#FF0000' },
@@ -186,7 +186,7 @@ describe('RoundUI', () => {
         currentPlayerId: 'player1',
         nextGameIn: 10000,
         stats: {
-          totalRounds: 10,
+          totalRounds: 8,
           completedRounds: 8
         },
         isSoloMode: false
@@ -238,7 +238,7 @@ describe('RoundUI', () => {
         currentPlayerId: 'player1',
         nextGameIn: 5000,
         stats: {
-          totalRounds: 10,
+          totalRounds: 8,
           completedRounds: 8
         },
         isSoloMode: true

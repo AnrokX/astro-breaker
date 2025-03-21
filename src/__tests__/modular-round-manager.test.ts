@@ -92,7 +92,7 @@ describe('Modular RoundManager Integration', () => {
       ui,
       scoreManager,
       {
-        maxRounds: 10,
+        maxRounds: 8,
         requiredPlayers: 2,
         transitionDuration: 3000
       }
