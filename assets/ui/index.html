@@ -2901,12 +2901,22 @@ function showGameEnd(data) {
     // Get winner details
     const winnerPlayerNumber = data.winner.playerNumber || 1;
     const winnerColor = data.winner.playerColor || '#FFD700';
+    const isCurrentPlayerWinner = data.winner.playerId === data.currentPlayerId;
     
     // Style winner announcement with winner's color
-    winnerAnnouncement.innerHTML = `
-        <span class="player-avatar large" style="background-color: ${winnerColor}"></span>
-        <span style="color: ${winnerColor}">Player ${winnerPlayerNumber}</span> Wins!
-    `;
+    if (isCurrentPlayerWinner) {
+        // Show "Victory! You won the game!" when current player is winner
+        winnerAnnouncement.innerHTML = `
+            <span class="player-avatar large" style="background-color: ${winnerColor}"></span>
+            <span style="color: ${winnerColor}">Victory! You won the game!</span>
+        `;
+    } else {
+        // Show regular message for other players
+        winnerAnnouncement.innerHTML = `
+            <span class="player-avatar large" style="background-color: ${winnerColor}"></span>
+            <span style="color: ${winnerColor}">Player ${winnerPlayerNumber}</span> Wins!
+        `;
+    }
     winnerAnnouncement.style.textShadow = `0 0 15px ${winnerColor}`;
     
     // Show standings
