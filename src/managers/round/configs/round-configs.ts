@@ -77,47 +77,9 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
         }
     },
 
-    // Round 5 - 100% Pop-up
+    // Round 5 - 100% Parabolic
     5: {
         duration: 10000,  // 10 seconds (was 25000)
-        minBlockCount: 2,
-        maxBlockCount: 4,
-        blockSpawnInterval: 500,
-        speedMultiplier: 0.75,
-        blockTypes: {
-            normal: 0,
-            sineWave: 0,
-            static: 0,
-            verticalWave: 0,
-            popup: 1.0,
-            rising: 0,
-            parabolic: 0,
-            pendulum: 0
-        }
-    },
-
-    // Round 6 - 100% Rising
-    6: {
-        duration: 10000,  // 10 seconds (was 25000)
-        minBlockCount: 2,
-        maxBlockCount: 4,
-        blockSpawnInterval: 500,
-        speedMultiplier: 0.8,
-        blockTypes: {
-            normal: 0,
-            sineWave: 0,
-            static: 0,
-            verticalWave: 0,
-            popup: 0,
-            rising: 1.0,
-            parabolic: 0,
-            pendulum: 0
-        }
-    },
-
-    // Round 7 - 100% Parabolic
-    7: {
-        duration: 10000,  // 10 seconds (was 30000)
         minBlockCount: 2,
         maxBlockCount: 4,
         blockSpawnInterval: 500,
@@ -131,25 +93,6 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
             rising: 0,
             parabolic: 1.0,
             pendulum: 0
-        }
-    },
-
-    // Round 8 - 100% Pendulum
-    8: {
-        duration: 10000,  // 10 seconds (was 30000)
-        minBlockCount: 2,
-        maxBlockCount: 4,
-        blockSpawnInterval: 500,
-        speedMultiplier: 0.9,
-        blockTypes: {
-            normal: 0,
-            sineWave: 0,
-            static: 0,
-            verticalWave: 0,
-            popup: 0,
-            rising: 0,
-            parabolic: 0,
-            pendulum: 1.0
         }
     }
 };

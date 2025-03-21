@@ -3780,8 +3780,8 @@ function modeMultiplayer() {
       .join('');
       
     // Populate round selector based on total rounds
-    // Use at least 8 rounds since we know the game has 8 rounds
-    populateRoundSelector(Math.max(data.totalRounds || 8, 8));
+    // Use at least 5 rounds since we know the game has 5 rounds
+    populateRoundSelector(Math.max(data.totalRounds || 5, 5));
     
     // Display round scores
     displayRoundScores(1, data.roundHighScores); // Default to round 1
@@ -3797,8 +3797,8 @@ function modeMultiplayer() {
     // Clear existing options
     selector.innerHTML = '';
     
-    // Ensure totalRounds is at least 8 (the default max rounds)
-    const maxRounds = Math.max(totalRounds || 8, 8);
+    // Ensure totalRounds is at least 5 (the default max rounds)
+    const maxRounds = Math.max(totalRounds || 5, 5);
     
     // Create an option for each round
     for (let i = 1; i <= maxRounds; i++) {

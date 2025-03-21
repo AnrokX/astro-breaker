@@ -64,7 +64,7 @@ const roundManager = new RoundManager(
   playerTracker,
   ui,
   scoreManager,
-  { maxRounds: 8, requiredPlayers: 2 }
+  { maxRounds: 5, requiredPlayers: 2 }
 );
 
 // Start a round

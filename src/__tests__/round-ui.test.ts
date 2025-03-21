@@ -50,8 +50,8 @@ describe('RoundUI', () => {
   test('displayRoundInfo should send round update to all players', () => {
     // Set up test data
     const round = 1;
-    const totalRounds = 8;
-    const remainingRounds = 7;
+    const totalRounds = 5;
+    const remainingRounds = 4;
     const remainingTime = 60000;
     
     // Call method
@@ -75,7 +75,7 @@ describe('RoundUI', () => {
   test('displayRoundEnd should send round end information to all players', () => {
     // Set up test data
     const round = 1;
-    const totalRounds = 8;
+    const totalRounds = 5;
     const winnerId = 'player1';
     const placements: RoundEndPlacement[] = [
       { playerId: 'player1', points: 100, playerNumber: 1, playerColor: '#FF0000' },
@@ -175,7 +175,7 @@ describe('RoundUI', () => {
     ];
     
     // Call method
-    roundUI.displayGameEnd(winner, standings, 10, 8, 10000);
+    roundUI.displayGameEnd(winner, standings, 10, 5, 10000);
     
     // Verify all players got the game end message with their ID
     expect(mockPlayerEntities[0].player.ui.sendData).toHaveBeenCalledWith({
@@ -186,8 +186,8 @@ describe('RoundUI', () => {
         currentPlayerId: 'player1',
         nextGameIn: 10000,
         stats: {
-          totalRounds: 8,
-          completedRounds: 8
+          totalRounds: 5,
+          completedRounds: 5
         },
         isSoloMode: false
       }
@@ -227,7 +227,7 @@ describe('RoundUI', () => {
     const standings: GameEndStanding[] = [winner];
     
     // Call method
-    soloRoundUI.displayGameEnd(winner, standings, 10, 8, 5000);
+    soloRoundUI.displayGameEnd(winner, standings, 10, 5, 5000);
     
     // Verify game end message includes solo mode flag
     expect(mockPlayerEntities[0].player.ui.sendData).toHaveBeenCalledWith({
@@ -238,8 +238,8 @@ describe('RoundUI', () => {
         currentPlayerId: 'player1',
         nextGameIn: 5000,
         stats: {
-          totalRounds: 8,
-          completedRounds: 8
+          totalRounds: 5,
+          completedRounds: 5
         },
         isSoloMode: true
       }

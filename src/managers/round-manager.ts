@@ -44,7 +44,7 @@ export class RoundManager {
   private world: World;
   
   // Properties needed for backward compatibility with tests
-  public GAME_CONFIG = { maxRounds: 8 };
+  public GAME_CONFIG = { maxRounds: 5 };
   public roundTransitionPending = false;
   public roundTimer: NodeJS.Timeout | null = null;
   public blockSpawnTimer: NodeJS.Timeout | null = null;
@@ -95,7 +95,7 @@ export class RoundManager {
       this.ui, 
       scoreManager,
       {
-        maxRounds: 8,
+        maxRounds: 5,
         requiredPlayers: requiredPlayers,
         transitionDuration,
         gameMode: gameMode || 'multiplayer'
