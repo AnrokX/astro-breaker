@@ -33,13 +33,13 @@ export class ScoreManager extends Entity {
     MIN_SCORE: 5,                   // Increased minimum score for better feedback
     
     // Movement multipliers adjusted for progression
-    BASE_MOVEMENT_MULTIPLIER: 1.0,   // Base for static targets
+    BASE_MOVEMENT_MULTIPLIER: 0.5,   // Reduced by 50% (Static blocks in Round 1)
     Z_AXIS_MULTIPLIER: 4.0,         // New multiplier for Z-Axis blocks
     SINE_WAVE_MULTIPLIER: 3.0,      // Reduced from 2.5 for better scaling
-    VERTICAL_WAVE_MULTIPLIER: 3.0,   // Reduced from 3.0
+    VERTICAL_WAVE_MULTIPLIER: 3.75,  // Increased by 25% (Vertical Wave blocks in Round 4)
     POPUP_MULTIPLIER: 4.0,          // Reduced from 3.5
     RISING_MULTIPLIER: 5.5,         // Reduced from 4.0
-    PARABOLIC_MULTIPLIER: 6.0,      // Reduced from 4.5
+    PARABOLIC_MULTIPLIER: 15.0,     // Increased by 150% (Parabolic blocks in Round 5)
     PENDULUM_MULTIPLIER: 5.0,       // Added for pendulum targets
     
     // Combo system adjusted for early game
