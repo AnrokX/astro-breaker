@@ -275,6 +275,10 @@
       display: none;
     }
     
+    .player-avatar.large {
+      display: none;
+    }
+    
     .rank-change {
       font-size: 12px;
       margin: 0 4px;
@@ -1153,11 +1157,7 @@
     }
     
     .round-end-placement .player-avatar {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      display: inline-block;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+      display: none;
     }
 
     .placement-rank {
@@ -1363,6 +1363,50 @@
     .standing-entry.winner {
         background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, transparent 100%);
         border: 1px solid #ffd700;
+    }
+    
+    .medal {
+        font-size: 24px;
+        margin: 0 6px;
+        display: inline-block;
+        transform-origin: center;
+        animation: medalPulse 2s infinite alternate;
+        filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.5));
+    }
+    
+    .medal.gold {
+        animation: goldMedalShine 3s infinite;
+    }
+    
+    .medal.silver {
+        animation: silverMedalShine 3s infinite;
+    }
+    
+    .medal.bronze {
+        animation: bronzeMedalShine 3s infinite;
+    }
+    
+    @keyframes medalPulse {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.1); }
+    }
+    
+    @keyframes goldMedalShine {
+        0% { filter: drop-shadow(0px 0px 3px rgba(255, 215, 0, 0.5)); }
+        50% { filter: drop-shadow(0px 0px 10px rgba(255, 215, 0, 0.8)); }
+        100% { filter: drop-shadow(0px 0px 3px rgba(255, 215, 0, 0.5)); }
+    }
+    
+    @keyframes silverMedalShine {
+        0% { filter: drop-shadow(0px 0px 3px rgba(192, 192, 192, 0.5)); }
+        50% { filter: drop-shadow(0px 0px 10px rgba(192, 192, 192, 0.8)); }
+        100% { filter: drop-shadow(0px 0px 3px rgba(192, 192, 192, 0.5)); }
+    }
+    
+    @keyframes bronzeMedalShine {
+        0% { filter: drop-shadow(0px 0px 3px rgba(205, 127, 50, 0.5)); }
+        50% { filter: drop-shadow(0px 0px 10px rgba(205, 127, 50, 0.8)); }
+        100% { filter: drop-shadow(0px 0px 3px rgba(205, 127, 50, 0.5)); }
     }
 
     .standing-position {
@@ -2404,7 +2448,6 @@ function handleRoundEnd(data) {
         placementDiv.innerHTML = `
           <div class="player-info">
             <span class="placement-rank" style="color: ${playerColor}">#${index + 1}</span>
-            <span class="player-avatar" style="background-color: ${playerColor}"></span>
             <span class="player-name" style="color: ${playerColor}">Player ${placement.playerNumber}</span>
             ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
           </div>
@@ -2496,7 +2539,6 @@ function updateScoreboard(scores) {
     // Build score display - total score and last earned score
     playerDiv.innerHTML = `
       <div class="player-indicator">
-        <span class="player-avatar" style="background-color: ${playerColor}"></span>
         <span class="player-label" style="color: ${playerColor}">Player ${score.playerNumber}</span>
         ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
       </div>
@@ -2907,13 +2949,11 @@ function showGameEnd(data) {
     if (isCurrentPlayerWinner) {
         // Show "Victory! You won the game!" when current player is winner
         winnerAnnouncement.innerHTML = `
-            <span class="player-avatar large" style="background-color: ${winnerColor}"></span>
             <span style="color: ${winnerColor}">Victory! You won the game!</span>
         `;
     } else {
         // Show regular message for other players
         winnerAnnouncement.innerHTML = `
-            <span class="player-avatar large" style="background-color: ${winnerColor}"></span>
             <span style="color: ${winnerColor}">Player ${winnerPlayerNumber}</span> Wins!
         `;
     }
@@ -2935,10 +2975,20 @@ function showGameEnd(data) {
             entry.style.boxShadow = `0 0 8px ${playerColor}`;
         }
         
+        // Create medal element based on position
+        let medalHtml = '';
+        if (index === 0) {
+            medalHtml = `<span class="medal gold" title="1st Place">🥇</span>`;
+        } else if (index === 1) {
+            medalHtml = `<span class="medal silver" title="2nd Place">🥈</span>`;
+        } else if (index === 2) {
+            medalHtml = `<span class="medal bronze" title="3rd Place">🥉</span>`;
+        }
+        
         entry.innerHTML = `
             <div class="player-info standing-player-info">
                 <span class="standing-position" style="color: ${playerColor}">#${index + 1}</span>
-                <span class="player-avatar" style="background-color: ${playerColor}"></span>
+                ${medalHtml}
                 <span class="player-name" style="color: ${playerColor}">Player ${standing.playerNumber}</span>
                 ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
             </div>
