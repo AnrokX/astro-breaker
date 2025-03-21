@@ -3306,6 +3306,12 @@ function modeMultiplayer() {
     </div>
     
     <h3>Round High Scores</h3>
+    <div class="round-selector personal-round-selector">
+      <label for="personal-round-select">Select Round:</label>
+      <select id="personal-round-select">
+        <!-- Dynamically populated based on total rounds -->
+      </select>
+    </div>
     <div id="personal-round-scores" class="personal-rounds">
       <!-- Dynamically populated -->
     </div>
@@ -3508,6 +3514,19 @@ function modeMultiplayer() {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 15px;
     margin: 15px 0 30px 0;
+  }
+  
+  .personal-round-selector {
+    margin-top: 5px;
+    margin-bottom: 15px;
+  }
+  
+  .no-scores-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
   }
   
   .round-score {
@@ -3843,33 +3862,160 @@ function modeMultiplayer() {
 
   function displayPersonalStats(data) {
     // Update personal total score
-    document.getElementById('personal-total-score').textContent = data.personalBest.totalScore;
+    document.getElementById('personal-total-score').textContent = data.personalBest.totalScore || 0;
     
-    // Display individual round scores
+    // If roundScores object is empty, try to check global leaderboard for this player's scores
+    // This is a temporary client-side fix until the server properly syncs the data
+    const playerRoundScores = data.personalBest.roundScores || {};
+    let roundScoresToUse = playerRoundScores;
+    
+    // If we have access to the global leaderboard data and personal round scores are empty
+    if (window.leaderboardData && 
+        window.leaderboardData.roundHighScores && 
+        Object.keys(playerRoundScores).length === 0) {
+      
+      console.log("Personal round scores empty, trying to use global leaderboard data");
+      
+      // Get current player ID - infer from the data if possible
+      const playerId = data.playerId || (data.personalId ? String(data.personalId) : null);
+      
+      if (playerId) {
+        // Create a synthetic roundScores object from the global leaderboard
+        const syntheticRoundScores = {};
+        
+        window.leaderboardData.roundHighScores
+          .filter(entry => entry.playerId === playerId)
+          .forEach(entry => {
+            const roundNum = entry.roundNumber;
+            // Only add if this round isn't already in the personal bests
+            if (!playerRoundScores[roundNum]) {
+              syntheticRoundScores[roundNum] = {
+                score: entry.roundScore,
+                date: entry.date
+              };
+            }
+          });
+        
+        // If we found any scores for this player
+        if (Object.keys(syntheticRoundScores).length > 0) {
+          console.log("Using synthetic round scores from global leaderboard:", syntheticRoundScores);
+          roundScoresToUse = syntheticRoundScores;
+        }
+      }
+    }
+    
+    // Store data globally for personal round selector access
+    window.personalRoundData = roundScoresToUse;
+    
+    // Populate the personal round selector
+    populatePersonalRoundSelector(roundScoresToUse);
+    
+    // Display round scores based on selection or default to showing all
+    const personalRoundSelect = document.getElementById('personal-round-select');
+    const selectedRound = personalRoundSelect.value === 'all' 
+      ? 'all' 
+      : parseInt(personalRoundSelect.value);
+    
+    displayPersonalRoundScores(selectedRound, roundScoresToUse);
+    
+    // Update games played
+    document.getElementById('personal-games-played').textContent = data.gamesPlayed || 0;
+  }
+  
+  // Function to populate the personal round selector
+  function populatePersonalRoundSelector(roundScores) {
+    const selector = document.getElementById('personal-round-select');
+    
+    // Save current selection if any
+    const currentSelection = selector.value || 'all';
+    
+    // Clear existing options
+    selector.innerHTML = '';
+    
+    // Add "All Rounds" option
+    const allOption = document.createElement('option');
+    allOption.value = 'all';
+    allOption.textContent = 'All Rounds';
+    selector.appendChild(allOption);
+    
+    // Sort round numbers numerically
+    const roundNumbers = Object.keys(roundScores)
+      .map(Number)
+      .sort((a, b) => a - b);
+    
+    // Create an option for each round that has a score
+    roundNumbers.forEach(roundNum => {
+      const option = document.createElement('option');
+      option.value = roundNum.toString();
+      option.textContent = `Round ${roundNum}`;
+      selector.appendChild(option);
+    });
+    
+    // Restore selection if valid, otherwise select "All Rounds"
+    if (currentSelection === 'all') {
+      selector.value = 'all';
+    } else {
+      const roundNum = parseInt(currentSelection);
+      if (!isNaN(roundNum) && roundNumbers.includes(roundNum)) {
+        selector.value = roundNum.toString();
+      } else {
+        selector.value = 'all';
+      }
+    }
+    
+    // Add event listener to update displayed scores when selection changes
+    selector.addEventListener('change', () => {
+      const selected = selector.value === 'all' ? 'all' : parseInt(selector.value);
+      displayPersonalRoundScores(selected, window.personalRoundData);
+    });
+  }
+  
+  // Function to display personal round scores based on selection
+  function displayPersonalRoundScores(selectedRound, roundScores) {
     const roundScoresContainer = document.getElementById('personal-round-scores');
     roundScoresContainer.innerHTML = '';
     
-    if (data.personalBest.roundScores) {
-      // Sort round numbers numerically
-      const roundNumbers = Object.keys(data.personalBest.roundScores)
-        .map(Number)
-        .sort((a, b) => a - b);
-      
-      // Display each round score
-      roundNumbers.forEach(round => {
-        const scoreData = data.personalBest.roundScores[round];
-        roundScoresContainer.innerHTML += `
-          <div class="round-score">
-            <div class="round-label">Round ${round}</div>
-            <div class="round-value">${scoreData.score}</div>
-            <div class="round-date">${new Date(scoreData.date).toLocaleDateString()}</div>
-          </div>
-        `;
-      });
+    if (!roundScores || Object.keys(roundScores).length === 0) {
+      roundScoresContainer.innerHTML = `
+        <div class="no-scores-message">
+          No round scores available
+        </div>
+      `;
+      return;
     }
     
-    // Update games played
-    document.getElementById('personal-games-played').textContent = data.gamesPlayed;
+    // Get round numbers to display
+    let roundsToDisplay = [];
+    if (selectedRound === 'all') {
+      // Display all rounds
+      roundsToDisplay = Object.keys(roundScores).map(Number).sort((a, b) => a - b);
+    } else {
+      // Display only the selected round if it exists
+      if (roundScores[selectedRound]) {
+        roundsToDisplay = [selectedRound];
+      }
+    }
+    
+    if (roundsToDisplay.length === 0) {
+      roundScoresContainer.innerHTML = `
+        <div class="no-scores-message">
+          No scores available for Round ${selectedRound}
+        </div>
+      `;
+      return;
+    }
+    
+    // Display each round score
+    roundsToDisplay.forEach(round => {
+      const scoreData = roundScores[round];
+      roundScoresContainer.innerHTML += `
+        <div class="round-score">
+          <div class="round-label">Round ${round}</div>
+          <div class="round-value">${scoreData.score}</div>
+          <div class="round-date">${new Date(scoreData.date).toLocaleDateString()}</div>
+        </div>
+      `;
+    });
   }
 </script>
 

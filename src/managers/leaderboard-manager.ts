@@ -691,7 +691,33 @@ export class LeaderboardManager {
         console.log(`Updated total score to ${gameStats.totalScore} (provided score)`);
       }
       
-      // Update round scores if provided
+      // Try to sync round scores from global leaderboard
+      try {
+        const leaderboard = await this.getGlobalLeaderboard();
+        const playerRoundEntries = leaderboard.roundHighScores.filter(entry => entry.playerId === player.id);
+        
+        // Update personal best round scores from global leaderboard entries
+        for (const entry of playerRoundEntries) {
+          const roundNum = entry.roundNumber;
+          const score = entry.roundScore;
+          
+          // Get current best for this round
+          const currentBest = playerData.personalBest.roundScores[roundNum]?.score || 0;
+          
+          // Only update if global score is better than personal best
+          if (score > currentBest) {
+            playerData.personalBest.roundScores[roundNum] = {
+              score: score,
+              date: entry.date || currentDate
+            };
+            console.log(`Synced round ${roundNum} score to ${score} from global leaderboard`);
+          }
+        }
+      } catch (e) {
+        console.error("Error syncing round scores from global leaderboard:", e);
+      }
+      
+      // Update round scores if explicitly provided in gameStats
       if (gameStats.roundScores) {
         for (const [roundNumber, score] of Object.entries(gameStats.roundScores)) {
           const roundNum = parseInt(roundNumber);
@@ -706,7 +732,7 @@ export class LeaderboardManager {
               score: score,
               date: currentDate
             };
-            console.log(`Updated round ${roundNum} score to ${score}`);
+            console.log(`Updated round ${roundNum} score to ${score} from provided gameStats`);
           }
         }
       }
