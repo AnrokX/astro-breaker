@@ -2013,7 +2013,7 @@
   });
 </script>
 
-<div class="scoreboard">
+<div class="scoreboard" style="display: none;">
   <div class="scores-wrapper">
     <div class="scores-title">Round Score</div>
     <div id="scores-container">
@@ -2223,8 +2223,18 @@ function createParticle() {
 hytopia.onData(data => {
   // Projectile count handlers removed - projectiles are now unlimited
   if (data.type === 'updateScores') {
+    // Show scoreboard when we receive scores update (active game)
+    const scoreboard = document.querySelector('.scoreboard');
+    if (scoreboard) {
+      scoreboard.style.display = 'block';
+    }
     updateScoreboard(data.scores);
   } else if (data.type === 'roundUpdate') {
+    // Show scoreboard when round is active
+    const scoreboard = document.querySelector('.scoreboard');
+    if (scoreboard) {
+      scoreboard.style.display = 'block';
+    }
     updateRoundInfo(data.data);
   } else if (data.type === 'roundEnd') {
     handleRoundEnd(data.data);
@@ -2233,6 +2243,11 @@ hytopia.onData(data => {
       timerInterval = null;
     }
   } else if (data.type === 'waitingForPlayers') {
+    // Hide scoreboard when waiting for players
+    const scoreboard = document.querySelector('.scoreboard');
+    if (scoreboard) {
+      scoreboard.style.display = 'none';
+    }
     showWaitingForPlayers(data.data);
   } else if (data.type === 'updateLeaderboard') {
     updateLeaderboard(data.leaderboard);
@@ -2245,12 +2260,22 @@ hytopia.onData(data => {
       clearTimeout(window.comboTimeout);
     }
   } else if (data.type === 'gameEnd') {
+    // Hide scoreboard when game ends
+    const scoreboard = document.querySelector('.scoreboard');
+    if (scoreboard) {
+      scoreboard.style.display = 'none';
+    }
     showGameEnd(data.data);
   } else if (data.type === 'showHitNotification') {
     showLocalHitNotification(data.data);
   } else if (data.type === 'showBlockDestroyedNotification') {
     showLocalBlockDestroyedNotification(data.data);
   } else if (data.type === 'showModeSelection') {
+    // Hide scoreboard when showing game mode selection
+    const scoreboard = document.querySelector('.scoreboard');
+    if (scoreboard) {
+      scoreboard.style.display = 'none';
+    }
     console.log('Received showModeSelection event from server, showing game mode selection UI');
     showGameModeSelection();
   } else if (data.type === 'hideGameModeSelection') {
@@ -2259,6 +2284,8 @@ hytopia.onData(data => {
   } else if (data.type === 'systemMessage') {
     // Display system message
     showSystemMessage(data.message, data.color || 'FFFFFF');
+  } else if (data.type === 'resetUI') {
+    resetUI();
   }
 });
 
@@ -2412,6 +2439,15 @@ function updateRoundInfo(roundData) {
 }
 
 function handleRoundEnd(data) {
+  // Hide the scoreboard when round ends
+  const scoreboard = document.querySelector('.scoreboard');
+  if (scoreboard) {
+    // Use a small delay to ensure scores are visible during the end animation
+    setTimeout(() => {
+      scoreboard.style.display = 'none';
+    }, data.nextRoundIn - 500); // Hide 0.5s before next round
+  }
+  
   // Only show results if it's not the final round
   if (data.round < data.totalRounds) {
     // Create and show round standings dialog
@@ -2505,6 +2541,22 @@ function handleRoundEnd(data) {
 }
 
 function updateScoreboard(scores) {
+  // Early return if scores array is empty or not defined - this handles the case when game isn't active
+  if (!scores || !Array.isArray(scores) || scores.length === 0) {
+    const scoreboard = document.querySelector('.scoreboard');
+    if (scoreboard) {
+      scoreboard.style.display = 'none';
+    }
+    return;
+  }
+
+  // Show scoreboard since we have valid scores
+  const scoreboard = document.querySelector('.scoreboard');
+  if (scoreboard) {
+    scoreboard.style.display = 'block';
+  }
+  
+  // Clear existing scores
   scoresContainer.innerHTML = '';
   const currentPlayerId = scores.currentPlayerId;
   
@@ -3257,6 +3309,33 @@ function showSystemMessage(message, color = 'FFFFFF') {
 }
 
 // Function removed - no longer needed with unlimited projectiles
+
+// Function to reset UI elements to their default state
+function resetUI() {
+  // Hide scoreboard
+  const scoreboard = document.querySelector('.scoreboard');
+  if (scoreboard) {
+    scoreboard.style.display = 'none';
+  }
+  
+  // Clear scores container
+  const scoresContainer = document.getElementById('scores-container');
+  if (scoresContainer) {
+    scoresContainer.innerHTML = '';
+  }
+  
+  // Reset game status if applicable
+  const gameStatus = document.querySelector('.game-status');
+  if (gameStatus) {
+    gameStatus.classList.remove('waiting');
+  }
+  
+  // Reset round timer display
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
 </script>
 
 <!-- Game Mode Selection Modal -->
