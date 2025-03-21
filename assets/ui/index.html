@@ -124,6 +124,39 @@
                   inset 0 0 10px rgba(255, 0, 0, 0.1);
       min-width: 240px;
       text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+      z-index: 100;
+      will-change: transform; /* Optimize for performance */
+      transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), 
+                  opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+      opacity: 1;
+    }
+
+    .scoreboard.hidden {
+      transform: translateX(-120%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @keyframes scoreboardSlideIn {
+      0% {
+        transform: translateX(-120%);
+        opacity: 0;
+      }
+      100% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes scoreboardSlideOut {
+      0% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translateX(-120%);
+        opacity: 0;
+      }
     }
 
     .leaderboard {
@@ -483,8 +516,39 @@
     }
 
     .scores-wrapper {
-      display: flex;
-      gap: 20px;
+      width: 100%;
+    }
+
+    .scores-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--blood-red);
+      border-bottom: 1px solid rgba(255, 0, 0, 0.3);
+      padding-bottom: 10px;
+      text-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+    }
+
+    /* Add animation for individual score entries */
+    .player-score {
+      animation: scoreEntryFadeIn 0.4s ease-out forwards;
+      animation-delay: calc(var(--index, 0) * 0.1s);
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    @keyframes scoreEntryFadeIn {
+      0% {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
 
     .player-score {
@@ -1899,6 +1963,12 @@
       min-width: 320px;
       margin: 10px auto;
     }
+
+    @keyframes scoreValueChanged {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); color: #ffcc00; text-shadow: 0 0 12px rgba(255, 204, 0, 0.8); }
+      100% { transform: scale(1); }
+    }
   </style>
 <!-- Scene UI Templates -->
 <template id="hit-notification-template">
@@ -2013,7 +2083,7 @@
   });
 </script>
 
-<div class="scoreboard" style="display: none;">
+<div class="scoreboard hidden">
   <div class="scores-wrapper">
     <div class="scores-title">Round Score</div>
     <div id="scores-container">
@@ -2223,18 +2293,10 @@ function createParticle() {
 hytopia.onData(data => {
   // Projectile count handlers removed - projectiles are now unlimited
   if (data.type === 'updateScores') {
-    // Show scoreboard when we receive scores update (active game)
-    const scoreboard = document.querySelector('.scoreboard');
-    if (scoreboard) {
-      scoreboard.style.display = 'block';
-    }
+    showScoreboard();
     updateScoreboard(data.scores);
   } else if (data.type === 'roundUpdate') {
-    // Show scoreboard when round is active
-    const scoreboard = document.querySelector('.scoreboard');
-    if (scoreboard) {
-      scoreboard.style.display = 'block';
-    }
+    showScoreboard();
     updateRoundInfo(data.data);
   } else if (data.type === 'roundEnd') {
     handleRoundEnd(data.data);
@@ -2243,11 +2305,7 @@ hytopia.onData(data => {
       timerInterval = null;
     }
   } else if (data.type === 'waitingForPlayers') {
-    // Hide scoreboard when waiting for players
-    const scoreboard = document.querySelector('.scoreboard');
-    if (scoreboard) {
-      scoreboard.style.display = 'none';
-    }
+    hideScoreboard();
     showWaitingForPlayers(data.data);
   } else if (data.type === 'updateLeaderboard') {
     updateLeaderboard(data.leaderboard);
@@ -2260,22 +2318,14 @@ hytopia.onData(data => {
       clearTimeout(window.comboTimeout);
     }
   } else if (data.type === 'gameEnd') {
-    // Hide scoreboard when game ends
-    const scoreboard = document.querySelector('.scoreboard');
-    if (scoreboard) {
-      scoreboard.style.display = 'none';
-    }
+    hideScoreboard();
     showGameEnd(data.data);
   } else if (data.type === 'showHitNotification') {
     showLocalHitNotification(data.data);
   } else if (data.type === 'showBlockDestroyedNotification') {
     showLocalBlockDestroyedNotification(data.data);
   } else if (data.type === 'showModeSelection') {
-    // Hide scoreboard when showing game mode selection
-    const scoreboard = document.querySelector('.scoreboard');
-    if (scoreboard) {
-      scoreboard.style.display = 'none';
-    }
+    hideScoreboard();
     console.log('Received showModeSelection event from server, showing game mode selection UI');
     showGameModeSelection();
   } else if (data.type === 'hideGameModeSelection') {
@@ -2439,14 +2489,10 @@ function updateRoundInfo(roundData) {
 }
 
 function handleRoundEnd(data) {
-  // Hide the scoreboard when round ends
-  const scoreboard = document.querySelector('.scoreboard');
-  if (scoreboard) {
-    // Use a small delay to ensure scores are visible during the end animation
-    setTimeout(() => {
-      scoreboard.style.display = 'none';
-    }, data.nextRoundIn - 500); // Hide 0.5s before next round
-  }
+  // Hide the scoreboard when round ends with a delay
+  setTimeout(() => {
+    hideScoreboard();
+  }, data.nextRoundIn - 500); // Hide 0.5s before next round
   
   // Only show results if it's not the final round
   if (data.round < data.totalRounds) {
@@ -2543,21 +2589,13 @@ function handleRoundEnd(data) {
 function updateScoreboard(scores) {
   // Early return if scores array is empty or not defined - this handles the case when game isn't active
   if (!scores || !Array.isArray(scores) || scores.length === 0) {
-    const scoreboard = document.querySelector('.scoreboard');
-    if (scoreboard) {
-      scoreboard.style.display = 'none';
-    }
+    hideScoreboard();
     return;
   }
 
   // Show scoreboard since we have valid scores
-  const scoreboard = document.querySelector('.scoreboard');
-  if (scoreboard) {
-    scoreboard.style.display = 'block';
-  }
+  showScoreboard();
   
-  // Clear existing scores
-  scoresContainer.innerHTML = '';
   const currentPlayerId = scores.currentPlayerId;
   
   // Sort scores to put current player first, then by player number
@@ -2570,37 +2608,100 @@ function updateScoreboard(scores) {
     return a.playerNumber - b.playerNumber;
   });
   
-  sortedScores.forEach((score) => {
-    const playerDiv = document.createElement('div');
-    const isCurrentPlayer = score.playerId === currentPlayerId;
-    playerDiv.className = `player-score ${isCurrentPlayer ? 'current-player' : ''}`;
+  // Get existing player divs
+  const existingPlayerDivs = Array.from(scoresContainer.querySelectorAll('.player-score'));
+  const existingPlayerIds = existingPlayerDivs.map(div => div.dataset.playerId);
+  
+  // Check if we need to rebuild the entire list
+  const playerIdsChanged = sortedScores.some(score => !existingPlayerIds.includes(score.playerId)) || 
+                           existingPlayerIds.some(id => !sortedScores.find(score => score.playerId === id));
+  
+  // If players changed, or first time loading, rebuild entire list
+  if (playerIdsChanged || existingPlayerDivs.length === 0) {
+    // Clear and rebuild entire list
+    scoresContainer.innerHTML = '';
     
-    // Use leaderboardPoints for game end, otherwise use round scoring
-    const points = score.isGameEnd ? score.leaderboardPoints : score.totalPoints;
-    const lastScore = Number(score.lastScore || 0);
-    
-    // Player icon/avatar with player color
-    const playerColor = score.playerColor || '#FFFFFF';
-    
-    // Highlight current player's score with a border
-    if (isCurrentPlayer) {
-      playerDiv.style.borderColor = playerColor;
-      playerDiv.style.boxShadow = `0 0 8px ${playerColor}`;
-    }
-    
-    // Build score display - total score and last earned score
-    playerDiv.innerHTML = `
-      <div class="player-indicator">
-        <span class="player-label" style="color: ${playerColor}">Player ${score.playerNumber}</span>
-        ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
-      </div>
-      <div class="score-info">
-        <span class="score-value" style="color: ${playerColor}">${points}</span>
-        ${!score.isGameEnd && lastScore > 0 ? `<span class="round-score" style="color: ${playerColor}">(+${lastScore})</span>` : ''}
-      </div>
-    `;
-    scoresContainer.appendChild(playerDiv);
-  });
+    sortedScores.forEach((score, index) => {
+      const playerDiv = document.createElement('div');
+      const isCurrentPlayer = score.playerId === currentPlayerId;
+      playerDiv.className = `player-score ${isCurrentPlayer ? 'current-player' : ''}`;
+      playerDiv.dataset.playerId = score.playerId;
+      
+      // Add animation delay based on index
+      playerDiv.style.setProperty('--index', index);
+      
+      // Use leaderboardPoints for game end, otherwise use round scoring
+      const points = score.isGameEnd ? score.leaderboardPoints : score.totalPoints;
+      const lastScore = Number(score.lastScore || 0);
+      
+      // Player icon/avatar with player color
+      const playerColor = score.playerColor || '#FFFFFF';
+      
+      // Highlight current player's score with a border
+      if (isCurrentPlayer) {
+        playerDiv.style.borderColor = playerColor;
+        playerDiv.style.boxShadow = `0 0 8px ${playerColor}`;
+      }
+      
+      // Build score display - total score and last earned score
+      playerDiv.innerHTML = `
+        <div class="player-indicator">
+          <span class="player-label" style="color: ${playerColor}">Player ${score.playerNumber}</span>
+          ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
+        </div>
+        <div class="score-info">
+          <span class="score-value" data-player-id="${score.playerId}" style="color: ${playerColor}">${points}</span>
+          <span class="round-score" data-player-id="${score.playerId}" style="color: ${playerColor}">
+            ${!score.isGameEnd && lastScore > 0 ? `(+${lastScore})` : ''}
+          </span>
+        </div>
+      `;
+      scoresContainer.appendChild(playerDiv);
+    });
+  } else {
+    // Just update scores without rebuilding the entire list
+    sortedScores.forEach(score => {
+      // Find score elements for this player
+      const scoreValueEl = scoresContainer.querySelector(`.score-value[data-player-id="${score.playerId}"]`);
+      const lastScoreEl = scoresContainer.querySelector(`.round-score[data-player-id="${score.playerId}"]`);
+      
+      // Update score value
+      if (scoreValueEl) {
+        const points = score.isGameEnd ? score.leaderboardPoints : score.totalPoints;
+        const currentValue = parseInt(scoreValueEl.textContent);
+        
+        // Only animate if the value has changed and is different
+        if (currentValue !== points) {
+          scoreValueEl.textContent = points;
+          
+          // Apply flash animation for changed score
+          scoreValueEl.style.animation = 'none';
+          void scoreValueEl.offsetWidth; // Trigger reflow
+          scoreValueEl.style.animation = 'scoreValueChanged 0.8s ease-out';
+        }
+      }
+      
+      // Update last score with animation if needed
+      if (lastScoreEl) {
+        const lastScore = Number(score.lastScore || 0);
+        if (!score.isGameEnd && lastScore > 0) {
+          // Check if the last score has changed
+          const currentText = lastScoreEl.textContent;
+          const newText = `(+${lastScore})`;
+          
+          if (currentText !== newText) {
+            // Apply flash animation for changed score
+            lastScoreEl.textContent = newText;
+            lastScoreEl.style.animation = 'none';
+            void lastScoreEl.offsetWidth; // Trigger reflow
+            lastScoreEl.style.animation = 'pulseScore 1.5s ease-out';
+          }
+        } else {
+          lastScoreEl.textContent = '';
+        }
+      }
+    });
+  }
 }
 
 // Track previous leaderboard state to detect changes
@@ -3312,11 +3413,8 @@ function showSystemMessage(message, color = 'FFFFFF') {
 
 // Function to reset UI elements to their default state
 function resetUI() {
-  // Hide scoreboard
-  const scoreboard = document.querySelector('.scoreboard');
-  if (scoreboard) {
-    scoreboard.style.display = 'none';
-  }
+  // Hide scoreboard with animation
+  hideScoreboard();
   
   // Clear scores container
   const scoresContainer = document.getElementById('scores-container');
@@ -3334,6 +3432,41 @@ function resetUI() {
   if (timerInterval) {
     clearInterval(timerInterval);
     timerInterval = null;
+  }
+}
+
+// Animation functions for scoreboard
+function showScoreboard() {
+  const scoreboard = document.querySelector('.scoreboard');
+  if (scoreboard) {
+    // Make sure it's in the DOM with display block
+    scoreboard.style.display = 'flex';
+    
+    // Apply the animation
+    scoreboard.style.animation = 'scoreboardSlideIn 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards';
+    
+    // Remove the hidden class after animation starts
+    setTimeout(() => {
+      scoreboard.classList.remove('hidden');
+    }, 50);
+  }
+}
+
+function hideScoreboard() {
+  const scoreboard = document.querySelector('.scoreboard');
+  if (scoreboard) {
+    // Apply the slide out animation
+    scoreboard.style.animation = 'scoreboardSlideOut 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards';
+    
+    // Add hidden class
+    scoreboard.classList.add('hidden');
+    
+    // After animation completes, set display to none
+    setTimeout(() => {
+      if (scoreboard.classList.contains('hidden')) {
+        scoreboard.style.display = 'none';
+      }
+    }, 500);
   }
 }
 </script>
