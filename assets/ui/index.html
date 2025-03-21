@@ -469,16 +469,17 @@
       transform: translateX(-50%);
       font-family: var(--display-font);
       font-size: 32px;
-      color: var(--matrix-green);
-      text-shadow: 0 0 10px var(--terminal-green);
-      background: rgba(13, 2, 8, 0.9);
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+      background: rgba(0, 0, 0, 0.7);
       padding: 15px 30px;
       border-radius: 8px;
-      border: 1px solid var(--matrix-green);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       z-index: 10000;  /* Increased z-index to ensure it's above other elements */
       text-align: center;
       min-width: 100px;
       pointer-events: none;  /* Ensure it doesn't interfere with clicking */
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
     .round-timer.warning {
@@ -1290,36 +1291,38 @@
     .game-status .round-number {
       font-family: var(--display-font);
       font-size: 32px;
-      color: var(--matrix-green);
-      text-shadow: 0 0 10px var(--terminal-green);
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
       text-align: center;
       background: rgba(13, 2, 8, 0.9);
       padding: 5px 20px;
       border-radius: 8px;
-      border: 1px solid var(--matrix-green);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       margin-bottom: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
     .game-status .round-timer {
       font-family: var(--display-font);
       font-size: 24px;
-      color: var(--blood-red);
-      text-shadow: 0 0 10px var(--glow-red);
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
       text-align: center;
-      background: rgba(13, 2, 8, 0.9);
+      background: rgba(0, 0, 0, 0.7);
       padding: 5px 15px;
       border-radius: 4px;
-      border: 1px solid var(--blood-red);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
     .game-status.waiting {
-      border-color: var(--blood-red);
+      border-color: rgba(255, 255, 255, 0.1);
     }
 
     .game-status.waiting .round-number,
     .game-status.waiting .round-timer {
-      color: var(--blood-red);
-      text-shadow: 0 0 10px var(--glow-red);
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
     }
 
     .scores-title {
