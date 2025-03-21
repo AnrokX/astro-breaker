@@ -3303,7 +3303,6 @@ function modeMultiplayer() {
     <div class="personal-total">
       <h3>Total High Score</h3>
       <div id="personal-total-score" class="stat-value">0</div>
-      <div id="personal-total-date" class="stat-date">Never</div>
     </div>
     
     <h3>Round High Scores</h3>
@@ -3499,7 +3498,7 @@ function modeMultiplayer() {
     margin-bottom: 5px;
   }
   
-  .stat-date, #personal-total-date {
+  .stat-date {
     font-size: 12px;
     color: #aaa;
   }
@@ -3845,7 +3844,6 @@ function modeMultiplayer() {
   function displayPersonalStats(data) {
     // Update personal total score
     document.getElementById('personal-total-score').textContent = data.personalBest.totalScore;
-    document.getElementById('personal-total-date').textContent = data.personalBest.date ? new Date(data.personalBest.date).toLocaleDateString() : 'Never';
     
     // Display individual round scores
     const roundScoresContainer = document.getElementById('personal-round-scores');
