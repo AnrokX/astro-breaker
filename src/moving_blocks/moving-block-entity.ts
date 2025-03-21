@@ -403,15 +403,27 @@ export class MovingBlockEntity extends Entity {
     
     // Multiply score based on movement behavior
     if (this.movementBehavior instanceof SineWaveMovement) {
-      score *= 1.5; // Sine wave blocks are harder to hit
+      // We need to check if this is a vertical wave based on position
+      const isVerticalWave = this.position.y > MOVING_BLOCK_CONFIG.VERTICAL_WAVE.HEIGHT_OFFSET;
+      
+      if (isVerticalWave) {
+        score *= MOVING_BLOCK_CONFIG.VERTICAL_WAVE.SCORE_MULTIPLIER;
+      } else {
+        score *= 1.5; // Sine wave blocks are harder to hit
+      }
     } else if (this.movementBehavior instanceof PopUpMovement) {
       score *= MOVING_BLOCK_CONFIG.POPUP_TARGET.SCORE_MULTIPLIER;
     } else if (this.movementBehavior instanceof RisingMovement) {
       score *= MOVING_BLOCK_CONFIG.RISING_TARGET.SCORE_MULTIPLIER;
     } else if (this.movementBehavior instanceof ParabolicMovement) {
       score *= MOVING_BLOCK_CONFIG.PARABOLIC_TARGET.SCORE_MULTIPLIER;
+    } else if (this.movementBehavior instanceof PendulumMovement) {
+      score *= MOVING_BLOCK_CONFIG.PENDULUM_TARGET.SCORE_MULTIPLIER;
     } else if (this.movementBehavior instanceof StaticMovement) {
       score = MOVING_BLOCK_CONFIG.STATIC_TARGET.SCORE; // Static targets have their own base score
+    } else if (this.movementBehavior instanceof DefaultBlockMovement) {
+      // Apply Z-axis multiplier to match the ScoreManager
+      score *= 1.5; // This should match SCORING_CONFIG.Z_AXIS_MULTIPLIER
     }
     
     return Math.round(score);
@@ -929,7 +941,8 @@ export class MovingBlockManager {
         onBlockBroken: () => {
             if (this.scoreManager && (block as any).playerId) {
                 const playerId = (block as any).playerId;
-                const score = MovingBlockEntity.DefaultBlockScore;
+                // Apply the Z-axis multiplier (1.5) to the base score to match the ScoreManager
+                const score = MovingBlockEntity.DefaultBlockScore * 1.5;
                 
                 this.scoreManager.addScore(playerId, score);
                 this.scoreManager.broadcastScores(this.world);
@@ -1315,8 +1328,8 @@ export class MovingBlockManager {
       onBlockBroken: () => {
         if (this.scoreManager && (block as any).playerId) {
           const playerId = (block as any).playerId;
-          // Let ScoreManager handle the scoring calculation
-          const score = MOVING_BLOCK_CONFIG.BREAK_SCORE;
+          // Apply the pendulum score multiplier consistently with other movement types
+          const score = MOVING_BLOCK_CONFIG.BREAK_SCORE * MovingBlockEntity.DefaultPendulumScoreMultiplier;
           
           this.scoreManager.addScore(playerId, score);
           this.scoreManager.broadcastScores(this.world);
