@@ -2197,6 +2197,7 @@
   <!-- Resume Button -->
   <div class="settings-option">
     <button class="settings-button" id="resume-button">Resume Game</button>
+    <button class="settings-button" id="reset-settings-button">Reset to Default</button>
   </div>
 </div>
 
@@ -3468,6 +3469,19 @@ function hideScoreboard() {
     }, 500);
   }
 }
+
+// Add reset settings button handler
+document.getElementById('reset-settings-button').addEventListener('click', () => {
+  if (confirm('Are you sure you want to reset all settings to default values?')) {
+    hytopia.sendData({ 
+      type: 'resetSettings'
+    });
+    
+    // Also close the settings menu
+    toggleSettings(false);
+    hytopia.sendData({ type: 'hideCursor' }); // Tell game to hide cursor again
+  }
+});
 </script>
 
 <!-- Game Mode Selection Modal -->

@@ -21,7 +21,7 @@ import { BlockParticleEffects } from './src/effects/block-particle-effects';
 import { TestBlockSpawner } from './src/utils/test-spawner';
 import { SceneUIManager } from './src/scene-ui/scene-ui-manager';
 import { AudioManager } from './src/managers/audio-manager';
-import { PlayerSettingsManager, UISettingsData } from './src/managers/player-settings-manager';
+import { PlayerSettingsManager, UISettingsData, PlayerSettings } from './src/managers/player-settings-manager';
 import { LeaderboardManager } from './src/managers/leaderboard-manager';
 // Import test utilities
 import { addLeaderboardTestToMainMenu } from './src/__tests__/run-leaderboard-tests';
@@ -250,7 +250,20 @@ startServer(world => {
     // Initialize player states
     scoreManager.initializePlayer(player.id);
     projectileManager.initializePlayer(player.id);
-    settingsManager.initializePlayer(player.id);
+    
+    // Initialize player settings with persistence (async)
+    settingsManager.initializePlayer(player.id, player)
+      .then(() => {
+        // Send the loaded settings to the UI
+        settingsManager.sendSettingsToUI(player);
+        
+        // Apply initial BGM volume setting
+        const settings = settingsManager.getPlayerSettings(player.id);
+        if (settings) {
+          audioManager.setBgmVolume(settings.bgmVolume);
+        }
+      })
+      .catch(error => console.error("Error initializing player settings:", error));
     
     // Initialize player in LeaderboardManager
     const leaderboardManager = LeaderboardManager.getInstance(world);
@@ -318,15 +331,13 @@ startServer(world => {
       // Handle leaderboard visibility events
       if (data.type === 'closeLeaderboard') {
         console.log(`Player ${player.id} closed leaderboard UI`);
-        // This now only updates the in-memory settings, not persistent data
-        settingsManager.updateSetting(player.id, 'showLeaderboard', false);
+        // We no longer use the settings manager for this temporary UI state
       }
       
       // Handle leaderboard toggle settings
       if (data.type === 'toggleLeaderboardSetting' && data.visible !== undefined) {
         console.log(`Player ${player.id} set leaderboard visibility to: ${data.visible}`);
-        // Update player settings in memory only
-        settingsManager.updateSetting(player.id, 'showLeaderboard', data.visible);
+        // No longer storing this in settings, handled by UI state
       }
       
       // Handle leaderboard display request
@@ -376,20 +387,6 @@ startServer(world => {
         input.l = false;
       }
     });
-    
-    // Initialize audio with player's settings
-    const playerSettings = settingsManager.getPlayerSettings(player.id);
-    if (playerSettings) {
-      // Start background music with initial volume
-      audioManager.setBgmVolume(playerSettings.bgmVolume);
-      audioManager.playBackgroundMusic();
-      
-      // Send initial settings to UI
-      player.ui.sendData({
-        type: 'settingsUpdate',
-        settings: playerSettings
-      });
-    }
     
     // Projectile count no longer needed as projectiles are unlimited
     
@@ -452,7 +449,8 @@ startServer(world => {
     player.ui.on(PlayerUIEvent.DATA, (payload) => {
       const data = payload.data;
       if (data && data.type === 'updateSettings') {
-        settingsManager.updateSetting(player.id, data.setting, data.value);
+        // Update the setting with persistence
+        settingsManager.updateSetting(player.id, data.setting, data.value, player);
         
         // Handle background music volume changes
         if (data.setting === 'bgmVolume') {
@@ -591,6 +589,51 @@ startServer(world => {
             }, 1000);
           }
         }
+      }
+      // Handle resetSettings request
+      else if (data && data.type === 'resetSettings') {
+        console.log(`Player ${player.id} requested settings reset`);
+        
+        // Define default settings
+        const defaultSettings: PlayerSettings = {
+          crosshairColor: '#ffff00',
+          bgmVolume: 0.1,
+          gameMode: 'multiplayer'
+        };
+        
+        // Update each setting with persistence
+        for (const key in defaultSettings) {
+          const settingKey = key as keyof PlayerSettings;
+          const value = defaultSettings[settingKey];
+          
+          // Convert volume for UI (0-100 scale)
+          const uiValue = settingKey === 'bgmVolume' ? (value as number) * 100 : value;
+          
+          settingsManager.updateSetting(player.id, settingKey, uiValue, player);
+        }
+        
+        // Apply default volume
+        audioManager.setBgmVolume(defaultSettings.bgmVolume);
+        
+        // Send updated settings to UI
+        settingsManager.sendSettingsToUI(player);
+      }
+      // Handle leaderboard visibility events
+      else if (data && data.type === 'closeLeaderboard') {
+        console.log(`Player ${player.id} closed leaderboard UI`);
+        // We no longer use the settings manager for this temporary UI state
+      }
+      
+      // Handle leaderboard toggle settings
+      if (data && data.type === 'toggleLeaderboardSetting' && data.visible !== undefined) {
+        console.log(`Player ${player.id} set leaderboard visibility to: ${data.visible}`);
+        // No longer storing this in settings, handled by UI state
+      }
+      
+      // Handle leaderboard display request
+      if (data && data.type === 'showLeaderboard') {
+        console.log(`Player ${player.id} requested leaderboard display`);
+        displayLeaderboardToPlayer(player);
       }
     });
 
