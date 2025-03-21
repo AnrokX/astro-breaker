@@ -63,28 +63,37 @@ export class RoundSpawner {
     // Determine how many blocks to spawn using scaled values
     const blocksNeeded = Math.min(
       scaledMaxBlocks - currentBlocks,
-      // If 0-1 blocks left, spawn up to 4 at once
-      // If below minimum, spawn up to 2 at once
-      // If below 25% of max, spawn up to 3 at once
-      currentBlocks <= 1 ? 4 :
-      currentBlocks < scaledMinBlocks ? 2 : 
-      currentBlocks < (scaledMaxBlocks * 0.25) ? 3 : 1
+      // Modified spawn logic for more balanced gameplay:
+      // - If no blocks left (0): spawn only 2 at once instead of 4
+      // - If only 1 block left: spawn only 1 at once instead of 4
+      // - Below minimum: spawn only 1 at once instead of 2
+      // - Below 25% of max: spawn 1 at once instead of 3
+      currentBlocks === 0 ? 2 :
+      currentBlocks === 1 ? 1 :
+      currentBlocks < scaledMinBlocks ? 1 : 
+      currentBlocks < (scaledMaxBlocks * 0.25) ? 1 : 1
     );
 
-    // Try to spawn multiple blocks if needed
-    for(let i = 0; i < blocksNeeded; i++) {
-      // Choose block type first
-      const chosenType = this.selectBlockType(config);
-      if (!chosenType) continue;
+    // Add randomized delay to create more natural, less predictable spawning
+    const spawnChance = 0.7; // 70% chance to spawn each interval
+    
+    // Only proceed with spawn if we pass the random check (unless no blocks at all)
+    if (currentBlocks === 0 || Math.random() < spawnChance) {
+      // Try to spawn blocks if needed
+      for(let i = 0; i < blocksNeeded; i++) {
+        // Choose block type first
+        const chosenType = this.selectBlockType(config);
+        if (!chosenType) continue;
 
-      // Find a safe spawn position
-      const spawnPosition = this.getSpawnPosition(chosenType);
-      
-      // Calculate the base speed for this block
-      const baseSpeed = 8 * config.speedMultiplier;
+        // Find a safe spawn position
+        const spawnPosition = this.getSpawnPosition(chosenType);
+        
+        // Calculate the base speed for this block
+        const baseSpeed = 8 * config.speedMultiplier;
 
-      // Spawn the chosen block type with appropriate parameters
-      this.spawnBlockByType(chosenType, spawnPosition, baseSpeed);
+        // Spawn the chosen block type with appropriate parameters
+        this.spawnBlockByType(chosenType, spawnPosition, baseSpeed);
+      }
     }
   }
 
