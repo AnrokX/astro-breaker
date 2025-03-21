@@ -23,7 +23,9 @@ export class RoundSpawner {
     // Calculate player scaling factor
     const playerCount = this.world.entityManager.getAllPlayerEntities().length;
     const additionalPlayers = Math.max(0, playerCount - 2); // Count players above 2
-    const playerScaling = Math.min(0.3, additionalPlayers * 0.1); // 10% per player, max 30%
+    // Disable scaling by setting playerScaling to 0 regardless of player count
+    // Original: const playerScaling = Math.min(0.3, additionalPlayers * 0.1); // 10% per player, max 30%
+    const playerScaling = 0; // Scaling disabled
     
     // Scale block counts
     const scaledMaxBlocks = Math.floor(config.maxBlockCount * (1 + playerScaling));
