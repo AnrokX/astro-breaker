@@ -14,6 +14,6 @@
   },
   "dependencies": {
     "@hytopia.com/assets": "latest",
-    "hytopia": "^0.3.6"
+    "hytopia": "^0.3.9"
   }
 }

@@ -5,7 +5,7 @@
       "name": "block-breaking-game",
       "dependencies": {
         "@hytopia.com/assets": "latest",
-        "hytopia": "^0.3.6",
+        "hytopia": "^0.3.9",
       },
       "devDependencies": {
         "@types/jest": "^29.5.14",
@@ -102,7 +102,7 @@
 
     "@gltf-transform/functions": ["@gltf-transform/functions@4.1.2", "", { "dependencies": { "@gltf-transform/core": "^4.1.2", "@gltf-transform/extensions": "^4.1.2", "ktx-parse": "^1.0.0", "ndarray": "^1.0.19", "ndarray-lanczos": "^0.3.0", "ndarray-pixels": "^4.1.0" } }, "sha512-AJmXJxK6NEli+k1nOSBVVtDQ59LauyVz8GvH5Wst1xrV3TaQ6ea45cyLidzbYt/Eq7qXdYLdCxHdfBIpfZQk3A=="],
 
-    "@hytopia.com/assets": ["@hytopia.com/assets@0.2.6", "", {}, "sha512-CiJgALM2oGlgrJgmxjFNsiruvlS1DxZFbCua0WHEGzf6lqYLnTQOzPSMsUhwGfsZmWMf3EHDYGTQ9GGHcmcMSQ=="],
+    "@hytopia.com/assets": ["@hytopia.com/assets@0.2.7", "", {}, "sha512-Gr0vRT724d/i7SUkKAPKnWadTAHF3lDc1UP8zF1gI3aj7VJsmHJOuf9mgftxPEefjL15Ik3Xnc0A/WiBS8xB/Q=="],
 
     "@img/sharp-darwin-arm64": ["@img/sharp-darwin-arm64@0.33.5", "", { "optionalDependencies": { "@img/sharp-libvips-darwin-arm64": "1.0.4" }, "os": "darwin", "cpu": "arm64" }, "sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ=="],
 
@@ -470,7 +470,7 @@
 
     "human-signals": ["human-signals@2.1.0", "", {}, "sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw=="],
 
-    "hytopia": ["hytopia@0.3.6", "", { "dependencies": { "@gltf-transform/cli": "4.1.1" }, "bin": { "hytopia": "bin/scripts.js" } }, "sha512-nDw0RDC6QaNgI6YCs2LbyCiJItapzgyqHsqab54MYBVbwS1ENnudXko69dhQAqK7KDnurFfVYJf5RxT0acHZmw=="],
+    "hytopia": ["hytopia@0.3.9", "", { "dependencies": { "@gltf-transform/cli": "4.1.1" }, "bin": { "hytopia": "bin/scripts.js" } }, "sha512-sWX+EPs1u6bku/DKCHkkKHJEKKzqTZa3rHI5KKOghdC0Of5dSvNmGBpsCaXu903oMWAw5cVHrg2evmGsiRQGcQ=="],
 
     "import-local": ["import-local@3.2.0", "", { "dependencies": { "pkg-dir": "^4.2.0", "resolve-cwd": "^3.0.0" }, "bin": { "import-local-fixture": "fixtures/cli.js" } }, "sha512-2SPlun1JUPWoM6t3F0dw0FkCF/jWY8kttcY4f599GLTSjh2OCuuhdTkJQsEcZzBqbXZGKMK2OqW1oZsjtf/gQA=="],
 
