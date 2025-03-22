@@ -81,8 +81,8 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     5: {
         duration: 20000,  // 20 seconds - short and intense final round
         minBlockCount: 1,  // Reduced from 2 to 1 (50% reduction)
-        maxBlockCount: 2,  // Reduced from 4 to 2 (50% reduction)
-        blockSpawnInterval: 2000,  // Increased from 500ms to 2000ms for more balanced spawning
+        maxBlockCount: 3,  // Reduced from 4 to 2 (50% reduction)
+        blockSpawnInterval: 1000,  // Increased from 500ms to 2000ms for more balanced spawning
         speedMultiplier: 0.85,
         blockTypes: {
             normal: 0,
