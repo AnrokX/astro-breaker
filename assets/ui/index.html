@@ -2202,7 +2202,7 @@
 <div class="help-menu">
     <div class="help-header">
         <span class="help-title">GAME GUIDE</span>
-        <span class="help-key">[H]</span>
+        <span class="help-key">[Ctrl+H]</span>
     </div>
     <div class="help-content">
         <div class="help-section scoring">
@@ -2229,25 +2229,35 @@
         <div class="help-section controls">
             <h3>🎮 CONTROLS</h3>
             <div class="control-item">
-                <span class="key">[ESC]</span>
+                <span class="key">[Ctrl+ESC]</span>
                 <span class="action">Show Cursor</span>
             </div>
             <div class="control-item">
-                <span class="key">[P]</span>
+                <span class="key">[Ctrl+P]</span>
                 <span class="action">Settings Menu</span>
             </div>
             <div class="control-item">
-                <span class="key">[H]</span>
+                <span class="key">[Ctrl+H]</span>
                 <span class="action">Help Guide</span>
+            </div>
+            <div class="control-item">
+                <span class="key">[Ctrl+L]</span>
+                <span class="action">Leaderboard</span>
+            </div>
+            <div class="control-item">
+                <span class="key">[T]</span>
+                <span class="action">Open Chat</span>
             </div>
         </div>
     </div>
 </div>
 
 <div class="hotkey-hints">
-    <div class="hotkey-hint">[H] Game Guide</div>
-    <div class="hotkey-hint">[P] Settings</div>
-    <div class="hotkey-hint">[ESC] Show Cursor</div>
+    <div class="hotkey-hint">[Ctrl+H] Game Guide</div>
+    <div class="hotkey-hint">[Ctrl+P] Settings</div>
+    <div class="hotkey-hint">[Ctrl+ESC] Show Cursor</div>
+    <div class="hotkey-hint">[Ctrl+L] Leaderboard</div>
+    <div class="hotkey-hint">[T] Chat</div>
 </div>
 
 <script>
@@ -2813,7 +2823,7 @@ function toggleSettings(show) {
 
 // Listen for Escape key - work with cursor state
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
+  if (e.key === 'Escape' && e.ctrlKey) {
     // If settings are open, close them
     if (isSettingsOpen) {
       toggleSettings(false);
@@ -2827,12 +2837,18 @@ document.addEventListener('keydown', (e) => {
         }
       }, 50); // Small delay to ensure cursor state has updated
     }
+  } else if (e.key === 'Escape' && !e.ctrlKey) {
+    // Regular ESC behavior without Ctrl
+    if (isSettingsOpen) {
+      toggleSettings(false);
+      e.preventDefault(); // Prevent the default escape behavior
+    }
   }
 });
 
 // Multiple hotkeys for settings
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Tab' || e.key.toLowerCase() === 'p') { // Added 'P' key
+  if ((e.key === 'Tab' || e.key.toLowerCase() === 'p') && e.ctrlKey) { // Added Ctrl requirement
     e.preventDefault(); // Prevent default behavior
     const cursorStyle = window.getComputedStyle(document.body).cursor;
     if (cursorStyle === 'default' || cursorStyle === 'auto') {
@@ -2985,7 +3001,7 @@ document.getElementById('show-dot').addEventListener('change', updateCrosshairVi
 let isHelpOpen = false;
 
 document.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'h') {
+    if (e.key.toLowerCase() === 'h' && e.ctrlKey) {
         e.preventDefault();
         toggleHelp(!isHelpOpen);
     }
@@ -3026,7 +3042,7 @@ function updateHotkeysVisibility(show) {
 
 // Hide hotkeys when menus are open
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' || e.key.toLowerCase() === 'p' || e.key.toLowerCase() === 'h') {
+    if ((e.key === 'Escape' || e.key.toLowerCase() === 'p' || e.key.toLowerCase() === 'h') && e.ctrlKey) {
         updateHotkeysVisibility(false);
     }
 });
@@ -3358,9 +3374,9 @@ hytopia.onData(data => {
 
 // Global keyboard shortcuts for mode selection
 document.addEventListener('keydown', (e) => {
-  // Process "1" key press to activate solo mode
-  if (e.key === '1') {
-    console.log('🎮 KEY PRESSED: "1" - Activating solo mode');
+  // Process "Ctrl+1" key press to activate solo mode
+  if (e.key === '1' && e.ctrlKey) {
+    console.log('🎮 KEY PRESSED: "Ctrl+1" - Activating solo mode');
     e.preventDefault(); // Prevent any default behavior
     
     // Check if there's more than one player present
@@ -3395,9 +3411,9 @@ document.addEventListener('keydown', (e) => {
     return false; // Prevent default and stop propagation
   }
   
-  // Process "2" key press to dismiss the mode selection UI
-  else if (e.key === '2') {
-    console.log('🎮 KEY PRESSED: "2" - Dismissing mode selection');
+  // Process "Ctrl+2" key press to dismiss the mode selection UI
+  else if (e.key === '2' && e.ctrlKey) {
+    console.log('🎮 KEY PRESSED: "Ctrl+2" - Dismissing mode selection');
     e.preventDefault(); // Prevent any default behavior
     
     // Add flash effect to the dismiss button if visible
@@ -3539,8 +3555,8 @@ document.getElementById('reset-settings-button').addEventListener('click', () =>
   <div class="mode-buttons">
     <button id="solo-mode" style="display: flex; flex-direction: column; align-items: center; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 30px 50px; min-width: 350px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);">
       <div class="button-main-text" style="font-size: 42px; font-weight: bold; color: #ffffff; margin-bottom: 15px;">START SOLO</div>
-      <div style="font-family: var(--text-font); font-size: 24px; color: #ffffff; opacity: 0.8;">PRESS 1 TO START</div>
-      <div id="dismiss-mode-selection" style="font-family: var(--text-font); font-size: 18px; color: #ffffff; opacity: 0.7; cursor: pointer; margin-top: 15px;">PRESS 2 TO DISMISS</div>
+      <div style="font-family: var(--text-font); font-size: 24px; color: #ffffff; opacity: 0.8;">PRESS CTRL+1 TO START</div>
+      <div id="dismiss-mode-selection" style="font-family: var(--text-font); font-size: 18px; color: #ffffff; opacity: 0.7; cursor: pointer; margin-top: 15px;">PRESS CTRL+2 TO DISMISS</div>
     </button>
   </div>
 </div>
@@ -4484,8 +4500,8 @@ function modeMultiplayer() {
 <!-- Add keyboard shortcut for leaderboard -->
 <script>
 document.addEventListener('keydown', (e) => {
-  if (e.key.toLowerCase() === 'l') {
-    console.log('Leaderboard toggled via L key');
+  if (e.key.toLowerCase() === 'l' && e.ctrlKey) {
+    console.log('Leaderboard toggled via Ctrl+L key');
     e.preventDefault(); // Prevent default behavior
     
     const panel = document.getElementById('leaderboard-panel');
@@ -4501,9 +4517,9 @@ document.addEventListener('keydown', (e) => {
     }
   }
   
-  // T key to run leaderboard tests
-  if (e.key.toLowerCase() === 'b') {
-    console.log('Running leaderboard tests via B key');
+  // B key to run leaderboard tests
+  if (e.key.toLowerCase() === 'b' && e.ctrlKey) {
+    console.log('Running leaderboard tests via Ctrl+B key');
     e.preventDefault(); // Prevent default behavior
     
     // Show a message that tests are running

@@ -660,7 +660,8 @@ startServer(world => {
       world.chatManager.sendPlayerMessage(player, 'Press space to jump.');
       world.chatManager.sendPlayerMessage(player, 'Hold shift to sprint.');
       world.chatManager.sendPlayerMessage(player, 'Left click to throw projectiles.');
-      world.chatManager.sendPlayerMessage(player, 'Press ESC, Tab, or P to open settings.', '00FF00');
+      world.chatManager.sendPlayerMessage(player, 'Press T to chat. Use Ctrl+L for leaderboard, Ctrl+H for help.', '00FF00');
+      world.chatManager.sendPlayerMessage(player, 'Press Ctrl+ESC, Ctrl+Tab, or Ctrl+P to open settings.', '00FF00');
       
       if (IS_TEST_MODE) {
         world.chatManager.sendPlayerMessage(player, 'TEST MODE: One of each block type has been spawned', 'FFFF00');
