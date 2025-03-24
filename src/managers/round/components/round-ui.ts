@@ -1,9 +1,11 @@
 import { World } from 'hytopia';
 import { ScoreManager } from '../../score-manager';
 import { GameEndStanding, RoundEndPlacement } from '../interfaces/round-interfaces';
+import { RoundTotalScoreManager } from './round-total-score-manager';
 
 export class RoundUI {
   private isSoloMode: boolean = false;
+  private roundTotalScoreManager: RoundTotalScoreManager;
 
   constructor(
     private world: World,
@@ -11,9 +13,13 @@ export class RoundUI {
     gameConfig?: { gameMode?: 'solo' | 'multiplayer' }
   ) { 
     this.isSoloMode = gameConfig?.gameMode === 'solo';
+    this.roundTotalScoreManager = new RoundTotalScoreManager(world, scoreManager);
   }
 
   public displayRoundInfo(round: number, totalRounds: number, remainingRounds: number, remainingTime: number): void {
+    // Start tracking this round's scores
+    this.roundTotalScoreManager.startRound(round);
+    
     const message = {
       type: 'roundUpdate',
       data: {
@@ -32,6 +38,9 @@ export class RoundUI {
                          winnerId: string | null, 
                          placements: Array<RoundEndPlacement>,
                          transitionDuration: number): void {
+    // End tracking for this round and capture scores
+    this.roundTotalScoreManager.endRound();
+    
     // Enhance placements with player information (playerNumber and playerColor)
     const enhancedPlacements = placements.map(placement => {
       // Get player stats from score manager
@@ -96,22 +105,38 @@ export class RoundUI {
   public displayGameEnd(winner: GameEndStanding, standings: GameEndStanding[], 
                         totalRounds: number, completedRounds: number, 
                         nextGameIn: number = 10000): void {
+    // Capture final round scores before sending game end data
+    this.roundTotalScoreManager.endRound();
+    
     // Send game end message to all players with current player ID for highlighting
     this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
       const currentPlayerId = playerEntity.player.id;
       
       // Find this player's specific score from standings
       const playerStanding = standings.find(s => s.playerId === currentPlayerId);
-      const playerScore = playerStanding ? playerStanding.totalScore : 0;
       
-      console.log(`Sending game end UI for player ${currentPlayerId}, score: ${playerScore}`);
+      // Get the cumulative score across all rounds
+      const cumulativeScore = this.roundTotalScoreManager.getCumulativeScore(currentPlayerId);
       
-      // Send game end data with currentPlayerId
+      console.log(`Sending game end UI for player ${currentPlayerId}, score: ${cumulativeScore}`);
+      
+      // Enhance standings with cumulative scores
+      const enhancedStandings = standings.map(standing => {
+        return {
+          ...standing,
+          cumulativeScore: this.roundTotalScoreManager.getCumulativeScore(standing.playerId)
+        };
+      });
+      
+      // Send game end data with currentPlayerId and enhanced standings
       playerEntity.player.ui.sendData({
         type: 'gameEnd',
         data: {
-          winner,
-          standings,
+          winner: {
+            ...winner,
+            cumulativeScore: this.roundTotalScoreManager.getCumulativeScore(winner.playerId)
+          },
+          standings: enhancedStandings,
           currentPlayerId,
           nextGameIn,
           stats: {
@@ -127,7 +152,7 @@ export class RoundUI {
         // In solo mode, show completion message with player's own score
         playerEntity.player.ui.sendData({
           type: 'systemMessage',
-          message: `🏆 Game complete! Your final score: ${playerScore}`,
+          message: `🏆 Game complete! Your final score: ${cumulativeScore}`,
           color: 'FFD700' // Gold color
         });
         
@@ -135,7 +160,7 @@ export class RoundUI {
         playerEntity.player.ui.sendData({
           type: 'updateFinalScore',
           data: {
-            totalScore: playerScore,
+            totalScore: cumulativeScore,
             points: playerStanding ? playerStanding.placementPoints || 0 : 0
           }
         });
@@ -143,6 +168,11 @@ export class RoundUI {
         // No completion message
       }
     });
+    
+    // Reset the round total score manager after the game ends
+    setTimeout(() => {
+      this.roundTotalScoreManager.reset();
+    }, nextGameIn);
   }
 
   public displaySystemMessage(message: string, color: string = 'FFFFFF'): void {
