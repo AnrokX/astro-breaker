@@ -528,10 +528,8 @@ export class RoundManager {
       leaderboardManager.updateWithGameResults(leaderboardEntries, this.gameConfig.gameMode)
         .catch(error => console.error("Error updating final leaderboard:", error));
       
-      // Display leaderboard to all players after a short delay
-      setTimeout(() => {
-        this.displayLeaderboardToAllPlayers();
-      }, 3000); // Show leaderboard 3 seconds after game end
+      // No longer automatically showing leaderboard at game end
+      // Players can press 'L' to view leaderboard instead
     }
 
     // Reset game after delay (shorter for solo mode)
