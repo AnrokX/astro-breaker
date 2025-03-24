@@ -310,6 +310,13 @@ startServer(world => {
         
         // Handle solo mode
         if (data.mode === 'solo') {
+          // Check if there's more than one player
+          const playerCount = world.entityManager.getAllPlayerEntities().length;
+          if (playerCount > 1) {
+            console.log(`Solo mode requested but ${playerCount} players present - ignoring request`);
+            return;
+          }
+          
           // Ensure the player's pointer is locked
           player.ui.lockPointer(true);
           

@@ -3363,6 +3363,13 @@ document.addEventListener('keydown', (e) => {
     console.log('🎮 KEY PRESSED: "1" - Activating solo mode');
     e.preventDefault(); // Prevent any default behavior
     
+    // Check if there's more than one player present
+    const playerCount = document.querySelectorAll('.round-end-placement').length;
+    if (playerCount > 1) {
+      console.log('Multiple players present, ignoring solo mode key press');
+      return false; // Ignore the key press completely if multiple players
+    }
+    
     // Add flash effect to the button if visible
     const soloButton = document.getElementById('solo-mode');
     if (soloButton) {
