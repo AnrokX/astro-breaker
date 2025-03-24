@@ -2,7 +2,6 @@ import {
   startServer,
   Audio,
   PlayerEntity,
-  RaycastOptions,
   PlayerCameraMode,
   PlayerUI,
   Vector3Like,
@@ -97,8 +96,6 @@ startServer(world => {
   // Enable debug rendering for development
   world.simulation.enableDebugRendering(DEBUG_ENABLED);
   
-  // Raycast handler removed
-
   // Initialize the score manager
   const scoreManager = new ScoreManager();
   scoreManager.spawn(world, { x: 0, y: 0, z: 0 }); // Make it available as an entity
@@ -124,7 +121,6 @@ startServer(world => {
   // Initialize the projectile manager with round manager if not in test mode
   const projectileManager = new PlayerProjectileManager(
     world,
-    null,
     SHOW_TRAJECTORY_PREVIEW,
     roundManager ?? undefined
   );

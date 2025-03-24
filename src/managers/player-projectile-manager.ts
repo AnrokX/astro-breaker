@@ -20,16 +20,14 @@ export class PlayerProjectileManager {
   ];
   private playerStates = new Map<string, PlayerProjectileState>();
   private readonly world: World;
-  private readonly raycastHandler: any;
   private readonly enablePreview: boolean;
   private readonly audioManager: AudioManager;
   private roundManager?: RoundManager;
   // Special flag to force enable shooting in solo mode
   private forceEnableShooting: boolean = false;
 
-  constructor(world: World, raycastHandler: any, enablePreview: boolean = false, roundManager?: RoundManager) {
+  constructor(world: World, enablePreview: boolean = false, roundManager?: RoundManager) {
     this.world = world;
-    this.raycastHandler = raycastHandler;
     this.enablePreview = enablePreview;
     this.audioManager = AudioManager.getInstance(world);
     this.roundManager = roundManager;
@@ -71,7 +69,6 @@ export class PlayerProjectileManager {
   private createProjectile(playerId: string, position: Vector3Like, direction: Vector3Like): ProjectileEntity {
     const projectile = new ProjectileEntity({
       modelScale: 1,
-      raycastHandler: this.raycastHandler,
       enablePreview: this.enablePreview,
       playerId
     });

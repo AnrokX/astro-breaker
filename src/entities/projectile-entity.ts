@@ -7,15 +7,8 @@ export interface ProjectileOptions extends EntityOptions {
     speed?: number;
     lifetime?: number;
     damage?: number;
-    raycastHandler?: any;
     enablePreview?: boolean;
     playerId?: string;
-}
-
-interface TrajectoryPoint {
-    position: Vector3Like;
-    isCollision: boolean;
-    hitDistance?: number;
 }
 
 export class ProjectileEntity extends Entity {
@@ -32,7 +25,6 @@ export class ProjectileEntity extends Entity {
         FRICTION: 0.3,
         LINEAR_DAMPING: 0.05,
         MIN_SPAWN_DISTANCE: 1.0,
-        TRAJECTORY_CHECK_DISTANCE: 2.0,
         MAX_DOWN_ANGLE: -0.85,
         SPEED_LOSS_PER_BOUNCE: 0.35,
         SPAWN_HEIGHT_OFFSET: -1.2,
@@ -41,8 +33,6 @@ export class ProjectileEntity extends Entity {
 
     // Trajectory preview constants
     private static readonly PREVIEW = {
-        TRAJECTORY_STEPS: 10,
-        TIME_STEP: 0.1,
         MARKER_URI: 'models/projectiles/energy-orb-projectile.gltf',
         MARKER_SCALE: 0.3,
         MARKER_OPACITY: 0.7
@@ -52,7 +42,6 @@ export class ProjectileEntity extends Entity {
     private lifetime: number;
     private damage: number;
     private spawnTime: number;
-    private raycastHandler?: any;
     private enablePreview: boolean;
     private static readonly SPAWN_CHECK_DIRECTIONS = [
         { x: 0, y: -1, z: 0 },  // Down
@@ -79,7 +68,6 @@ export class ProjectileEntity extends Entity {
         this.lifetime = options.lifetime ?? ProjectileEntity.PHYSICS.DEFAULT_LIFETIME;
         this.damage = options.damage ?? ProjectileEntity.PHYSICS.DEFAULT_DAMAGE;
         this.spawnTime = Date.now();
-        this.raycastHandler = options.raycastHandler;
         this.enablePreview = options.enablePreview ?? true;
         this.playerId = options.playerId;
         
@@ -90,37 +78,6 @@ export class ProjectileEntity extends Entity {
                 this.despawn();
             }
         });
-    }
-
-    private validateTrajectory(direction: Vector3Like): boolean {
-        if (!this.raycastHandler || !this.isSpawned) return true;
-
-        // Normalize direction for accurate distance checking
-        const magnitude = Math.sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
-        if (magnitude === 0) return false;
-
-        const normalizedDir = {
-            x: direction.x / magnitude,
-            y: direction.y / magnitude,
-            z: direction.z / magnitude
-        };
-
-        // Check if there's any immediate obstruction in the trajectory
-        const raycastResult = this.raycastHandler.raycast(
-            this.position,
-            normalizedDir,
-            ProjectileEntity.PHYSICS.TRAJECTORY_CHECK_DISTANCE,
-            {
-                filterExcludeRigidBody: this.rawRigidBody
-            }
-        );
-
-        // If we hit something very close, the trajectory is not valid
-        if (raycastResult && raycastResult.hitDistance < ProjectileEntity.PHYSICS.MIN_SPAWN_DISTANCE) {
-            return false;
-        }
-
-        return true;
     }
 
     spawn(world: World, position: Vector3Like): void {
@@ -136,28 +93,12 @@ export class ProjectileEntity extends Entity {
             y: position.y + ProjectileEntity.PHYSICS.SPAWN_HEIGHT_OFFSET,
             z: position.z + (lookDir.z * ProjectileEntity.PHYSICS.SPAWN_FORWARD_OFFSET)
         };
-        
-        // Only adjust if world has raycast capability
-        if ('raycast' in world) {
-            // Check in all directions for nearby blocks
-            for (const direction of ProjectileEntity.SPAWN_CHECK_DIRECTIONS) {
-                const raycastResult = (world as any).raycast(adjustedPosition, direction, 1.5);
-                if (raycastResult && raycastResult.distance < ProjectileEntity.PHYSICS.MIN_SPAWN_DISTANCE) {
-                    // Move away from the block in the opposite direction
-                    adjustedPosition.x += -direction.x * (ProjectileEntity.PHYSICS.MIN_SPAWN_DISTANCE - raycastResult.distance);
-                    adjustedPosition.y += -direction.y * (ProjectileEntity.PHYSICS.MIN_SPAWN_DISTANCE - raycastResult.distance);
-                    adjustedPosition.z += -direction.z * (ProjectileEntity.PHYSICS.MIN_SPAWN_DISTANCE - raycastResult.distance);
-                }
-            }
-        }
 
         super.spawn(world, adjustedPosition);
 
         if (!this.isSpawned) {
             throw new Error('ProjectileEntity.spawn(): Entity failed to spawn!');
         }
-
-        // Lifetime checks are handled automatically by the onTick method from the engine's tick system
 
         // Configure collider for solid physics interaction
         this.createAndAddChildCollider({
@@ -216,8 +157,6 @@ export class ProjectileEntity extends Entity {
         }
     }
 
-    // This is a special property that Hytopia's Entity class recognizes
-
     throw(direction: Vector3Like): void {
         if (!this.rawRigidBody) return;
 
@@ -233,12 +172,6 @@ export class ProjectileEntity extends Entity {
 
         // Prevent throwing if looking too far down
         if (normalizedDir.y < ProjectileEntity.PHYSICS.MAX_DOWN_ANGLE) {
-            this.despawn();
-            return;
-        }
-
-        // Validate trajectory before throwing
-        if (!this.validateTrajectory(normalizedDir)) {
             this.despawn();
             return;
         }
@@ -268,96 +201,6 @@ export class ProjectileEntity extends Entity {
     }
 
     /**
-     * Predicts the trajectory of the projectile and returns an array of points
-     * along with collision information.
-     */
-    predictTrajectory(direction: Vector3Like): TrajectoryPoint[] {
-        if (!this.raycastHandler || !this.isSpawned) return [];
-
-        const points: TrajectoryPoint[] = [];
-        let currentPos = { ...this.position };
-        
-        // Calculate initial velocity based on direction and speed
-        const magnitude = Math.sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
-        if (magnitude === 0) return points;
-
-        const normalizedDir = {
-            x: direction.x / magnitude,
-            y: direction.y / magnitude,
-            z: direction.z / magnitude
-        };
-
-        // Initial velocity including the upward arc
-        let velocity = {
-            x: normalizedDir.x * this.speed,
-            y: normalizedDir.y * this.speed + 1.0, // Same upward arc as in throw()
-            z: normalizedDir.z * this.speed
-        };
-
-        // Predict trajectory points
-        for (let i = 0; i < ProjectileEntity.PREVIEW.TRAJECTORY_STEPS; i++) {
-            // Calculate next position based on current velocity
-            const nextPos = {
-                x: currentPos.x + velocity.x * ProjectileEntity.PREVIEW.TIME_STEP,
-                y: currentPos.y + velocity.y * ProjectileEntity.PREVIEW.TIME_STEP,
-                z: currentPos.z + velocity.z * ProjectileEntity.PREVIEW.TIME_STEP
-            };
-
-            // Calculate direction to next point
-            const dirToNext = {
-                x: nextPos.x - currentPos.x,
-                y: nextPos.y - currentPos.y,
-                z: nextPos.z - currentPos.z
-            };
-
-            // Get the distance to the next point
-            const distance = Math.sqrt(
-                dirToNext.x * dirToNext.x +
-                dirToNext.y * dirToNext.y +
-                dirToNext.z * dirToNext.z
-            );
-
-            // Normalize direction
-            if (distance > 0) {
-                dirToNext.x /= distance;
-                dirToNext.y /= distance;
-                dirToNext.z /= distance;
-            }
-
-            // Check for collisions along the path
-            const raycastResult = this.raycastHandler.raycast(
-                currentPos,
-                dirToNext,
-                distance,
-                { filterExcludeRigidBody: this.rawRigidBody }
-            );
-
-            if (raycastResult) {
-                // Collision detected
-                points.push({
-                    position: raycastResult.hitPoint,
-                    isCollision: true,
-                    hitDistance: raycastResult.hitDistance
-                });
-                break;
-            } else {
-                // No collision, add the point
-                points.push({
-                    position: { ...currentPos },
-                    isCollision: false
-                });
-            }
-
-            // Update position and velocity for next iteration
-            currentPos = nextPos;
-            // Apply gravity to Y velocity
-            velocity.y -= ProjectileEntity.PHYSICS.GRAVITY * ProjectileEntity.PREVIEW.TIME_STEP;
-        }
-
-        return points;
-    }
-
-    /**
      * Cleans up all trajectory markers
      */
     public clearTrajectoryMarkers(): void {
@@ -373,37 +216,8 @@ export class ProjectileEntity extends Entity {
      * Shows visual preview of the predicted trajectory if enabled
      */
     showTrajectoryPreview(direction: Vector3Like): void {
-        if (!this.enablePreview || !this.world || !this.raycastHandler) return;
-
-        // Clear any existing trajectory markers
+        // Simplified to remove raycast-based preview
         this.clearTrajectoryMarkers();
-
-        const points = this.predictTrajectory(direction);
-        
-        // Find the collision point
-        const collisionPoint = points.find(point => point.isCollision);
-        if (collisionPoint) {
-            // Only create/update a single marker at the predicted impact point
-            if (this.trajectoryMarkers.length === 0) {
-                const marker = new Entity({
-                    name: 'ImpactMarker',
-                    modelUri: ProjectileEntity.PREVIEW.MARKER_URI,
-                    modelScale: ProjectileEntity.PREVIEW.MARKER_SCALE,
-                    opacity: ProjectileEntity.PREVIEW.MARKER_OPACITY
-                });
-                this.trajectoryMarkers.push(marker);
-                marker.spawn(this.world, collisionPoint.position);
-            } else {
-                // Update existing marker position
-                const marker = this.trajectoryMarkers[0];
-                if (marker.isSpawned) {
-                    marker.setPosition(collisionPoint.position);
-                }
-            }
-        } else {
-            // No collision point found, clear any existing markers
-            this.clearTrajectoryMarkers();
-        }
     }
 
     // Override despawn to ensure we clean up trajectory markers
