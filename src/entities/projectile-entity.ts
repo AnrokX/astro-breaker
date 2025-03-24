@@ -19,24 +19,24 @@ interface TrajectoryPoint {
 }
 
 export class ProjectileEntity extends Entity {
-    // Physics constants adjusted to match TF2 grenade launcher
+    // Physics constants
     private static readonly PHYSICS = {
-        GRAVITY: 15.24,           // TF2's 800 HU/s² converted to m/s²
-        DEFAULT_SPEED: 22.00,     // TF2's 1216 HU/s converted to m/s
-        DEFAULT_LIFETIME: 2300,    // 2.3 seconds fuse timer
-        DEFAULT_DAMAGE: 10,       // Typical TF2 grenade damage
-        UPWARD_ARC: 0.3,          // Reduced to match TF2's arc
-        COLLIDER_RADIUS: 0.2,     // Smaller radius for grenades
-        MASS: 0.46,                // Increased mass for better physics
-        BOUNCINESS: 0.65,         // TF2's grenade bounce factor
-        FRICTION: 0.3,            // Lower friction for better rolling
-        LINEAR_DAMPING: 0.05,     // Reduced damping for longer rolls
+        GRAVITY: 15.24,
+        DEFAULT_SPEED: 22.00,
+        DEFAULT_LIFETIME: 2300,
+        DEFAULT_DAMAGE: 10,
+        UPWARD_ARC: 0.3,
+        COLLIDER_RADIUS: 0.2,
+        MASS: 0.46,
+        BOUNCINESS: 0.65,
+        FRICTION: 0.3,
+        LINEAR_DAMPING: 0.05,
         MIN_SPAWN_DISTANCE: 1.0,
         TRAJECTORY_CHECK_DISTANCE: 2.0,
         MAX_DOWN_ANGLE: -0.85,
-        SPEED_LOSS_PER_BOUNCE: 0.35,  // 35% speed loss per bounce
-        SPAWN_HEIGHT_OFFSET: -1.2,  // Meters below eye level (adjust as needed)
-        SPAWN_FORWARD_OFFSET: -0.5,  // Meters forward from player (adjust as needed)
+        SPEED_LOSS_PER_BOUNCE: 0.35,
+        SPAWN_HEIGHT_OFFSET: -1.2,
+        SPAWN_FORWARD_OFFSET: -0.5,
     } as const;
 
     // Trajectory preview constants
