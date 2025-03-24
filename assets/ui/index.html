@@ -3106,23 +3106,6 @@ function showGameEnd(data) {
     const winnerColor = data.winner.playerColor || '#FFD700';
     const isCurrentPlayerWinner = data.winner.playerId === data.currentPlayerId;
     
-    // Style winner announcement with winner's color
-    if (isCurrentPlayerWinner) {
-        // Show "Victory! You won the game!" when current player is winner
-        winnerAnnouncement.innerHTML = `
-            <span style="color: ${winnerColor}">Victory! You won the game!</span>
-        `;
-    } else {
-        // Show regular message for other players
-        winnerAnnouncement.innerHTML = `
-            <span style="color: ${winnerColor}">Player ${winnerPlayerNumber}</span> Wins!
-        `;
-    }
-    winnerAnnouncement.style.textShadow = `0 0 15px ${winnerColor}`;
-    
-    // Show standings
-    standingsContainer.innerHTML = '';
-    
     // Pre-calculate ranks to handle ties
     let currentRank = 1;
     let previousPoints = -1;
@@ -3144,6 +3127,41 @@ function showGameEnd(data) {
             rank: currentRank
         };
     });
+    
+    // Check for ties in first place
+    const firstPlaceStandings = rankedStandings.filter(standing => standing.rank === 1);
+    const isTiedForFirst = firstPlaceStandings.length > 1;
+    
+    // Style winner announcement with winner's color
+    if (isTiedForFirst) {
+        // Show tie message when there's a tie for first place
+        const tiedPlayerNumbers = firstPlaceStandings.map(s => s.playerNumber).join(', ').replace(/,([^,]*)$/, ' and$1');
+        const isCurrentPlayerInTie = firstPlaceStandings.some(s => s.playerId === data.currentPlayerId);
+        
+        if (isCurrentPlayerInTie) {
+            winnerAnnouncement.innerHTML = `
+                <span style="color: ${winnerColor}">It's a tie! You share the victory!</span>
+            `;
+        } else {
+            winnerAnnouncement.innerHTML = `
+                <span style="color: ${winnerColor}">It's a tie between Players ${tiedPlayerNumbers}!</span>
+            `;
+        }
+    } else if (isCurrentPlayerWinner) {
+        // Show "Victory! You won the game!" when current player is winner
+        winnerAnnouncement.innerHTML = `
+            <span style="color: ${winnerColor}">Victory! You won the game!</span>
+        `;
+    } else {
+        // Show regular message for other players
+        winnerAnnouncement.innerHTML = `
+            <span style="color: ${winnerColor}">Player ${winnerPlayerNumber}</span> Wins!
+        `;
+    }
+    winnerAnnouncement.style.textShadow = `0 0 15px ${winnerColor}`;
+    
+    // Show standings
+    standingsContainer.innerHTML = '';
     
     rankedStandings.forEach((standing, index) => {
         const isCurrentPlayer = standing.playerId === data.currentPlayerId;
