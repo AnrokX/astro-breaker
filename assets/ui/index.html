@@ -3114,7 +3114,30 @@ function showGameEnd(data) {
     
     // Show standings
     standingsContainer.innerHTML = '';
-    data.standings.forEach((standing, index) => {
+    
+    // Pre-calculate ranks to handle ties
+    let currentRank = 1;
+    let previousPoints = -1;
+    const rankedStandings = data.standings.map((standing, index) => {
+        // Check if this player has the same points as the previous one
+        if (index > 0 && standing.placementPoints === previousPoints) {
+            // Keep the same rank for tied players
+        } else {
+            // New points value = new rank
+            currentRank = index + 1;
+        }
+        
+        // Store current points for next iteration
+        previousPoints = standing.placementPoints;
+        
+        // Return standing with rank
+        return {
+            ...standing,
+            rank: currentRank
+        };
+    });
+    
+    rankedStandings.forEach((standing, index) => {
         const isCurrentPlayer = standing.playerId === data.currentPlayerId;
         const entry = document.createElement('div');
         entry.className = `standing-entry ${index === 0 ? 'winner' : ''} ${isCurrentPlayer ? 'current-player' : ''}`;
@@ -3128,19 +3151,19 @@ function showGameEnd(data) {
             entry.style.boxShadow = `0 0 8px ${playerColor}`;
         }
         
-        // Create medal element based on position
+        // Create medal element based on actual rank (not index)
         let medalHtml = '';
-        if (index === 0) {
+        if (standing.rank === 1) {
             medalHtml = `<span class="medal gold" title="1st Place">🥇</span>`;
-        } else if (index === 1) {
+        } else if (standing.rank === 2) {
             medalHtml = `<span class="medal silver" title="2nd Place">🥈</span>`;
-        } else if (index === 2) {
+        } else if (standing.rank === 3) {
             medalHtml = `<span class="medal bronze" title="3rd Place">🥉</span>`;
         }
         
         entry.innerHTML = `
             <div class="player-info standing-player-info">
-                <span class="standing-position" style="color: ${playerColor}">#${index + 1}</span>
+                <span class="standing-position" style="color: ${playerColor}">#${standing.rank}</span>
                 ${medalHtml}
                 <span class="player-name" style="color: ${playerColor}">Player ${standing.playerNumber}</span>
                 ${isCurrentPlayer ? '<span class="player-you-tag">YOU</span>' : ''}
