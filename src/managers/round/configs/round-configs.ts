@@ -3,7 +3,7 @@ import { RoundConfig } from '../interfaces/round-interfaces';
 export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     // Tutorial round (Round 1) - Static targets only
     1: {
-        duration: 1000,  // 45 seconds - longer tutorial round for learning
+        duration: 35000,  // 45 seconds - longer tutorial round for learning
         minBlockCount: 6,  // Increased from 4 to 6 (50% more)
         maxBlockCount: 17,  // Increased from 6 to 9 (50% more)
         blockSpawnInterval: 900,  // Increased for smoother spawning
@@ -22,7 +22,7 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     
     // Round 2 - 100% Normal Blocks
     2: {
-        duration: 1000,  // 35 seconds - comfortable intro to moving blocks
+        duration: 35000,  // 35 seconds - comfortable intro to moving blocks
         minBlockCount: 3,  // Increased from 2 to 3 (30% more)
         maxBlockCount: 10,  // Increased from 4 to 5 (30% more)
         blockSpawnInterval: 700,  // Adjusted for smoother spawning
@@ -41,7 +41,7 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     
     // Round 3 - 100% Sine Wave
     3: {
-        duration: 1000,  // 30 seconds - standard duration
+        duration: 30000,  // 30 seconds - standard duration
         minBlockCount: 2,  // Base value maintained
         maxBlockCount: 10,  // Increased from 3 to 4 (30% more)
         blockSpawnInterval: 1400,  // Maintained for sine wave control
@@ -64,7 +64,7 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
         minBlockCount: 3,  // Increased from 1 to 2 (100% more)
         maxBlockCount: 7,  // Increased from 3 to 6 (100% more)
         blockSpawnInterval: 1200,  // Maintained for vertical wave control
-        speedMultiplier: 0.7,
+        speedMultiplier: 0.5,
         blockTypes: {
             normal: 0,
             sineWave: 0,
