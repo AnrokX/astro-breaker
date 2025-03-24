@@ -258,19 +258,19 @@ export class RoundSpawner {
         });
         break;
       case 'verticalWave':
-        // Calculate random height parameters for more variance
-        const waveBaseHeight = this.getRandomY(-3, 3);  // Varied base height
-        const waveAmplitude = this.getRandomY(6, 12);   // Higher amplitude for more dramatic peaks
-        const waveFrequency = this.getRandomY(0.2, 0.4); // Varied frequency for different speeds
+        // Use consistent height parameters for stability
+        const waveBaseHeight = this.getRandomY(4, 6);  // Fixed higher base height to avoid floor problems
+        const waveAmplitude = this.getRandomY(3, 6);   // Further reduced from 4-8 to 3-6 for more controlled movement
+        const waveFrequency = this.getRandomY(0.15, 0.25); // Even slower frequency for smoother wave pattern
         
         this.blockManager.createVerticalWaveBlock({
           spawnPosition: {
             ...spawnPosition,
-            y: waveBaseHeight  // Start at varied base height
+            y: waveBaseHeight  // Start at more stable base height
           },
-          moveSpeed: baseSpeed * 0.75,
-          amplitude: waveAmplitude,    // Add amplitude for higher peaks
-          frequency: waveFrequency     // Add frequency for varied wave speeds
+          moveSpeed: baseSpeed * 0.6, // Adjusted to be 20% faster than previous 0.5 setting
+          amplitude: waveAmplitude,
+          frequency: waveFrequency
         });
         break;
       case 'popup':

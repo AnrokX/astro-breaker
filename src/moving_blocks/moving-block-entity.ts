@@ -68,12 +68,12 @@ export const MOVING_BLOCK_CONFIG = {
   VERTICAL_WAVE: {  // New configuration for vertical sine wave blocks
     TEXTURE: 'blocks/infected-shadowrock.png',
     HALF_EXTENTS: { x: 1, y: 1, z: 1 },
-    DEFAULT_AMPLITUDE: 4,  // Reduced amplitude to prevent floor collision
-    DEFAULT_FREQUENCY: 0.5,  // Slightly faster than horizontal sine wave
-    HEIGHT_OFFSET: 10,  // Significantly increased base height
-    SAFETY_MARGIN: 2,   // Extra space to prevent any collision
+    DEFAULT_AMPLITUDE: 3.5,  // Further reduced amplitude to prevent floor collision
+    DEFAULT_FREQUENCY: 0.3,  // Slower frequency for smoother movement
+    HEIGHT_OFFSET: 8,  // Slightly reduced base height for more stability
+    SAFETY_MARGIN: 3,   // Increased safety margin to prevent boundary collisions
     SCORE_MULTIPLIER: 2,  // Double points for hitting this challenging target
-    SPEED_MULTIPLIER: 0.7,  // Slightly slower forward movement for better visibility
+    SPEED_MULTIPLIER: 0.6,  // Adjusted to 60% of normal speed (20% faster than previous 0.5)
     HEALTH: 1  // One-shot kill, like static targets
   },
   POPUP_TARGET: {
@@ -238,7 +238,7 @@ export class MovingBlockEntity extends Entity {
     if (!this.movementBounds) return true;
 
     // Use a larger epsilon for boundary checks to prevent jittering
-    const epsilon = 0.05;
+    const epsilon = 0.1; // Increased from 0.05 to 0.1 for more robust boundary detection
     
     // Check each axis independently and apply epsilon consistently
     const withinX = position.x >= (this.movementBounds.min.x + epsilon) && 
@@ -249,9 +249,9 @@ export class MovingBlockEntity extends Entity {
                     position.z <= (this.movementBounds.max.z - epsilon);
 
     // Only enforce bounds on axes that have different min/max values
-    const needsXCheck = Math.abs(this.movementBounds.max.x - this.movementBounds.min.x) > epsilon;
-    const needsYCheck = Math.abs(this.movementBounds.max.y - this.movementBounds.min.y) > epsilon;
-    const needsZCheck = Math.abs(this.movementBounds.max.z - this.movementBounds.min.z) > epsilon;
+    const needsXCheck = Math.abs(this.movementBounds.max.x - this.movementBounds.min.x) > epsilon * 2;
+    const needsYCheck = Math.abs(this.movementBounds.max.y - this.movementBounds.min.y) > epsilon * 2;
+    const needsZCheck = Math.abs(this.movementBounds.max.z - this.movementBounds.min.z) > epsilon * 2;
 
     return (!needsXCheck || withinX) && 
            (!needsYCheck || withinY) && 
@@ -259,9 +259,29 @@ export class MovingBlockEntity extends Entity {
   }
 
   private reverseDirection(): void {
+    // Reverse direction with a small randomization to avoid getting stuck in patterns
     this.direction.x *= -1;
     this.direction.y *= -1;
     this.direction.z *= -1;
+    
+    // Add slight randomization to avoid repetitive patterns
+    const jitterAmount = 0.15; // Up to 15% random adjustment
+    this.direction.x += (Math.random() * 2 - 1) * jitterAmount;
+    this.direction.z += (Math.random() * 2 - 1) * jitterAmount;
+    
+    // Re-normalize the direction vector after adding jitter
+    const magnitude = Math.sqrt(
+      this.direction.x * this.direction.x + 
+      this.direction.y * this.direction.y + 
+      this.direction.z * this.direction.z
+    );
+    
+    if (magnitude > 0) {
+      this.direction.x /= magnitude;
+      this.direction.y /= magnitude;
+      this.direction.z /= magnitude;
+    }
+    
     this.isReversed = !this.isReversed;
   }
 
@@ -927,13 +947,22 @@ export class MovingBlockManager {
         z: defaultHalfExtents.z * 0.6   // 40% smaller
     };
 
-    // Generate random direction with X component
-    const randomAngle = Math.random() * Math.PI * 0.5 - Math.PI * 0.25; // -45 to 45 degrees
-    const direction = {
-        x: Math.sin(randomAngle) * 0.5,  // X component limited to 0.5 magnitude
-        y: 0,                            // Y handled by movement behavior
-        z: Math.cos(randomAngle)         // Z component
-    };
+    // Generate a more balanced direction vector
+    // Choose one of 8 primary directions to ensure varied but clear movement patterns
+    const directionChoices = [
+      { x: 0, y: 0, z: 1 },     // North
+      { x: 0.7, y: 0, z: 0.7 }, // Northeast
+      { x: 1, y: 0, z: 0 },     // East
+      { x: 0.7, y: 0, z: -0.7 },// Southeast
+      { x: 0, y: 0, z: -1 },    // South
+      { x: -0.7, y: 0, z: -0.7 },// Southwest
+      { x: -1, y: 0, z: 0 },    // West
+      { x: -0.7, y: 0, z: 0.7 } // Northwest
+    ];
+    
+    // Choose a random direction from the predefined choices
+    const directionChoice = Math.floor(Math.random() * directionChoices.length);
+    const direction = directionChoices[directionChoice];
 
     const block = new MovingBlockEntity(MovingBlockEntity.createDefaultBlockConfiguration({
         blockHalfExtents: scaledHalfExtents,
