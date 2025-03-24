@@ -677,23 +677,8 @@ startServer(world => {
       const leaderboardManager = LeaderboardManager.getInstance(world);
       leaderboardManager.getGlobalLeaderboard().then(leaderboardData => {
         if (leaderboardData.allTimeHighScores.length > 0) {
-          // Create a leaderboard marker at a prominent location
-          const sceneUIManager = SceneUIManager.getInstance(world);
-          
-          // Position the marker at a visible location in the center of the map
-          const markerPos = { x: 0, y: 15, z: 0 };
-          
-          // Format the scores for display
-          const displayScores = leaderboardData.allTimeHighScores
-            .slice(0, 5)
-            .map(entry => ({
-              playerName: entry.playerName,
-              score: entry.score
-            }));
-          
-          // Create the leaderboard marker
-          sceneUIManager.createLeaderboardMarker(markerPos, displayScores, 50);
-          console.log('Created in-world leaderboard marker');
+          // Leaderboard marker functionality removed
+          console.log('In-world leaderboard marker functionality has been removed');
         }
       }).catch(error => {
         console.error("Error creating leaderboard marker:", error);

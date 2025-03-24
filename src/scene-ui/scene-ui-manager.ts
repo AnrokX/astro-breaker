@@ -58,8 +58,10 @@ export class SceneUIManager {
     
     const verticalOffset = 1.5 + Math.min(Math.pow(roundedScore / 30, 1.4), 1.5);
 
-    // Calculate color based on score
-    const colorInfo = this.getScoreColor(roundedScore);
+    // For scores above 100, always use bright red without any effects
+    const colorInfo = roundedScore > 100 
+      ? { main: '#FF0000', glow: 'transparent', intensity: 0 }
+      : this.getScoreColor(roundedScore);
     
     // Create animation style
     const dynamicStyle = this.createDynamicStyle(roundedScore, scale, duration, colorInfo);
@@ -99,11 +101,17 @@ export class SceneUIManager {
 
   private getScoreColor(score: number): { main: string, glow: string, intensity: number } {
     const colors = [
-      { score: 0, color: '#FFFFFF', glow: '#CCCCCC', intensity: 0.3 },
-      { score: 15, color: '#FFFF00', glow: '#CCCC00', intensity: 0.6 },
-      { score: 25, color: '#FFA500', glow: '#CC8400', intensity: 0.9 },
-      { score: 50, color: '#FF0000', glow: '#CC0000', intensity: 1.2 },
-      { score: 150, color: '#FF00FF', glow: '#FFFFFF', intensity: 1.5 }
+      { score: 0, color: '#FFFFFF', glow: 'transparent', intensity: 0 }, // This color is white
+      { score: 10, color: '#99CCFF', glow: 'transparent', intensity: 0 }, // Light blue
+      { score: 20, color: '#FFFF00', glow: 'transparent', intensity: 0 }, // Yellow
+      { score: 30, color: '#FF9900', glow: 'transparent', intensity: 0 }, // Orange
+      { score: 40, color: '#FF6600', glow: 'transparent', intensity: 0 }, // Dark orange
+      { score: 50, color: '#FF00FF', glow: 'transparent', intensity: 0 }, // Pink
+      { score: 60, color: '#CC00FF', glow: 'transparent', intensity: 0 }, // Purple
+      { score: 65, color: '#CC00FF', glow: 'transparent', intensity: 0 }, // Deep purple
+      { score: 75, color: '#FF3333', glow: 'transparent', intensity: 0 },  // Brighter red
+      { score: 130, color: '#FF3333', glow: 'transparent', intensity: 0 },  // Brighter red
+      { score: 180, color: '#FF3333', glow: 'transparent', intensity: 0 }  // Brighter red
     ];
 
     let lower = colors[0];
@@ -144,6 +152,9 @@ export class SceneUIManager {
   }
 
   private createDynamicStyle(score: number, scale: number, duration: number, colorInfo: { main: string, glow: string, intensity: number }): string {
+    // For high scores, ensure we use a consistent animation duration
+    const actualDuration = score > 100 ? 800 : duration;
+    
     return `
       @keyframes scoreAnimation {
         0% {
@@ -171,39 +182,15 @@ export class SceneUIManager {
           transform: translateY(-${50 * scale}px) scale(${scale * 0.8});
         }
       }
-      animation: scoreAnimation ${duration}ms ease-out forwards;
+      animation: scoreAnimation ${actualDuration}ms ease-out forwards;
       will-change: transform, opacity;
       transform: translateZ(0);
       font-size: ${scale * 48}px;
-      color: ${colorInfo.main};
-      text-shadow: 0 0 ${5 + colorInfo.intensity * 15}px ${colorInfo.glow};
+      color: ${colorInfo.main} !important; /* Force color override */
       --score-value: ${score};
-      --intensity: ${colorInfo.intensity};
     `;
   }
 
-  /**
-   * Creates a leaderboard marker in the world showing high scores
-   * @param position Position in the world where to place the marker
-   * @param scores Array of score entries to display
-   * @param viewDistance Maximum distance from which the marker is visible (default: 20)
-   * @returns The created SceneUI instance
-   */
-  public createLeaderboardMarker(
-    position: Vector3Like,
-    scores: Array<{playerName: string, score: number}>,
-    viewDistance: number = 20
-  ): SceneUI {
-    const leaderboardMarker = new SceneUI({
-      templateId: 'leaderboard-marker',
-      state: { scores: scores.slice(0, 5) }, // Show top 5 scores
-      viewDistance,
-      position
-    });
-    
-    leaderboardMarker.load(this.world);
-    return leaderboardMarker;
-  }
 
   public cleanup(): void {
     // No cleanup needed anymore as we're not storing any SceneUI instances

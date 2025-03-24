@@ -701,12 +701,9 @@
     }
 
     .hit-notification .score {
-      color: var(--matrix-green);
+      /* Using dynamic colors from SceneUIManager */
       font-family: var(--display-font);
       font-size: 28px;
-      text-shadow: 0 0 10px var(--terminal-green),
-                   0 0 20px var(--terminal-green),
-                   0 0 30px var(--terminal-green);
       animation: hitNotification 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
       opacity: 0;
       transform: scale(0.5) translateZ(0);
@@ -732,44 +729,36 @@
       transform-origin: center center;
       perspective: 1000px;
       --pop-intensity: calc(var(--score-value, 0) * 0.01);
-      --glow-intensity: calc(var(--intensity, 0.5) * 100%);
     }
 
     @keyframes scoreAnimation {
       0% {
         opacity: 0;
         transform: scale(0.5) translateZ(-300px) translateY(calc(50px * var(--pop-intensity))) rotate3d(1, 0, 0, -45deg);
-        filter: brightness(calc(100% + var(--glow-intensity)));
       }
       15% {
         opacity: 1;
         transform: scale(1.8) translateZ(200px) translateY(calc(-100px * var(--pop-intensity))) rotate3d(1, 0, 0, 30deg);
-        filter: brightness(calc(150% + var(--glow-intensity)));
       }
       30% {
         opacity: 1;
         transform: scale(2) translateZ(150px) translateY(calc(-150px * var(--pop-intensity))) rotate3d(1, 0, 0, 15deg);
-        filter: brightness(calc(200% + var(--glow-intensity)));
       }
       50% {
         opacity: 1;
         transform: scale(1.8) translateZ(100px) translateY(calc(-200px * var(--pop-intensity))) rotate3d(1, 0, 0, 0deg);
-        filter: brightness(calc(150% + var(--glow-intensity)));
       }
       70% {
         opacity: 0.9;
         transform: scale(1.5) translateZ(50px) translateY(calc(-250px * var(--pop-intensity))) rotate3d(1, 0, 0, -10deg);
-        filter: brightness(calc(125% + var(--glow-intensity)));
       }
       85% {
         opacity: 0.7;
         transform: scale(1.2) translateZ(25px) translateY(calc(-300px * var(--pop-intensity))) rotate3d(1, 0, 0, -20deg);
-        filter: brightness(calc(110% + var(--glow-intensity)));
       }
       100% {
         opacity: 0;
         transform: scale(1) translateZ(0) translateY(calc(-350px * var(--pop-intensity))) rotate3d(1, 0, 0, -30deg);
-        filter: brightness(100%);
       }
     }
 
