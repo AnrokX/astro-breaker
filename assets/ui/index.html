@@ -3761,6 +3761,18 @@ function modeMultiplayer() {
     text-align: center;
   }
   
+  /* Styling for tied entries */
+  .leaderboard-table tr.tied-entry td {
+    border-top: none;
+  }
+  
+  .tie-indicator {
+    font-size: 8px;
+    vertical-align: super;
+    color: rgba(255, 255, 255, 0.7);
+    margin-left: 3px;
+  }
+  
   .leaderboard-table tr:hover td {
     background: rgba(255, 255, 255, 0.05);
   }
@@ -4118,13 +4130,16 @@ function modeMultiplayer() {
     // Calculate ranks for all-time high scores to handle ties
     let currentRank = 1;
     let previousScore = -1;
+    let position = 0;
     const rankedScores = data.allTimeHighScores.map((score, index) => {
+      position = index + 1; // Track the actual position (1-based)
+      
       // Check if this player has the same score as the previous one
       if (index > 0 && score.score === previousScore) {
-        // Keep the same rank for tied players
+        // Keep the same rank for tied players (do nothing)
       } else {
-        // New score value = new rank
-        currentRank = index + 1;
+        // New score value = new rank (update the rank to match the current position)
+        currentRank = position;
       }
       
       // Store current score for next iteration
@@ -4139,7 +4154,7 @@ function modeMultiplayer() {
     
     // Display all-time high scores with medals for top 3
     document.getElementById('all-time-scores').innerHTML = rankedScores
-      .map(score => {
+      .map((score, index) => {
         // For top 3, show medals instead of rank numbers
         let rankDisplay = '';
         if (score.rank === 1) {
@@ -4153,9 +4168,13 @@ function modeMultiplayer() {
           rankDisplay = `${score.rank}`;
         }
         
+        // Get previous score for comparison (to indicate ties visually)
+        const previousEntry = index > 0 ? rankedScores[index - 1] : null;
+        const isTied = previousEntry && score.score === previousEntry.score;
+        
         return `
-        <tr class="${score.rank <= 3 ? 'top-rank rank-' + score.rank : ''}">
-          <td>${rankDisplay}</td>
+        <tr class="${score.rank <= 3 ? 'top-rank rank-' + score.rank : ''} ${isTied ? 'tied-entry' : ''}">
+          <td>${rankDisplay}${isTied ? '<span class="tie-indicator" title="Tied">•</span>' : ''}</td>
           <td>${score.playerName}</td>
           <td>${score.score}</td>
           <td>${new Date(score.date).toLocaleDateString()}</td>
@@ -4233,13 +4252,16 @@ function modeMultiplayer() {
       // Calculate ranks to handle ties
       let currentRank = 1;
       let previousScore = -1;
+      let position = 0;
       const rankedScores = roundScores.map((score, index) => {
+        position = index + 1; // Track the actual position (1-based)
+        
         // Check if this player has the same score as the previous one
         if (index > 0 && score.roundScore === previousScore) {
-          // Keep the same rank for tied players
+          // Keep the same rank for tied players (do nothing)
         } else {
-          // New score value = new rank
-          currentRank = index + 1;
+          // New score value = new rank (update the rank to match the current position)
+          currentRank = position;
         }
         
         // Store current score for next iteration
@@ -4254,7 +4276,7 @@ function modeMultiplayer() {
       
       // Display the scores with medals for top 3
       document.getElementById('round-scores').innerHTML = rankedScores
-        .map(score => {
+        .map((score, index) => {
           // For top 3, show medals instead of rank numbers
           let rankDisplay = '';
           if (score.rank === 1) {
@@ -4268,9 +4290,13 @@ function modeMultiplayer() {
             rankDisplay = `${score.rank}`;
           }
           
+          // Get previous score for comparison (to indicate ties visually)
+          const previousEntry = index > 0 ? rankedScores[index - 1] : null;
+          const isTied = previousEntry && score.roundScore === previousEntry.roundScore;
+          
           return `
-          <tr class="${score.rank <= 3 ? 'top-rank rank-' + score.rank : ''}">
-            <td>${rankDisplay}</td>
+          <tr class="${score.rank <= 3 ? 'top-rank rank-' + score.rank : ''} ${isTied ? 'tied-entry' : ''}">
+            <td>${rankDisplay}${isTied ? '<span class="tie-indicator" title="Tied">•</span>' : ''}</td>
             <td data-player-id="${score.playerId}">${score.playerName}</td>
             <td>${score.roundNumber}</td>
             <td>${score.roundScore}</td>
