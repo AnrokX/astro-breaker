@@ -69,11 +69,11 @@ export const MOVING_BLOCK_CONFIG = {
     TEXTURE: 'blocks/infected-shadowrock.png',
     HALF_EXTENTS: { x: 1, y: 1, z: 1 },
     DEFAULT_AMPLITUDE: 5.5,  // Moderate amplitude for stable vertical movement
-    DEFAULT_FREQUENCY: 0.3,  // Fixed frequency for all vertical waves
+    DEFAULT_FREQUENCY: 0.25,  // Fixed frequency for smooth movement
     HEIGHT_OFFSET: 0,  // Lowered base height to allow blocks to go lower
-    SAFETY_MARGIN: 2.5,   // Increased safety margin for boundary stability
+    SAFETY_MARGIN: 4.0,   // Increased safety margin for more room to move
     SCORE_MULTIPLIER: 2,  // Double points for hitting this challenging target
-    SPEED_MULTIPLIER: 0.6,  // Fixed speed independent of previous settings
+    SPEED_MULTIPLIER: 0.5,  // Slower speed for smoother movement
     HEALTH: 1  // One-shot kill, like static targets
   },
   POPUP_TARGET: {
@@ -1152,15 +1152,16 @@ export class MovingBlockManager {
         baseAxis: 'z',  // Move forward along Z axis
         waveAxis: 'y'   // Oscillate on Y axis
       }),
-      // Modified movement bounds: we fix Y to let the sine function determine vertical movement.
+      // Modified movement bounds: we fix Y to let the sine function determine vertical movement
+      // and provide wider X boundaries for more horizontal space
       movementBounds: {
         min: { 
-          x: -5,
+          x: -8,  // Wider X boundaries (was -5)
           y: fixedY,
           z: MOVING_BLOCK_CONFIG.MOVEMENT_BOUNDS.min.z
         },
         max: {
-          x: 5,
+          x: 8,   // Wider X boundaries (was 5)
           y: fixedY,
           z: MOVING_BLOCK_CONFIG.MOVEMENT_BOUNDS.max.z
         }

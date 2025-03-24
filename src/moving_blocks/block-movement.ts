@@ -310,15 +310,23 @@ export class SineWaveMovement implements BlockMovementBehavior {
     let waveOffset;
     
     if (isVerticalWave) {
-      // Using a lower frequency for vertical waves to make it smoother and slower
-      const fixedFrequency = 0.15; // Reduced from 0.3 for smoother oscillation
-      // Calculate wave with phase offset for vertical waves
-      // Use a larger amplitude multiplier (2.0) to create wider vertical movement
-      waveOffset = this.amplitude * 2.0 * Math.sin(2 * Math.PI * fixedFrequency * this.elapsedTime + this.startingPhaseOffset);
+      // Use a much more fluid sine function with careful parameters
+      // Ensure continuous movement without any pausing at extremes
+      const fixedFrequency = 0.25; // Higher frequency for more continuous movement
       
-      // Add gentle smoothing for vertical waves to make transitions more fluid
-      const smoothingFactor = 0.03; // Very gentle smoothing
-      this.lastWaveOffset += (waveOffset - this.lastWaveOffset) * smoothingFactor;
+      // Use sine for base movement but modify slightly to prevent lingering at extremes
+      // This creates a modified sine wave that spends less time at the peaks and troughs
+      const sineValue = Math.sin(2 * Math.PI * fixedFrequency * this.elapsedTime + this.startingPhaseOffset);
+      
+      // Use Cubic easing to reduce time spent at extremes (peaks/troughs)
+      // This transforms the sine curve to spend less time at peaks and troughs
+      const cubicEased = sineValue * (1 - Math.abs(sineValue) * 0.3);
+      
+      // Apply the amplitude to our modified wave pattern
+      waveOffset = this.amplitude * 2.0 * cubicEased;
+      
+      // Directly set the offset without smoothing for more responsive movement
+      this.lastWaveOffset = waveOffset;
     } else {
       // Standard calculation for horizontal sine waves
       waveOffset = this.amplitude * Math.sin(2 * Math.PI * this.frequency * this.elapsedTime);
