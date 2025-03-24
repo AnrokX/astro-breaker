@@ -68,12 +68,12 @@ export const MOVING_BLOCK_CONFIG = {
   VERTICAL_WAVE: {  // New configuration for vertical sine wave blocks
     TEXTURE: 'blocks/infected-shadowrock.png',
     HALF_EXTENTS: { x: 1, y: 1, z: 1 },
-    DEFAULT_AMPLITUDE: 3.5,  // Further reduced amplitude to prevent floor collision
-    DEFAULT_FREQUENCY: 0.3,  // Slower frequency for smoother movement
-    HEIGHT_OFFSET: 8,  // Slightly reduced base height for more stability
-    SAFETY_MARGIN: 3,   // Increased safety margin to prevent boundary collisions
+    DEFAULT_AMPLITUDE: 5.5,  // Moderate amplitude for stable vertical movement
+    DEFAULT_FREQUENCY: 0.3,  // Fixed frequency for all vertical waves
+    HEIGHT_OFFSET: 0,  // Lowered base height to allow blocks to go lower
+    SAFETY_MARGIN: 2.5,   // Increased safety margin for boundary stability
     SCORE_MULTIPLIER: 2,  // Double points for hitting this challenging target
-    SPEED_MULTIPLIER: 0.6,  // Adjusted to 60% of normal speed (20% faster than previous 0.5)
+    SPEED_MULTIPLIER: 0.6,  // Fixed speed independent of previous settings
     HEALTH: 1  // One-shot kill, like static targets
   },
   POPUP_TARGET: {

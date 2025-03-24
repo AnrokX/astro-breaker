@@ -62,7 +62,7 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     4: {
         duration: 25000,  // 25 seconds - slightly more intense
         minBlockCount: 3,  // Increased from 1 to 2 (100% more)
-        maxBlockCount: 10,  // Increased from 3 to 6 (100% more)
+        maxBlockCount: 7,  // Increased from 3 to 6 (100% more)
         blockSpawnInterval: 1200,  // Maintained for vertical wave control
         speedMultiplier: 0.7,
         blockTypes: {

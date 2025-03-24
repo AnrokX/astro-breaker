@@ -234,14 +234,15 @@ export class SineWaveMovement implements BlockMovementBehavior {
   private readonly baseAxis: 'x' | 'y' | 'z';
   private readonly waveAxis: 'x' | 'y' | 'z';
   private initialY: number = 0;
-  private lastWaveOffset: number = 0; // Track last offset for smoother transitions
+  private lastWaveOffset: number = 0;
   private lastReversalTime: number = 0;
-  private minReversalInterval: number = 1200; // Increased minimum ms between reversals for sine wave
+  private minReversalInterval: number = 1000; // Longer interval to prevent too frequent reversals
   private stuckCounter: number = 0;
-  private stuckThreshold: number = 4;
+  private stuckThreshold: number = 5;
   private lastPositions: Vector3Like[] = [];
-  private boundsEpsilon: number = 0.25; // Much larger epsilon for boundary detection
-  private startingPhaseOffset: number = 0; // Track starting phase
+  private boundsEpsilon: number = 0.2; // Larger epsilon for boundary detection
+  private startingPhaseOffset: number = 0;
+  private moveSpeedOriginal: number = 0; // Store original move speed
 
   constructor(options: {
     amplitude?: number;
@@ -249,19 +250,16 @@ export class SineWaveMovement implements BlockMovementBehavior {
     baseAxis?: 'x' | 'y' | 'z';
     waveAxis?: 'x' | 'y' | 'z';
   } = {}) {
-    this.amplitude = options.amplitude ?? 8;  // Default to wider amplitude
-    this.frequency = options.frequency ?? 0.2; // Default to slower frequency
+    this.amplitude = options.amplitude ?? 8;
+    this.frequency = options.frequency ?? 0.2;
     this.baseAxis = options.baseAxis ?? 'z';
     this.waveAxis = options.waveAxis ?? 'x';
-    // Start with random phase offset to prevent waves from being synchronized
+    // Random phase offset to prevent synchronization
     this.startingPhaseOffset = Math.random() * Math.PI * 2;
   }
 
-  /**
-   * Clamps the position to be safely within the bounds with a generous margin.
-   */
   private clampPosition(pos: Vector3Like, bounds: { min: Vector3Like; max: Vector3Like }): Vector3Like {
-    // Use a much larger epsilon for vertical waves to prevent edge cases
+    // Use a large epsilon for vertical waves to prevent boundary problems
     const epsilon = this.waveAxis === 'y' ? this.boundsEpsilon : 0.15;
     
     return {
@@ -275,57 +273,59 @@ export class SineWaveMovement implements BlockMovementBehavior {
     const isVerticalWave = this.waveAxis === 'y';
     const currentTime = Date.now();
     
-    // Set initialY on first update with special handling for vertical waves
+    // Store original speed on first update and set initial position
     if (this.elapsedTime === 0) {
+      // Store original speed to keep movement consistent
+      this.moveSpeedOriginal = block.getMoveSpeed();
+      
       if (isVerticalWave) {
-        // Force a consistent starting height in the middle of the allowed range
-        // This prevents the wild initial movement from high spawns
-        this.initialY = 5; // Fixed initial Y for all vertical waves
-        
-        // Immediately set the block to this height to prevent initial jitter
-        const fixedStartPosition = { ...block.position, y: this.initialY };
-        block.setPosition(fixedStartPosition);
+        // For vertical waves, allow a lower starting height
+        this.initialY = Math.max(-2, Math.min(8, block.position.y));
       } else {
         this.initialY = block.position.y;
       }
+      
+      // Initialize with a small offset to avoid sudden jumps
       this.lastWaveOffset = 0;
     }
     
     const deltaSeconds = deltaTimeMs / 1000;
     this.elapsedTime += deltaSeconds;
 
-    // Store current position for stuck detection
+    // Track positions for stuck detection
     this.lastPositions.push({...block.position});
-    if (this.lastPositions.length > 10) {
-      this.lastPositions.shift(); // Keep last 10 positions only
+    if (this.lastPositions.length > 8) {
+      this.lastPositions.shift();
     }
 
-    // Adjust speed based on wave type - increased by 20% from previous settings
-    const speedMultiplier = isVerticalWave ? 0.85 : 1.0; // Only 15% reduction for vertical waves
-    const baseSpeed = block.getMoveSpeed() * deltaSeconds * speedMultiplier;
+    // Always use the original speed for consistency - NOT the current block speed
+    // which might have been changed elsewhere
+    const baseSpeed = isVerticalWave ? 
+      this.moveSpeedOriginal * 0.4 * deltaSeconds : // Reduced to 40% speed for vertical waves (was 0.5)
+      this.moveSpeedOriginal * deltaSeconds;        // Full speed for horizontal waves
+    
     const baseMovement = block.getDirection()[this.baseAxis] * baseSpeed;
     
-    // Special wave calculation for vertical waves
-    let waveFrequency, targetWaveOffset, smoothingFactor;
+    // Wave calculations with fixed parameters
+    let waveOffset;
     
     if (isVerticalWave) {
-      // Use much slower frequency and smaller amplitude for vertical movement
-      waveFrequency = this.frequency * 0.6;
+      // Using a lower frequency for vertical waves to make it smoother and slower
+      const fixedFrequency = 0.15; // Reduced from 0.3 for smoother oscillation
+      // Calculate wave with phase offset for vertical waves
+      // Use a larger amplitude multiplier (2.0) to create wider vertical movement
+      waveOffset = this.amplitude * 2.0 * Math.sin(2 * Math.PI * fixedFrequency * this.elapsedTime + this.startingPhaseOffset);
       
-      // Use pre-calculated phase offset to make smooth, consistent waves
-      targetWaveOffset = this.amplitude * Math.sin(2 * Math.PI * waveFrequency * this.elapsedTime + this.startingPhaseOffset);
-      
-      // Use very gentle smoothing for vertical waves
-      smoothingFactor = 0.03;
+      // Add gentle smoothing for vertical waves to make transitions more fluid
+      const smoothingFactor = 0.03; // Very gentle smoothing
+      this.lastWaveOffset += (waveOffset - this.lastWaveOffset) * smoothingFactor;
     } else {
       // Standard calculation for horizontal sine waves
-      waveFrequency = this.frequency;
-      targetWaveOffset = this.amplitude * Math.sin(2 * Math.PI * waveFrequency * this.elapsedTime);
-      smoothingFactor = 0.1;
+      waveOffset = this.amplitude * Math.sin(2 * Math.PI * this.frequency * this.elapsedTime);
+      // Use a moderate smoothing factor for horizontal waves
+      const smoothingFactor = 0.1;
+      this.lastWaveOffset += (waveOffset - this.lastWaveOffset) * smoothingFactor;
     }
-    
-    // Apply smoothing - the rate at which the current offset approaches the target
-    this.lastWaveOffset += (targetWaveOffset - this.lastWaveOffset) * smoothingFactor;
     
     // Calculate new position
     let newPosition = { ...block.position };
@@ -333,15 +333,14 @@ export class SineWaveMovement implements BlockMovementBehavior {
     // Apply forward movement along base axis
     newPosition[this.baseAxis] += baseMovement;
 
-    // Apply wave offset differently based on wave type
+    // Apply wave offset
     if (isVerticalWave) {
-      // Vertical waves are centered at initialY
+      // Apply vertical offset with much wider limits
       newPosition.y = this.initialY + this.lastWaveOffset;
-      
-      // Enforce absolute min/max Y bounds to prevent extreme heights
-      newPosition.y = Math.max(3, Math.min(10, newPosition.y));
+      // Allow much lower positions (down to -10) with higher upper limit
+      newPosition.y = Math.max(-10, Math.min(12, newPosition.y));
     } else {
-      // Horizontal waves are centered at 0
+      // Horizontal waves centered at 0
       newPosition[this.waveAxis] = this.lastWaveOffset;
     }
 
@@ -356,113 +355,69 @@ export class SineWaveMovement implements BlockMovementBehavior {
           this.stuckCounter = 0;
           this.lastPositions = [];
           
-          // Choose one of 8 primary directions to ensure clear movement
-          const directionChoices = [
-            { x: 0, y: 0, z: 1 },     // North
-            { x: 0.7, y: 0, z: 0.7 }, // Northeast
-            { x: 1, y: 0, z: 0 },     // East
-            { x: 0.7, y: 0, z: -0.7 },// Southeast
-            { x: 0, y: 0, z: -1 },    // South
-            { x: -0.7, y: 0, z: -0.7 },// Southwest
-            { x: -1, y: 0, z: 0 },    // West
-            { x: -0.7, y: 0, z: 0.7 } // Northwest
-          ];
+          // For vertical waves, choose from a limited set of directions
+          // that are more natural for the movement
+          const directions = isVerticalWave ? 
+            [
+              { x: 0, y: 0, z: 1 },     // North
+              { x: 0, y: 0, z: -1 },    // South
+              { x: 1, y: 0, z: 0 },     // East
+              { x: -1, y: 0, z: 0 },    // West
+            ] :
+            [
+              { x: 0, y: 0, z: 1 },
+              { x: 0.7, y: 0, z: 0.7 },
+              { x: 1, y: 0, z: 0 },
+              { x: 0.7, y: 0, z: -0.7 },
+              { x: 0, y: 0, z: -1 },
+              { x: -0.7, y: 0, z: -0.7 },
+              { x: -1, y: 0, z: 0 },
+              { x: -0.7, y: 0, z: 0.7 }
+            ];
           
-          // Choose a random direction from the predefined choices
-          const directionChoice = Math.floor(Math.random() * directionChoices.length);
-          const newDirection = directionChoices[directionChoice];
+          const directionIndex = Math.floor(Math.random() * directions.length);
+          const newDirection = directions[directionIndex];
           
           // Force direction change
           (block as any).direction = newDirection;
           this.lastReversalTime = currentTime;
           
-          // For vertical waves, reset the wave cycle but maintain current height
-          if (isVerticalWave) {
-            // Generate a new random phase offset
-            this.startingPhaseOffset = Math.random() * Math.PI * 2;
-            // Don't reset elapsed time - just recalculate current offset to match current height
-            const currentOffset = block.position.y - this.initialY;
-            this.lastWaveOffset = currentOffset;
-          }
-          
-          // Apply strong push in new direction
-          const escapePushFactor = 1.0; // Even stronger push
+          // Apply push in new direction
+          const pushFactor = isVerticalWave ? 0.6 : 1.0;
           newPosition = {
-            x: block.position.x + newDirection.x * (baseSpeed + escapePushFactor),
-            y: isVerticalWave ? block.position.y : (this.initialY + this.lastWaveOffset),
-            z: block.position.z + newDirection.z * (baseSpeed + escapePushFactor)
+            x: block.position.x + newDirection.x * (baseSpeed + pushFactor),
+            y: block.position.y, // Maintain height
+            z: block.position.z + newDirection.z * (baseSpeed + pushFactor)
           };
-        }
-        // Standard boundary handling
-        else {
+        } else {
           const timeSinceLastReversal = currentTime - this.lastReversalTime;
           
           if (timeSinceLastReversal >= this.minReversalInterval) {
-            // Completely new approach for vertical waves at boundaries
-            if (isVerticalWave) {
-              // Don't use standard reversal - choose a completely new direction
-              // Pick from the 8 primary directions
-              const directionChoices = [
-                { x: 0, y: 0, z: 1 },     // North
-                { x: 0.7, y: 0, z: 0.7 }, // Northeast
-                { x: 1, y: 0, z: 0 },     // East
-                { x: 0.7, y: 0, z: -0.7 },// Southeast
-                { x: 0, y: 0, z: -1 },    // South
-                { x: -0.7, y: 0, z: -0.7 },// Southwest
-                { x: -1, y: 0, z: 0 },    // West
-                { x: -0.7, y: 0, z: 0.7 } // Northwest
-              ];
-              
-              // Avoid choosing direction similar to current (to prevent ping-pong)
-              const currentDir = block.getDirection();
-              const validChoices = directionChoices.filter(dir => {
-                // Calculate dot product to find similarity
-                const similarity = dir.x * currentDir.x + dir.z * currentDir.z;
-                // Filter out directions too similar (including direct opposite)
-                return Math.abs(similarity) < 0.7;
-              });
-              
-              // Pick a random valid direction or fallback to any if none valid
-              const newDirection = validChoices.length > 0 ? 
-                validChoices[Math.floor(Math.random() * validChoices.length)] :
-                directionChoices[Math.floor(Math.random() * directionChoices.length)];
-              
-              // Force direction change
-              (block as any).direction = newDirection;
-              
-              // Apply significant push in new direction
-              const pushFactor = 0.6;
-              newPosition = {
-                x: block.position.x + newDirection.x * (baseSpeed + pushFactor),
-                y: block.position.y, // Keep current height
-                z: block.position.z + newDirection.z * (baseSpeed + pushFactor)
-              };
-            } 
-            // Standard reversal for horizontal waves
-            else {
-              block.reverseMovementDirection();
-              
-              // Get new direction after reversal
-              const newDirection = block.getDirection();
-              const pushFactor = 0.3;
-              
-              const reversedBaseSpeed = block.getMoveSpeed() * deltaSeconds;
-              const reversedBaseMovement = newDirection[this.baseAxis] * (reversedBaseSpeed + pushFactor);
-              
-              newPosition = { ...block.position };
-              newPosition[this.baseAxis] += reversedBaseMovement;
-              newPosition[this.waveAxis] = this.lastWaveOffset;
-            }
-            
+            // Simple direction reversal
+            block.reverseMovementDirection();
             this.lastReversalTime = currentTime;
-          } else {
-            // If we can't reverse yet, maintain current position
-            newPosition = { ...block.position };
             
-            // But still allow wave movement
+            // For vertical waves, we don't need to adjust the wave pattern
+            // Just recalculate position with new direction
+            const newDirection = block.getDirection();
+            const pushFactor = isVerticalWave ? 0.4 : 0.3;
+            
+            newPosition = { ...block.position };
+            newPosition[this.baseAxis] += newDirection[this.baseAxis] * (baseSpeed + pushFactor);
+            
             if (isVerticalWave) {
               newPosition.y = this.initialY + this.lastWaveOffset;
-              newPosition.y = Math.max(3, Math.min(10, newPosition.y)); // Enforce height limits
+              newPosition.y = Math.max(-10, Math.min(12, newPosition.y)); // Allow much lower heights
+            } else {
+              newPosition[this.waveAxis] = this.lastWaveOffset;
+            }
+          } else {
+            // Can't reverse yet, maintain current position but continue wave movement
+            newPosition = { ...block.position };
+            
+            if (isVerticalWave) {
+              newPosition.y = this.initialY + this.lastWaveOffset;
+              newPosition.y = Math.max(-10, Math.min(12, newPosition.y)); // Allow much lower heights
             } else {
               newPosition[this.waveAxis] = this.lastWaveOffset;
             }
@@ -474,6 +429,7 @@ export class SineWaveMovement implements BlockMovementBehavior {
           newPosition = this.clampPosition(newPosition, (block as any)['movementBounds']);
         }
       } else {
+        // Non-oscillating block reset
         block.resetToInitialPosition();
         this.elapsedTime = 0;
         this.lastWaveOffset = 0;
@@ -482,22 +438,14 @@ export class SineWaveMovement implements BlockMovementBehavior {
         return;
       }
     }
-
-    // Not hitting bounds or stuck - reset counter
-    this.stuckCounter = Math.max(0, this.stuckCounter - 1);
     
     // Set final position
     block.setPosition(newPosition);
   }
   
-  // Detect if the block appears to be stuck
   private detectStuckState(): boolean {
     if (this.lastPositions.length < 5) return false;
     
-    // For vertical waves, we need to track horizontal movement only
-    const isVerticalWave = this.waveAxis === 'y';
-    
-    // Check if movement is very small over last several frames
     let totalDistance = 0;
     
     for (let i = 1; i < this.lastPositions.length; i++) {
@@ -512,17 +460,13 @@ export class SineWaveMovement implements BlockMovementBehavior {
       totalDistance += dist;
     }
     
-    // Calculate average movement per frame
     const avgMovement = totalDistance / (this.lastPositions.length - 1);
+    const threshold = 0.01;
     
-    // Different thresholds based on wave type
-    const movementThreshold = isVerticalWave ? 0.003 : 0.01;
-    
-    if (avgMovement < movementThreshold) {
+    if (avgMovement < threshold) {
       this.stuckCounter++;
     } else {
-      // Gradual decrease
-      this.stuckCounter = Math.max(0, this.stuckCounter - 1);
+      this.stuckCounter = 0;
     }
     
     return this.stuckCounter >= this.stuckThreshold;
