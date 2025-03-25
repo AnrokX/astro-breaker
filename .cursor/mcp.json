@@ -6,6 +6,7 @@
         "-y",
         "topia-mcp@latest",
         "serve",
+        "--dir",
         "C:\\Users\\anrok\\OneDrive\\Documentos\\GitHub\\astro-breaker"
       ]
     }

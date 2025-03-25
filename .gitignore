@@ -188,3 +188,6 @@ assets/models/projectiles/textures/Stylized_Bomb_mat_*
 
 # data
 /dev/
+
+.mcp.json
+.cursor
