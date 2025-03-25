@@ -1,11 +1,14 @@
-import { World, Vector3Like, Player, SceneUI } from 'hytopia';
+import { World, Vector3Like, Player } from 'hytopia';
+import { ComboNotificationManager } from './combo-notification-manager';
 
 export class SceneUIManager {
   private static instance: SceneUIManager;
   private world: World;
+  private comboManager: ComboNotificationManager;
 
   private constructor(world: World) {
     this.world = world;
+    this.comboManager = ComboNotificationManager.getInstance();
   }
 
   public static getInstance(world: World): SceneUIManager {
@@ -80,23 +83,7 @@ export class SceneUIManager {
   }
 
   public showComboNotification(consecutiveHits: number, comboBonus: number, player: Player): void {
-    
-    player.ui.sendData({
-      type: 'showCombo',
-      data: {
-        hits: consecutiveHits,
-        bonus: comboBonus,
-        text: this.getComboText(consecutiveHits)
-      }
-    });
-  }
-
-  private getComboText(hits: number): string {
-    if (hits >= 10) return 'UNSTOPPABLE!';
-    if (hits >= 7) return 'DOMINATING!';
-    if (hits >= 5) return 'IMPRESSIVE!';
-    if (hits >= 3) return 'NICE COMBO!';
-    return '';
+    this.comboManager.showComboNotification(consecutiveHits, comboBonus, player);
   }
 
   private getScoreColor(score: number): { main: string, glow: string, intensity: number } {

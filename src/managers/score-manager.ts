@@ -4,6 +4,7 @@ import { World, Vector3Like, Entity } from 'hytopia';
 import { MovingBlockEntity, MOVING_BLOCK_CONFIG } from '../moving_blocks/moving-block-entity';
 import { ProjectileEntity } from '../entities/projectile-entity';
 import { SceneUIManager } from '../scene-ui/scene-ui-manager';
+import { ComboNotificationManager } from '../scene-ui/combo-notification-manager';
 import { AudioManager } from './audio-manager';
 import { LeaderboardManager } from './leaderboard-manager';
 
@@ -453,7 +454,7 @@ export class ScoreManager extends Entity {
         .find(entity => entity.player.id === playerId)?.player;
       
       if (player) {
-        SceneUIManager.getInstance(this.world).showComboNotification(
+        ComboNotificationManager.getInstance().showComboNotification(
           stats.consecutiveHits,
           totalBonus,
           player
