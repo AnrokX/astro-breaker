@@ -56,10 +56,8 @@ export class SceneUIManager {
     
     const verticalOffset = 1.5 + Math.min(Math.pow(roundedScore / 30, 1.4), 1.5);
 
-    // For scores above 100, always use bright red without any effects
-    const colorInfo = roundedScore > 100 
-      ? { main: '#FF0000', glow: 'transparent', intensity: 0 }
-      : this.getScoreColor(roundedScore);
+    // Get color based on score
+    const colorInfo = this.getScoreColor(roundedScore);
     
     // Create a SceneUI for block destroyed notification
     const notification = new SceneUI({
@@ -111,17 +109,17 @@ export class SceneUIManager {
 
   private getScoreColor(score: number): { main: string, glow: string, intensity: number } {
     const colors = [
-      { score: 0, color: '#FFFFFF', glow: 'transparent', intensity: 0 }, // This color is white
-      { score: 10, color: '#99CCFF', glow: 'transparent', intensity: 0 }, // Light blue
+      { score: 0, color: '#FFFFFF', glow: 'transparent', intensity: 0 }, // White
       { score: 20, color: '#FFFF00', glow: 'transparent', intensity: 0 }, // Yellow
-      { score: 30, color: '#FF9900', glow: 'transparent', intensity: 0 }, // Orange
-      { score: 40, color: '#FF6600', glow: 'transparent', intensity: 0 }, // Dark orange
-      { score: 50, color: '#FF00FF', glow: 'transparent', intensity: 0 }, // Pink
-      { score: 60, color: '#CC00FF', glow: 'transparent', intensity: 0 }, // Purple
-      { score: 65, color: '#CC00FF', glow: 'transparent', intensity: 0 }, // Deep purple
-      { score: 75, color: '#FF3333', glow: 'transparent', intensity: 0 },  // Brighter red
-      { score: 130, color: '#FF3333', glow: 'transparent', intensity: 0 },  // Brighter red
-      { score: 180, color: '#FF3333', glow: 'transparent', intensity: 0 }  // Brighter red
+      { score: 40, color: '#FF9900', glow: 'transparent', intensity: 0 }, // Orange
+      { score: 60, color: '#FF0000', glow: 'transparent', intensity: 0 }, // Red
+      { score: 100, color: '#FF0000', glow: 'transparent', intensity: 0 }, // Red (for high scores)
+      { score: 140, color: '#FF0000', glow: 'transparent', intensity: 0 }, //these are repeated because higher scores were appearing as white
+            { score: 180, color: '#FF0000', glow: 'transparent', intensity: 0 }, //these are repeated because higher scores were appearing as white
+            { score: 300, color: '#FF0000', glow: 'transparent', intensity: 0 } // these are repeated because higher scores were appearing as white
+
+
+
     ];
 
     let lower = colors[0];
