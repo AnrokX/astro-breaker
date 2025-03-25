@@ -1,10 +1,11 @@
-import { World, Vector3Like, Player } from 'hytopia';
+import { World, Vector3Like, Player, SceneUI } from 'hytopia';
 import { ComboNotificationManager } from './combo-notification-manager';
 
 export class SceneUIManager {
   private static instance: SceneUIManager;
   private world: World;
   private comboManager: ComboNotificationManager;
+  private blockNotifications: Map<string, SceneUI> = new Map();
 
   private constructor(world: World) {
     this.world = world;
@@ -58,17 +59,38 @@ export class SceneUIManager {
     // Create animation style
     const dynamicStyle = this.createDynamicStyle(roundedScore, scale, duration, colorInfo);
 
-    // Send notification data to player's UI
-    player.ui.sendData({
-      type: 'showBlockDestroyedNotification',
-      data: {
+    // Create a Scene UI notification
+    const notificationId = `block-notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Create SceneUI instance
+    const notification = new SceneUI({
+      templateId: 'block-destroyed-notification',
+      position: {
+        x: worldPosition.x,
+        y: worldPosition.y + verticalOffset, // Position above the block
+        z: worldPosition.z
+      },
+      state: {
         score: roundedScore,
-        position: worldPosition,
         style: dynamicStyle,
-        verticalOffset,
-        duration
-      }
+        class: this.getScoreClass(roundedScore)
+      },
+      viewDistance: 50 // Make sure it's visible from a distance
     });
+    
+    // Load the SceneUI instance in the world
+    notification.load(this.world);
+    
+    // Store the notification reference
+    this.blockNotifications.set(notificationId, notification);
+    
+    // Schedule notification removal after animation duration
+    setTimeout(() => {
+      if (notification.isLoaded) {
+        notification.unload();
+      }
+      this.blockNotifications.delete(notificationId);
+    }, duration + 100);
   }
 
   public showComboNotification(consecutiveHits: number, comboBonus: number, player: Player): void {
@@ -167,8 +189,22 @@ export class SceneUIManager {
     `;
   }
 
+  private getScoreClass(score: number): string {
+    if (score >= 100) return 'score-extreme';
+    if (score >= 75) return 'score-high';
+    if (score >= 50) return 'score-medium';
+    if (score >= 30) return 'score-average';
+    if (score >= 10) return 'score-low';
+    return '';
+  }
 
   public cleanup(): void {
-    // No cleanup needed anymore as we're not storing any SceneUI instances
+    // Clean up any remaining notifications
+    this.blockNotifications.forEach(notification => {
+      if (notification.isLoaded) {
+        notification.unload();
+      }
+    });
+    this.blockNotifications.clear();
   }
 } 

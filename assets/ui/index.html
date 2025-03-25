@@ -692,13 +692,14 @@
 
 
     .block-destroyed-notification {
-      position: absolute;
-      transform: translate(-50%, -50%);
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       pointer-events: none;
-      z-index: 1001;
+      transform-style: preserve-3d;
+      width: 200px;
+      height: 80px;
     }
 
     .block-destroyed-notification .score {
@@ -2290,8 +2291,6 @@ hytopia.onData(data => {
   } else if (data.type === 'gameEnd') {
     hideScoreboard();
     showGameEnd(data.data);
-  } else if (data.type === 'showBlockDestroyedNotification') {
-    showLocalBlockDestroyedNotification(data.data);
   } else if (data.type === 'showModeSelection') {
     hideScoreboard();
     console.log('Received showModeSelection event from server, showing game mode selection UI');
@@ -3204,32 +3203,7 @@ function showGameEnd(data) {
 
 // Add these new functions to handle local notifications
 
-function showLocalBlockDestroyedNotification(data) {
-  const container = document.createElement('div');
-  container.className = 'block-destroyed-notification';
-  container.style.left = '50%';  // Center horizontally
-  container.style.top = '50%';   // Center vertically
-  
-  if (data.verticalOffset) {
-    container.style.transform = `translate(-50%, -50%) translateY(-${data.verticalOffset}px)`;
-  }
-  
-  const scoreElement = document.createElement('div');
-  scoreElement.className = 'score';
-  scoreElement.textContent = `+${data.score}`;
-  
-  if (data.style) {
-    scoreElement.style.cssText = data.style;
-  }
-  
-  container.appendChild(scoreElement);
-  document.body.appendChild(container);
-  
-  // Remove after animation
-  setTimeout(() => {
-    container.remove();
-  }, data.duration + 100);
-}
+// Block destroyed notifications are now handled through SceneUI
 
 // Game Mode Selection Functionality
 function showGameModeSelection() {
