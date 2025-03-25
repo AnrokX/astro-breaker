@@ -5,7 +5,7 @@ export class SceneUIManager {
   private static instance: SceneUIManager;
   private world: World;
   private comboManager: ComboNotificationManager;
-  private blockNotifications: Map<string, SceneUI> = new Map();
+  private notifications: Map<string, SceneUI[]> = new Map();
 
   private constructor(world: World) {
     this.world = world;
@@ -20,6 +20,11 @@ export class SceneUIManager {
   }
 
   public showBlockDestroyedNotification(worldPosition: Vector3Like, score: number, player: Player, spawnOrigin?: Vector3Like): void {
+    // Send player ID to the client UI first
+    player.ui.sendData({
+      type: 'playerId',
+      playerId: player.id
+    });
     
     // Ensure score is rounded and positive
     const roundedScore = Math.max(0, Math.round(score));
@@ -56,40 +61,47 @@ export class SceneUIManager {
       ? { main: '#FF0000', glow: 'transparent', intensity: 0 }
       : this.getScoreColor(roundedScore);
     
-    // Create animation style
-    const dynamicStyle = this.createDynamicStyle(roundedScore, scale, duration, colorInfo);
-
-    // Create a Scene UI notification
-    const notificationId = `block-notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Create SceneUI instance
+    // Create a SceneUI for block destroyed notification
     const notification = new SceneUI({
       templateId: 'block-destroyed-notification',
       position: {
         x: worldPosition.x,
-        y: worldPosition.y + verticalOffset, // Position above the block
+        y: worldPosition.y + verticalOffset,
         z: worldPosition.z
       },
       state: {
         score: roundedScore,
-        style: dynamicStyle,
-        class: this.getScoreClass(roundedScore)
+        playerId: player.id, // Include player ID in state
+        style: {
+          fontSize: `${scale * 48}px`,
+          color: colorInfo.main,
+          animationDuration: `${duration}ms`
+        }
       },
-      viewDistance: 50 // Make sure it's visible from a distance
+      viewDistance: 100
     });
-    
-    // Load the SceneUI instance in the world
+
+    // Add to tracking for cleanup
+    if (!this.notifications.has(player.id)) {
+      this.notifications.set(player.id, []);
+    }
+    this.notifications.get(player.id)?.push(notification);
+
+    // Load the scene UI for the world
     notification.load(this.world);
-    
-    // Store the notification reference
-    this.blockNotifications.set(notificationId, notification);
-    
-    // Schedule notification removal after animation duration
+
+    // Automatically remove the notification after the animation completes
     setTimeout(() => {
-      if (notification.isLoaded) {
-        notification.unload();
+      notification.unload();
+      
+      // Remove from our tracking
+      const notifications = this.notifications.get(player.id);
+      if (notifications) {
+        const index = notifications.indexOf(notification);
+        if (index !== -1) {
+          notifications.splice(index, 1);
+        }
       }
-      this.blockNotifications.delete(notificationId);
     }, duration + 100);
   }
 
@@ -149,62 +161,15 @@ export class SceneUIManager {
     return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
   }
 
-  private createDynamicStyle(score: number, scale: number, duration: number, colorInfo: { main: string, glow: string, intensity: number }): string {
-    // For high scores, ensure we use a consistent animation duration
-    const actualDuration = score > 100 ? 800 : duration;
-    
-    return `
-      @keyframes scoreAnimation {
-        0% {
-          opacity: 0;
-          transform: translateY(0) scale(0.2);
-        }
-        15% {
-          opacity: 1;
-          transform: translateY(-${8 * scale}px) scale(${scale * 0.9});
-        }
-        30% {
-          opacity: 1;
-          transform: translateY(-${20 * scale}px) scale(${scale});
-        }
-        60% {
-          opacity: 1;
-          transform: translateY(-${35 * scale}px) scale(${scale});
-        }
-        85% {
-          opacity: 0.5;
-          transform: translateY(-${45 * scale}px) scale(${scale * 0.9});
-        }
-        100% {
-          opacity: 0;
-          transform: translateY(-${50 * scale}px) scale(${scale * 0.8});
-        }
-      }
-      animation: scoreAnimation ${actualDuration}ms ease-out forwards;
-      will-change: transform, opacity;
-      transform: translateZ(0);
-      font-size: ${scale * 48}px;
-      color: ${colorInfo.main} !important; /* Force color override */
-      --score-value: ${score};
-    `;
-  }
-
-  private getScoreClass(score: number): string {
-    if (score >= 100) return 'score-extreme';
-    if (score >= 75) return 'score-high';
-    if (score >= 50) return 'score-medium';
-    if (score >= 30) return 'score-average';
-    if (score >= 10) return 'score-low';
-    return '';
-  }
-
   public cleanup(): void {
     // Clean up any remaining notifications
-    this.blockNotifications.forEach(notification => {
-      if (notification.isLoaded) {
-        notification.unload();
-      }
+    this.notifications.forEach(playerNotifications => {
+      playerNotifications.forEach(notification => {
+        if (notification.isLoaded) {
+          notification.unload();
+        }
+      });
     });
-    this.blockNotifications.clear();
+    this.notifications.clear();
   }
-} 
+}

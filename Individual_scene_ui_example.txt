@@ -1,0 +1,75 @@
+<script>
+  var myPlayerId = null;
+  hytopia.registerSceneUITemplate('player-tag', (id, onState) => {
+    const template = document.getElementById('player-tag-template');
+    const clone = template.content.cloneNode(true);
+    const playerTag = clone.firstElementChild;  // Store reference immediately after cloning
+    
+    const nameElement = clone.querySelector('.player-name');
+    const balanceElement = clone.querySelector('.player-balance');
+    
+    onState(state => {
+      if (!state) return;
+      nameElement.textContent = state.name;
+      balanceElement.textContent = `$${state.balance}`;
+
+      if (state.playerId === myPlayerId) {
+        playerTag.style.display = 'none';
+      } else {
+        playerTag.style.display = 'block';
+      }
+    });
+    
+    return clone;
+  });
+
+  hytopia.registerSceneUITemplate('agent-chat', (id, onState) => {
+    const element = document.getElementById('agent-chat').content.cloneNode(true);
+    const container = element.querySelector('.agent-chat');
+    const bubble = container.querySelector('.chat-bubble');
+    const messageEl = container.querySelector('.message');
+    
+    let fadeTimeout;
+    
+    onState(data => {
+        // Set agent name
+        const nameEl = container.querySelector('.agent-name');
+        if (nameEl && data.agentName) {
+            nameEl.textContent = data.agentName;
+        }
+
+        // Agent header is always visible
+        container.style.display = 'block';
+
+        if (data.message) {
+            // Clear any existing timeout
+            clearTimeout(fadeTimeout);
+            
+            // Show new message
+            messageEl.textContent = data.message;
+            bubble.classList.remove('fade');
+            bubble.style.display = 'block';
+
+            // Set timeout to fade after 5 seconds
+            fadeTimeout = setTimeout(() => {
+                bubble.classList.add('fade');
+                setTimeout(() => {
+                    bubble.style.display = 'none';
+                }, 300); // Match transition duration
+            }, 5000);
+        } else {
+            // Hide only the chat bubble if there's no message
+            bubble.style.display = 'none';
+        }
+    });
+    
+    return element;
+});
+
+  // Update the player list with the new balance data
+  var playerList = document.getElementById('player-list');
+
+  hytopia.onData(data => {
+    if (data.playerId) {
+      myPlayerId = data.playerId;
+    }

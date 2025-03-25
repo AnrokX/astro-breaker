@@ -697,20 +697,22 @@
       align-items: center;
       justify-content: center;
       pointer-events: none;
-      transform-style: preserve-3d;
       width: 200px;
       height: 80px;
+      transform-style: preserve-3d;
     }
 
     .block-destroyed-notification .score {
       font-family: var(--display-font);
       font-size: 48px;
       font-weight: bold;
-      opacity: 0;
-      transform: scale(0.5) translateZ(0);
       transform-origin: center center;
       perspective: 1000px;
+      text-align: center;
+      white-space: nowrap;
       --pop-intensity: calc(var(--score-value, 0) * 0.01);
+      animation: scoreAnimation 1000ms ease-out forwards;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
     }
 
     @keyframes scoreAnimation {
@@ -1969,28 +1971,59 @@
 <script>
   // Register Scene UI Templates
 
+  // Important global variable to track the current player's ID
+  var myPlayerId = null;
+  
+  // Handle playerId messages to store the current player's ID
+  hytopia.onData(data => {
+    if (data.type === 'playerId' && data.playerId) {
+      myPlayerId = data.playerId;
+      console.log('My player ID:', myPlayerId);
+    }
+  });
+
   hytopia.registerSceneUITemplate('block-destroyed-notification', (id, onState) => {
     const template = document.getElementById('block-destroyed-notification-template');
     const clone = template.content.cloneNode(true);
     
-    // Get both elements - we need to get these before returning the clone
+    // Get the container element immediately after cloning
+    const container = clone.firstElementChild;
     const scoreElement = clone.querySelector('.score');
     
     // Register the state handler
     onState(state => {
-      if (scoreElement && state?.score != null) {
-        const score = Math.round(Number(state.score));
-        scoreElement.textContent = `+${score}`;
+      if (!state) return;
+      
+      console.log('Block notification state:', state);
+      console.log('Current player ID:', myPlayerId);
+      
+      // Check if this notification is for the current player
+      if (state.playerId && state.playerId === myPlayerId) {
+        // This is for the current player, show it
+        container.style.display = 'flex';
         
-        // Apply score class
-        if (state.class) {
-          scoreElement.className = `score ${state.class}`;
+        if (scoreElement && state.score != null) {
+          const score = Math.round(Number(state.score));
+          scoreElement.textContent = `+${score}`;
+          
+          // Apply custom style if provided
+          if (state.style) {
+            if (typeof state.style === 'string') {
+              // Handle CSS string
+              scoreElement.style.cssText = state.style;
+            } else {
+              // Handle object style format
+              if (state.style.fontSize) scoreElement.style.fontSize = state.style.fontSize;
+              if (state.style.color) scoreElement.style.color = state.style.color;
+              if (state.style.animationDuration) {
+                scoreElement.style.animationDuration = state.style.animationDuration;
+              }
+            }
+          }
         }
-        
-        // Apply custom style if provided
-        if (state.style) {
-          scoreElement.style.cssText = state.style;
-        }
+      } else {
+        // Hide notifications not for this player
+        container.style.display = 'none';
       }
     });
     
