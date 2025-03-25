@@ -18,17 +18,6 @@ export class SceneUIManager {
     return SceneUIManager.instance;
   }
 
-  public showHitNotification(worldPosition: Vector3Like, score: number, player: Player): void {
-    
-    player.ui.sendData({
-      type: 'showHitNotification',
-      data: {
-        score: Math.round(score),
-        position: worldPosition
-      }
-    });
-  }
-
   public showBlockDestroyedNotification(worldPosition: Vector3Like, score: number, player: Player, spawnOrigin?: Vector3Like): void {
     
     // Ensure score is rounded and positive

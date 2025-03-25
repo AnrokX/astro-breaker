@@ -374,9 +374,6 @@ export class MovingBlockEntity extends Entity {
       
       this.despawn();
       return;
-    } else {
-      // Show hit notification for non-destroying hits
-      sceneUIManager.showHitNotification(this.position, 1, player); // Show +1 for each hit
     }
     
     // Instead of changing opacity, change the block type based on health

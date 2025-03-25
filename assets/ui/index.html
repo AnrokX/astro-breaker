@@ -690,25 +690,6 @@
       z-index: 1000;
     }
 
-    .hit-notification {
-      position: absolute;
-      transform: translate(-50%, -50%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      z-index: 1001;
-    }
-
-    .hit-notification .score {
-      /* Using dynamic colors from SceneUIManager */
-      font-family: var(--display-font);
-      font-size: 28px;
-      animation: hitNotification 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-      opacity: 0;
-      transform: scale(0.5) translateZ(0);
-      transform-origin: center center;
-    }
 
     .block-destroyed-notification {
       position: absolute;
@@ -1967,11 +1948,6 @@
     }
   </style>
 <!-- Scene UI Templates -->
-<template id="hit-notification-template">
-  <div class="hit-notification">
-    <span class="score">+0</span>
-  </div>
-</template>
 
 <template id="block-destroyed-notification-template">
   <div class="block-destroyed-notification">
@@ -1991,19 +1967,6 @@
 
 <script>
   // Register Scene UI Templates
-  hytopia.registerSceneUITemplate('hit-notification', (id, onState) => {
-    const template = document.getElementById('hit-notification-template');
-    const clone = template.content.cloneNode(true);
-    const scoreElement = clone.querySelector('.score');
-    
-    onState(state => {
-      if (scoreElement && state?.score != null) {
-        scoreElement.textContent = `+${Math.round(Number(state.score))}`;
-      }
-    });
-    
-    return clone;
-  });
 
   hytopia.registerSceneUITemplate('block-destroyed-notification', (id, onState) => {
     const template = document.getElementById('block-destroyed-notification-template');
@@ -2327,8 +2290,6 @@ hytopia.onData(data => {
   } else if (data.type === 'gameEnd') {
     hideScoreboard();
     showGameEnd(data.data);
-  } else if (data.type === 'showHitNotification') {
-    showLocalHitNotification(data.data);
   } else if (data.type === 'showBlockDestroyedNotification') {
     showLocalBlockDestroyedNotification(data.data);
   } else if (data.type === 'showModeSelection') {
@@ -3242,24 +3203,6 @@ function showGameEnd(data) {
 }
 
 // Add these new functions to handle local notifications
-function showLocalHitNotification(data) {
-  const container = document.createElement('div');
-  container.className = 'hit-notification';
-  container.style.left = '50%';  // Center horizontally
-  container.style.top = '50%';   // Center vertically
-  
-  const scoreElement = document.createElement('span');
-  scoreElement.className = 'score';
-  scoreElement.textContent = `+${Math.round(data.score)}`;
-  
-  container.appendChild(scoreElement);
-  document.body.appendChild(container);
-  
-  // Remove after animation
-  setTimeout(() => {
-    container.remove();
-  }, 1000);
-}
 
 function showLocalBlockDestroyedNotification(data) {
   const container = document.createElement('div');
