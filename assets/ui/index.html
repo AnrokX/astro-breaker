@@ -3243,9 +3243,22 @@ function showGameModeSelection() {
   console.log('Showing game mode selection');
   const modal = document.getElementById('game-mode-selection');
   if (modal) {
-    // Note: We can't directly control pointer lock from UI code
-    // The server should call player.ui.lockPointer(false) when sending the showModeSelection event
+    // Note: We now can directly control pointer lock from UI code with hytopia.lockPointer()
+    if (window.hytopia && window.hytopia.lockPointer) {
+      window.hytopia.lockPointer(false); // Unlock pointer for UI interaction
+    }
     modal.style.display = 'block';
+    
+    // Setup pointer lock toggle button
+    const lockButton = document.getElementById('toggle-pointer-lock');
+    if (lockButton) {
+      lockButton.onclick = function() {
+        if (window.hytopia && window.hytopia.lockPointer) {
+          window.hytopia.lockPointer(true);
+          console.log('Pointer locked');
+        }
+      };
+    }
   } else {
     console.error('Game mode selection modal not found!');
   }
@@ -3268,6 +3281,17 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('Setting up game mode buttons...');
   const soloButton = document.getElementById('solo-mode');
   const dismissButton = document.getElementById('dismiss-mode-selection');
+  const pointerLockButton = document.getElementById('toggle-pointer-lock');
+  
+  // Set up pointer lock button
+  if (pointerLockButton) {
+    pointerLockButton.addEventListener('click', function() {
+      if (window.hytopia && window.hytopia.lockPointer) {
+        window.hytopia.lockPointer(true);
+        console.log('Pointer locked via button');
+      }
+    });
+  }
   
   if (dismissButton) {
     console.log('Dismiss button found, adding click handler');
@@ -3507,6 +3531,13 @@ document.getElementById('reset-settings-button').addEventListener('click', () =>
       <div class="button-main-text" style="font-size: 42px; font-weight: bold; color: #ffffff; margin-bottom: 15px;">START SOLO</div>
       <div style="font-family: var(--text-font); font-size: 24px; color: #ffffff; opacity: 0.8;">PRESS CTRL+1 TO START</div>
       <div id="dismiss-mode-selection" style="font-family: var(--text-font); font-size: 18px; color: #ffffff; opacity: 0.7; cursor: pointer; margin-top: 15px;">PRESS CTRL+2 TO DISMISS</div>
+    </button>
+  </div>
+  
+  <!-- Pointer Lock Controls -->
+  <div style="margin-top: 20px; text-align: center;">
+    <button id="toggle-pointer-lock" style="padding: 10px 20px; background: #424242; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 16px;">
+      Lock Mouse Pointer
     </button>
   </div>
 </div>
