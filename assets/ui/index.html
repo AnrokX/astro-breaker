@@ -990,7 +990,7 @@
       position: fixed;
       right: 250px;   /* Moved even more to the left (from 150px) */
       bottom: 40px;
-      display: flex;
+      display: flex; /* Ensure this is always flex */
       gap: 20px;
       font-family: var(--display-font);
       font-size: 18px;
@@ -2252,7 +2252,7 @@
 <div class="hotkey-hints">
     <div class="hotkey-hint">[Ctrl+H] Game Guide</div>
     <div class="hotkey-hint">[Ctrl+P] Settings</div>
-    <div class="hotkey-hint">[Ctrl+ESC] Show Cursor</div>
+    <div class="hotkey-hint">[ESC] Show Cursor</div>
     <div class="hotkey-hint">[Ctrl+L] Leaderboard</div>
     <div class="hotkey-hint">[T] Chat</div>
 </div>
@@ -3023,27 +3023,8 @@ function toggleHelp(show) {
     }
 }
 
-
-
-// Add this to your existing script
-function updateHotkeysVisibility(show) {
-    const hints = document.querySelector('.hotkey-hints');
-    if (hints) {
-        hints.style.display = show ? 'flex' : 'none';
-    }
-}
-
-// Hide hotkeys when menus are open
-document.addEventListener('keydown', (e) => {
-    if ((e.key === 'Escape' || e.key.toLowerCase() === 'p' || e.key.toLowerCase() === 'h') && e.ctrlKey) {
-        updateHotkeysVisibility(false);
-    }
-});
-
-// Show hotkeys when menus are closed
-function onMenuClose() {
-    updateHotkeysVisibility(true);
-}
+// Remove the updateHotkeysVisibility function and related event listeners
+// The hotkey hints will now always be visible
 
 // Add this to your existing script
 let comboTimeout = null;
