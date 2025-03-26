@@ -84,8 +84,7 @@ function getNextSpawnPosition(platform: 'LEFT' | 'RIGHT'): Vector3Like {
 }
 
 startServer(world => {
-  console.log('Starting server and initializing debug settings...');
-  console.log(`Test mode: ${IS_TEST_MODE ? 'enabled' : 'disabled'}`);
+  
   
   // Initialize managers
   const sceneUIManager = SceneUIManager.getInstance(world);
