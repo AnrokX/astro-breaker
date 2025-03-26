@@ -15,7 +15,7 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
             verticalWave: 0,
             popup: 0,
             rising: 0,
-            parabolic: 1.0,
+            parabolic: 0,
             pendulum: 0
         }
     },
