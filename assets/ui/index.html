@@ -5,22 +5,10 @@
     /* Base styles */
     body {
       margin: 0;
-      padding: 0;
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       color: #eee;
       overflow: hidden;
       background-color: transparent;
-    }
-    
-    /* Container for test buttons */
-    #test-buttons-container {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
     }
     
     /* More styles... */
@@ -29,23 +17,6 @@
 <body>
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  
-  <!-- Debug button for testing -->
-  <button id="run-leaderboard-tests" style="
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background-color: #4CAF50;
-    color: white;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    z-index: 9999;
-    border: none;
-  ">Run Leaderboard Tests</button>
   
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
@@ -4036,10 +4007,6 @@ function modeMultiplayer() {
     else if (data.type === 'personalStats') {
       displayPersonalStats(data.data);
     }
-    else if (data.type === 'addTestButton') {
-      // Add test button to the UI
-      addTestButton(data.label, data.action);
-    }
     else if (data.type === 'injectHTML') {
       // Inject HTML directly into the page
       const container = document.createElement('div');
@@ -4478,18 +4445,6 @@ document.addEventListener('keydown', (e) => {
       hytopia.sendData({ type: 'closeLeaderboard' });
     }
   }
-  
-  // B key to run leaderboard tests
-  if (e.key.toLowerCase() === 'b' && e.ctrlKey) {
-    console.log('Running leaderboard tests via Ctrl+B key');
-    e.preventDefault(); // Prevent default behavior
-    
-    // Show a message that tests are running
-    showTemporaryNotification('Running leaderboard tests...', 3000);
-    
-    // Send message to server to run tests
-    hytopia.sendData({ type: 'runLeaderboardTests' });
-  }
 });
 </script>
 
@@ -4516,16 +4471,7 @@ document.addEventListener('keydown', (e) => {
 
 <!-- Add event handlers for buttons -->
 <script>
-  // Button to run leaderboard tests
-  document.getElementById('run-leaderboard-tests').addEventListener('click', () => {
-    console.log('Running leaderboard tests via button click');
-    
-    // Show a message that tests are running
-    showTemporaryNotification('Running leaderboard tests...', 3000);
-    
-    // Send message to server to run tests
-    hytopia.sendData({ type: 'runLeaderboardTests' });
-  });
+  // Remove the button to run leaderboard tests event handler
 </script>
 </body>
 </html>

@@ -22,8 +22,6 @@ import { SceneUIManager } from './src/scene-ui/scene-ui-manager';
 import { AudioManager } from './src/managers/audio-manager';
 import { PlayerSettingsManager, UISettingsData, PlayerSettings } from './src/managers/player-settings-manager';
 import { LeaderboardManager } from './src/managers/leaderboard-manager';
-// Import test utilities
-import { addLeaderboardTestToMainMenu } from './src/__tests__/run-leaderboard-tests';
 
 // Track which players have already seen welcome messages
 const hasDisplayedWelcome = new Set<string>();
@@ -723,10 +721,4 @@ startServer(world => {
   sceneUIManager.cleanup();
   audioManager.cleanup();
   settingsManager.cleanup();
-
-  // Setup leaderboard testing when not in production mode
-  if (process.env.NODE_ENV !== 'production') {
-    addLeaderboardTestToMainMenu(world);
-    console.log('🧪 Leaderboard testing tools enabled - Press the "Test Leaderboard" button in-game');
-  }
 });
