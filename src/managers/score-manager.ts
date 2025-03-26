@@ -362,7 +362,8 @@ export class ScoreManager extends Entity {
         playerEntity.player.ui.sendData({
             type: 'updateLeaderboard',
             leaderboard,
-            currentPlayerId
+            currentPlayerId,
+            timestamp: Date.now() // Add timestamp to force refresh
         });
     });
   }

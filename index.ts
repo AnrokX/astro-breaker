@@ -275,8 +275,20 @@ startServer(world => {
       })
       .catch(error => console.error("Error updating player leaderboard data:", error));
     
-    // Load the UI first
-    player.ui.load('ui/index.html');
+    // Load the UI first with explicit cache-busting
+    console.log("Loading UI with cache busting...");
+    const timestamp = Date.now();
+    player.ui.load(`ui/index.html?v=${timestamp}`);
+    
+    // Add a delayed UI update to ensure it's fully loaded
+    setTimeout(() => {
+      console.log("Sending debug message to UI...");
+      player.ui.sendData({
+        type: 'debugMessage',
+        message: 'UI loaded with version check',
+        timestamp: timestamp
+      });
+    }, 2000);
     
     // Generate spawn position based on player count
     const playerCount = world.entityManager.getAllPlayerEntities().length;
