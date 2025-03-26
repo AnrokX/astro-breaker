@@ -254,7 +254,7 @@ export class RoundSpawner {
           moveSpeed: baseSpeed * 0.6,
           amplitude: sineWaveAmplitude,
           frequency: sineWaveFrequency,
-          blockTextureUri: 'blocks/nuit.png' // Changed to nuit texture for sine wave (mystical flowing pattern)
+          blockTextureUri: 'blocks/colors/yellowpng.png' // Round 3 (sine wave) - yellow
         });
         break;
       case 'verticalWave':
@@ -324,7 +324,8 @@ export class RoundSpawner {
           },
           maxHeight: throwHeight,
           duration: 4500,  // Much slower for more hang time
-          moveSpeed: baseSpeed * 0.5  // Slower speed for more hang time
+          moveSpeed: baseSpeed * 0.5,  // Slower speed for more hang time
+          blockTextureUri: 'blocks/colors/red.png' // Round 5 (parabolic) - red
         });
         break;
       case 'pendulum':

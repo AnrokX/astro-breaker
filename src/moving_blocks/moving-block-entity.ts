@@ -11,7 +11,7 @@ import { ProjectileEntity } from '../entities/projectile-entity';
 export const MOVING_BLOCK_CONFIG = {
   DEFAULT_SPEED: 6,
   DEFAULT_HEALTH: 5,
-  DEFAULT_TEXTURE: 'blocks/creep.png',
+  DEFAULT_TEXTURE: 'blocks/colors/green.png',
   DEFAULT_HALF_EXTENTS: { x: 0.5, y: 2, z: 2 },
   MOVEMENT_BOUNDS: {
     min: { x: -15, y: 2, z: -15 },  // Wider X range, higher minimum Y
@@ -20,7 +20,7 @@ export const MOVING_BLOCK_CONFIG = {
   SPAWN_POSITION: { x: 0, y: 4, z: 0 },  // Higher default spawn
   BREAK_SCORE: 5,  // Points awarded for breaking a block
   STATIC_TARGET: {
-    TEXTURE: 'blocks/gold-ore.png',
+    TEXTURE: 'blocks/colors/blue.png',
     HALF_EXTENTS: { x: 0.8, y: 0.8, z: 0.8 }, // Balanced size for visibility and challenge
     HEIGHT_RANGE: { min: 3, max: 8 },  // Higher range for better visibility
     SCORE: 10, // More points for hitting target
@@ -66,7 +66,7 @@ export const MOVING_BLOCK_CONFIG = {
     }
   },
   VERTICAL_WAVE: {  // New configuration for vertical sine wave blocks
-    TEXTURE: 'blocks/infected-shadowrock.png',
+    TEXTURE: 'blocks/colors/orange.png',
     HALF_EXTENTS: { x: 1, y: 1, z: 1 },
     DEFAULT_AMPLITUDE: 5.5,  // Moderate amplitude for stable vertical movement
     DEFAULT_FREQUENCY: 0.25,  // Fixed frequency for smooth movement
@@ -97,7 +97,7 @@ export const MOVING_BLOCK_CONFIG = {
     PAUSE_DURATION: 2000   // 2 seconds at first stop
   },
   PARABOLIC_TARGET: {
-    TEXTURE: 'blocks/swirl-rune.png',
+    TEXTURE: 'blocks/colors/red.png',
     HALF_EXTENTS: { x: 0.8, y: 0.8, z: 0.8 },
     START_Y: -20,
     MAX_HEIGHT: 20,        // Increased height for more dramatic arc
@@ -1043,7 +1043,7 @@ export class MovingBlockManager {
 
     const block = new MovingBlockEntity({
       moveSpeed: options.moveSpeed ?? MOVING_BLOCK_CONFIG.DEFAULT_SPEED * 0.8,
-      blockTextureUri: options.blockTextureUri ?? 'blocks/diamond-ore.png',
+      blockTextureUri: options.blockTextureUri ?? 'blocks/colors/yellowpng.png',
       blockHalfExtents: { x: 1, y: 1, z: 1 },
       movementBehavior: new SineWaveMovement({
         amplitude: options.amplitude ?? 8,  // Increased from 4 to 8 for wider X movement
