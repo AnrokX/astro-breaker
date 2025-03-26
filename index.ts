@@ -244,6 +244,13 @@ startServer(world => {
     // Initialize player states
     scoreManager.initializePlayer(player.id);
     projectileManager.initializePlayer(player.id);
+
+    // Forward UI events to the round manager for this player
+    player.ui.on(PlayerUIEvent.DATA, ({ data }) => {
+      if (data.type === "modeSelection" && data.mode && roundManager) {
+        roundManager.handleModeSelection(data.mode);
+      }
+    });
     
     // Initialize player settings with persistence (async)
     settingsManager.initializePlayer(player.id, player)
@@ -720,3 +727,5 @@ startServer(world => {
   audioManager.cleanup();
   settingsManager.cleanup();
 });
+
+
