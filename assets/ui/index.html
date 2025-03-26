@@ -1949,7 +1949,6 @@
   hytopia.onData(data => {
     if (data.type === 'playerId' && data.playerId) {
       myPlayerId = data.playerId;
-      console.log('My player ID:', myPlayerId);
     }
   });
 
@@ -1964,9 +1963,6 @@
     // Register the state handler
     onState(state => {
       if (!state) return;
-      
-      console.log('Block notification state:', state);
-      console.log('Current player ID:', myPlayerId);
       
       // Check if this notification is for the current player
       if (state.playerId && state.playerId === myPlayerId) {
@@ -3994,8 +3990,7 @@ function modeMultiplayer() {
 <script>
   // Handle data from the server
   hytopia.onData(data => {
-    // Log all incoming messages
-    console.log('📩 UI received data from server:', data);
+    // Remove this log statement
     
     if (data.type === 'toggleLeaderboard') {
       const panel = document.getElementById('leaderboard-panel');
@@ -4446,15 +4441,6 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
-</script>
-
-<!-- Add global event logging -->
-<script>
-  // Log all data received from the server
-  hytopia.onData(data => {
-    console.log('📩 UI received data from server:', data);
-    // Process the data below...
-  });
 </script>
 
 <!-- Process specific event types -->
