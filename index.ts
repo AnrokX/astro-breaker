@@ -292,7 +292,6 @@ startServer(world => {
 
     // Spawn the entity at the position
     playerEntity.spawn(world, spawnPos);
-    console.log(`Player spawned at (${spawnPos.x.toFixed(2)}, ${spawnPos.y}, ${spawnPos.z.toFixed(2)})`);
 
     // Register UI event handlers directly on the player's UI
     player.ui.on(PlayerUIEvent.DATA, ({ data }) => {
@@ -679,8 +678,7 @@ startServer(world => {
       const leaderboardManager = LeaderboardManager.getInstance(world);
       leaderboardManager.getGlobalLeaderboard().then(leaderboardData => {
         if (leaderboardData.allTimeHighScores.length > 0) {
-          // Leaderboard marker functionality removed
-          console.log('In-world leaderboard marker functionality has been removed');
+        
         }
       }).catch(error => {
         console.error("Error creating leaderboard marker:", error);
