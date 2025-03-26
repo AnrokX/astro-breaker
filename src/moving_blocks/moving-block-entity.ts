@@ -129,7 +129,7 @@ export const MOVING_BLOCK_CONFIG = {
 };
 
 
-export interface MovingBlockOptions extends EntityOptions {
+export interface MovingBlockOptions extends Omit<EntityOptions, 'name'> {
   moveSpeed?: number;         // Speed at which the block moves (units per second)
   direction?: Vector3Like;    // Direction vector for movement
   movementBounds?: {         // Optional boundaries for movement
@@ -144,6 +144,7 @@ export interface MovingBlockOptions extends EntityOptions {
   onBlockBroken?: () => void; // Optional callback to be triggered when the block is broken
   movementBehavior?: BlockMovementBehavior; // New: inject block-specific movement logic
   despawnTime?: number;      // Optional: Time in milliseconds after which the block should despawn
+  name?: string;             // Name for the entity
 }
 
 export class MovingBlockEntity extends Entity {

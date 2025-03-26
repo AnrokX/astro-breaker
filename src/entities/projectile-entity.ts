@@ -3,12 +3,15 @@ import { MovingBlockEntity } from '../moving_blocks/moving-block-entity';
 import { BlockParticleEffects } from '../effects/block-particle-effects';
 import { ScoreManager } from '../managers/score-manager';
 
-export interface ProjectileOptions extends EntityOptions {
+export interface ProjectileOptions extends Omit<EntityOptions, 'modelUri' | 'modelScale' | 'name'> {
     speed?: number;
     lifetime?: number;
     damage?: number;
     enablePreview?: boolean;
     playerId?: string;
+    name?: string;
+    modelUri?: string;
+    modelScale?: number;
 }
 
 export class ProjectileEntity extends Entity {
@@ -61,7 +64,7 @@ export class ProjectileEntity extends Entity {
             ...options,
             name: options.name || 'Projectile',
             modelUri: options.modelUri || ProjectileEntity.PREVIEW.MARKER_URI,
-            modelScale: options.modelScale || 0.5
+            modelScale: options.modelScale !== undefined ? options.modelScale : 0.5
         });
 
         this.speed = options.speed ?? ProjectileEntity.PHYSICS.DEFAULT_SPEED;
