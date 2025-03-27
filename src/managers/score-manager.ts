@@ -36,11 +36,11 @@ export class ScoreManager extends Entity {
     // Movement multipliers adjusted for progression
     BASE_MOVEMENT_MULTIPLIER: 1,   // Reduced by 50% (Static blocks in Round 1)
     Z_AXIS_MULTIPLIER: 2.5,         // New multiplier for Z-Axis blocks
-    SINE_WAVE_MULTIPLIER: 5.0,      // Reduced from 2.5 for better scaling
-    VERTICAL_WAVE_MULTIPLIER: 6.0,  // Increased by 25% (Vertical Wave blocks in Round 4)
+    SINE_WAVE_MULTIPLIER: 3.0,      // Reduced from 2.5 for better scaling
+    VERTICAL_WAVE_MULTIPLIER: 5.5,  // Increased by 25% (Vertical Wave blocks in Round 4)
     POPUP_MULTIPLIER: 4.0,          // Reduced from 3.5
     RISING_MULTIPLIER: 5.5,         // Reduced from 4.0
-    PARABOLIC_MULTIPLIER: 10.0,     // Increased by 150% (Parabolic blocks in Round 5)
+    PARABOLIC_MULTIPLIER: 8.0,     // Increased by 150% (Parabolic blocks in Round 5)
     PENDULUM_MULTIPLIER: 5.0,       // Added for pendulum targets
     
     // Combo system adjusted for early game
