@@ -118,7 +118,7 @@ export class RoundUI {
       // Get the cumulative score across all rounds
       const cumulativeScore = this.roundTotalScoreManager.getCumulativeScore(currentPlayerId);
       
-      console.log(`Sending game end UI for player ${currentPlayerId}, score: ${cumulativeScore}`);
+      // Send game end UI with score
       
       // Enhance standings with cumulative scores
       const enhancedStandings = standings.map(standing => {

@@ -149,7 +149,7 @@ export class PlayerProjectileManager {
         // We're not sending UI data because there seems to be no handler for it
         if (player) {
           const remainingCooldown = Math.ceil((PlayerProjectileManager.SHOT_COOLDOWN - timeSinceLastShot) / 100) / 10;
-          console.log(`Projectile on cooldown: ${remainingCooldown}s remaining`);
+          // Projectile on cooldown
         }
         return;
       }

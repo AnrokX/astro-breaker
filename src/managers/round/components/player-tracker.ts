@@ -60,7 +60,7 @@ export class PlayerTracker {
       // Show the waiting for another player UI with solo option
       const player = this.world.entityManager.getAllPlayerEntities()[0]?.player;
       if (player) {
-        console.log('First player joined, showing waiting for player UI with solo option');
+        // Show waiting UI with solo option
         
         // Unlock the pointer first to allow interaction with the UI
         player.ui.lockPointer(false);
@@ -79,7 +79,7 @@ export class PlayerTracker {
       // Hide the waiting UI since another player joined
       const firstPlayer = this.world.entityManager.getAllPlayerEntities()[0]?.player;
       if (firstPlayer) {
-        console.log('Second player joined, hiding waiting for player UI');
+        // Hide waiting UI since second player joined
         
         // Send message to hide the UI
         firstPlayer.ui.sendData({

@@ -110,14 +110,14 @@ export class RoundManager {
     //   }
     // });
     
-    console.log('UI event subscription ready. Main game must implement event forwarding.');
+    // UI event subscription relies on main game implementation
   }
   
   /**
    * Handle mode selection from a player
    */
   public handleModeSelection(mode: 'solo' | 'multiplayer', playerId?: string): void {
-    console.log(`Mode selected: ${mode}`);
+    // Mode selection handler
     
     // Don't allow mode changes during active gameplay
     if (this.isRoundActive || this.gameInProgress) {
@@ -236,9 +236,9 @@ export class RoundManager {
     try {
       // Instead of updating the entity name (which is read-only), 
       // directly tell the score manager about our current round
-      console.log(`Round manager passing current round ${this.currentRound} to score manager`);
+      // Pass the current round to score manager
     } catch (error) {
-      console.error("Error updating score manager:", error);
+      // Error handling
     }
     
     // Get round results with placements and pass current round number
@@ -341,7 +341,6 @@ export class RoundManager {
   public actuallyStartRound(): void {
     // Prevent starting a round if one is already active
     if (this.isRoundActive) {
-      console.warn('Attempted to start a round while one was already active');
       return;
     }
     
@@ -353,7 +352,7 @@ export class RoundManager {
     
     // Get the next round number
     this.currentRound += 1;
-    console.log(`Starting round ${this.currentRound}`);
+    // Start the round
     
     // Mark round as active
     this.isRoundActive = true;
@@ -398,7 +397,7 @@ export class RoundManager {
    */
   private async createInWorldLeaderboardMarker(): Promise<void> {
     // Functionality removed as per user request
-    console.log("In-world leaderboard markers disabled");
+    // In-world leaderboard markers disabled
   }
 
   private getRoundConfig(round: number): RoundConfig {
@@ -522,11 +521,11 @@ export class RoundManager {
       }));
       
       // Log the entries being sent to the leaderboard for debugging
-      console.log(`Updating game results with entries:`, JSON.stringify(leaderboardEntries));
+      // Update game results with entries
       
       // Save game results to persistent leaderboard (async, won't block)
       leaderboardManager.updateWithGameResults(leaderboardEntries, this.gameConfig.gameMode)
-        .catch(error => console.error("Error updating final leaderboard:", error));
+        .catch(error => {});
       
       // No longer automatically showing leaderboard at game end
       // Players can press 'L' to view leaderboard instead
@@ -567,7 +566,7 @@ export class RoundManager {
           data: playerData
         });
       } catch (error) {
-        console.error(`Error displaying leaderboard to player: ${error}`);
+        // Error displaying leaderboard
       }
     });
   }

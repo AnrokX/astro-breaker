@@ -112,17 +112,7 @@ export class RoundManager {
    * using the World API event system.
    */
   private setupModeSelectionListener(): void {
-    // Add a message to the log so developers know how to connect UI events
-    console.log('IMPORTANT: You must set up UI event forwarding in your main game file.');
-    console.log('In your main game entry point (e.g., index.ts), add this code:');
-    console.log('-----------------------------------------------------------');
-    console.log('// Forward UI events to the round manager');
-    console.log('world.on(PlayerEvent.UI_DATA, ({ player, data }) => {');
-    console.log('  if (data.type === "modeSelection" && data.mode) {');
-    console.log('    roundManager.handleModeSelection(data.mode);');
-    console.log('  }');
-    console.log('});');
-    console.log('-----------------------------------------------------------');
+    // Event listener initialization is handled in the main game file
   }
   
   /**

@@ -71,7 +71,7 @@ export class RoundTotalScoreManager {
       const currentCumulative = this.cumulativeScores.get(playerId) || 0;
       this.cumulativeScores.set(playerId, currentCumulative + roundScore);
       
-      console.log(`Player ${playerId} round ${this.currentRound} score: ${roundScore}, cumulative: ${currentCumulative + roundScore}`);
+      // Record player score for this round
     });
   }
 
