@@ -54,7 +54,6 @@ export class LeaderboardManager {
             }))
           };
         } catch (parseError) {
-          console.error("Error parsing leaderboard data:", parseError);
           leaderboard = defaultLeaderboard;
         }
       } else {
@@ -64,7 +63,6 @@ export class LeaderboardManager {
       this.leaderboardCache = leaderboard;
       return leaderboard;
     } catch (error) {
-      console.error("Error retrieving leaderboard:", error);
       return { allTimeHighScores: [], roundHighScores: [] };
     }
   }
@@ -80,7 +78,6 @@ export class LeaderboardManager {
       await PersistenceManager.instance.setGlobalData(this.LEADERBOARD_KEY, dataToSave);
       this.leaderboardCache = updatedLeaderboard;
     } catch (error) {
-      console.error("Error updating leaderboard:", error);
     }
   }
   
@@ -110,7 +107,6 @@ export class LeaderboardManager {
             try {
               roundScores = personalBestRaw.roundScores as {[roundNumber: number]: {score: number, date: string}};
             } catch (e) {
-              console.error("Error parsing round scores:", e);
             }
           } 
           // If no round scores in new format, try to migrate from old format
@@ -130,14 +126,12 @@ export class LeaderboardManager {
             gamesPlayed: Number(rawData.gamesPlayed) || 0
           };
         } catch (parseError) {
-          console.error("Error parsing player data:", parseError);
           return defaultData;
         }
       }
       
       return defaultData;
     } catch (error) {
-      console.error("Error retrieving player data:", error);
       return {
         personalBest: { 
           totalScore: 0, 
@@ -171,7 +165,6 @@ export class LeaderboardManager {
       
       await PersistenceManager.instance.setPlayerData(player, dataToSave);
     } catch (error) {
-      console.error("Error updating player data:", error);
     }
   }
 
@@ -193,7 +186,6 @@ export class LeaderboardManager {
         const lowestScore = [...leaderboard.allTimeHighScores]
           .sort((a, b) => a.score - b.score)[0].score;
         if (score <= lowestScore) {
-          console.log(`Score ${score} does not qualify for leaderboard (minimum: ${lowestScore})`);
           return;
         }
       }
@@ -224,7 +216,6 @@ export class LeaderboardManager {
       // Update the leaderboard
       await this.updateGlobalLeaderboard(leaderboard);
     } catch (error) {
-      console.error("Error adding high score:", error);
     }
   }
 
@@ -253,7 +244,6 @@ export class LeaderboardManager {
         const lowestRoundScore = [...roundScores]
           .sort((a, b) => a.roundScore - b.roundScore)[0].roundScore;
         if (roundScore <= lowestRoundScore) {
-          console.log(`Round score ${roundScore} for round ${roundNumber} does not qualify (minimum: ${lowestRoundScore})`);
           return;
         }
       }
@@ -263,7 +253,6 @@ export class LeaderboardManager {
       if (existingPlayerEntry) {
         // Only update if the new score is better
         if (roundScore <= existingPlayerEntry.roundScore) {
-          console.log(`Player already has a higher score (${existingPlayerEntry.roundScore}) for round ${roundNumber}`);
           return;
         }
         // Remove the old entry
@@ -302,7 +291,6 @@ export class LeaderboardManager {
       // Update the leaderboard
       await this.updateGlobalLeaderboard(leaderboard);
     } catch (error) {
-      console.error("Error adding round high score:", error);
     }
   }
 
@@ -343,7 +331,6 @@ export class LeaderboardManager {
       playerData.personalBest = newPersonalBest;
       await this.updatePlayerData(player, playerData);
     } catch (error) {
-      console.error("Error updating player personal best:", error);
     }
   }
 
@@ -354,7 +341,6 @@ export class LeaderboardManager {
       playerData.gamesPlayed++;
       await this.updatePlayerData(player, playerData);
     } catch (error) {
-      console.error("Error incrementing games played:", error);
     }
   }
 
@@ -380,7 +366,6 @@ export class LeaderboardManager {
       const lowestScore = sortedScores[sortedScores.length - 1].score;
       return score > lowestScore;
     } catch (error) {
-      console.error("Error checking leaderboard qualifier:", error);
       return false;
     }
   }
@@ -391,9 +376,6 @@ export class LeaderboardManager {
     if (score <= 0) return 0;
     
     // REMOVED NORMALIZATION - we now return the original score as requested by user
-    // Just log for debugging purposes
-    console.log(`Score received: ${score}, mode=${gameMode} (no normalization applied)`);
-      
     // Ensure we don't return negative scores
     return Math.max(0, score);
   }
@@ -424,7 +406,6 @@ export class LeaderboardManager {
           const existingEntry = leaderboard.roundHighScores[existingEntryIndex];
           
           if (scoreData.roundScore <= existingEntry.roundScore) {
-            console.log(`Player ${scoreData.playerId} already has a higher score (${existingEntry.roundScore}) for round ${roundNumber}`);
             continue;
           }
           
@@ -486,7 +467,6 @@ export class LeaderboardManager {
       // Update the leaderboard
       await this.updateGlobalLeaderboard(leaderboard);
     } catch (error) {
-      console.error("Error updating round scores:", error);
     }
   }
   
@@ -501,11 +481,7 @@ export class LeaderboardManager {
     gameMode: 'solo' | 'multiplayer' = 'multiplayer'
   ): Promise<void> {
     try {
-      console.log(`updateWithGameResults called with ${finalStandings.length} players, mode: ${gameMode}`);
-      console.log(`Final standings: ${JSON.stringify(finalStandings)}`);
-      
       const leaderboard = await this.getGlobalLeaderboard();
-      console.log(`Current leaderboard: ${JSON.stringify(leaderboard)}`);
       
       const maxEntries = 10;
       
@@ -522,12 +498,8 @@ export class LeaderboardManager {
         // Use the sum of round scores instead of the provided totalScore
         const calculatedTotalScore = Math.max(sumOfRoundScores, playerData.totalScore);
         
-        console.log(`Processing player ${playerData.playerId} with original score ${playerData.totalScore}`);
-        console.log(`Calculated total score (sum of rounds): ${calculatedTotalScore}`);
-        
         // Skip zero or negative scores
         if (calculatedTotalScore <= 0) {
-          console.log(`Skipping player ${playerData.playerId} - score is zero or negative`);
           continue;
         }
         
@@ -542,9 +514,6 @@ export class LeaderboardManager {
           // Check if score qualifies
           qualifiesForLeaderboard = calculatedTotalScore > lowestScore;
           
-          if (!qualifiesForLeaderboard) {
-            console.log(`Score ${calculatedTotalScore} by player ${playerData.playerId} doesn't qualify for leaderboard (minimum: ${lowestScore})`);
-          }
         } else {
           // If we have fewer than max entries, any score qualifies
           qualifiesForLeaderboard = true;
@@ -564,11 +533,9 @@ export class LeaderboardManager {
             // For solo mode, always update the player's entry
             // For multiplayer, only replace if the new score is higher
             if (gameMode === 'multiplayer' && calculatedTotalScore <= existingEntry.score) {
-              console.log(`Player ${playerData.playerId} already has a higher score (${existingEntry.score})`);
               shouldAddEntry = false;
             } else {
               // Remove the existing entry
-              console.log(`Removing existing entry for player ${playerData.playerId}`);
               leaderboard.allTimeHighScores.splice(existingEntryIndex, 1);
             }
           }
@@ -586,8 +553,6 @@ export class LeaderboardManager {
               gameMode: gameMode
             };
             
-            console.log(`Adding new entry to all-time high scores: ${JSON.stringify(newEntry)}`);
-            
             // Add the entry to the array
             leaderboard.allTimeHighScores.push(newEntry);
           }
@@ -602,8 +567,6 @@ export class LeaderboardManager {
         leaderboard.allTimeHighScores = leaderboard.allTimeHighScores.slice(0, maxEntries);
       }
       
-      console.log(`Updated leaderboard: ${JSON.stringify(leaderboard)}`);
-      
       // Update the leaderboard
       await this.updateGlobalLeaderboard(leaderboard);
       
@@ -616,8 +579,6 @@ export class LeaderboardManager {
         const playerEntity = playerEntities.find(entity => entity.player.id === playerData.playerId);
         
         if (playerEntity) {
-          console.log(`Updating player best data for ${playerData.playerId}`);
-          
           // Calculate total score as sum of all round scores for this player again
           const playerRoundScores = leaderboard.roundHighScores
             .filter(entry => entry.playerId === playerData.playerId)
@@ -629,12 +590,9 @@ export class LeaderboardManager {
           await this.updatePlayerBest(playerEntity.player, {
             totalScore: sumOfRoundScores > 0 ? sumOfRoundScores : playerData.totalScore
           });
-        } else {
-          console.log(`Could not find player entity for ${playerData.playerId}`);
         }
       }
     } catch (error) {
-      console.error("Error updating game results:", error);
     }
   }
   
@@ -651,8 +609,6 @@ export class LeaderboardManager {
       // Get existing player data
       const playerData = await this.getPlayerData(player);
       const currentDate = new Date().toISOString();
-      
-      console.log(`Updating player best data: existing=${JSON.stringify(playerData.personalBest)}, new total=${gameStats.totalScore}`);
       
       // Ensure roundScores object exists
       if (!playerData.personalBest.roundScores) {
@@ -674,21 +630,17 @@ export class LeaderboardManager {
         // Calculate sum of all round scores
         if (playerRoundScores.length > 0) {
           sumOfRoundScores = playerRoundScores.reduce((sum, score) => sum + score, 0);
-          console.log(`Calculated sum of all round scores: ${sumOfRoundScores}`);
         }
       } catch (e) {
-        console.error("Error calculating sum of round scores:", e);
       }
       
       // Update total score with the calculated sum
       if (sumOfRoundScores > 0) {
         // Always update with the sum of round scores, as this is the new behavior
         playerData.personalBest.totalScore = sumOfRoundScores;
-        console.log(`Updated total score to ${sumOfRoundScores} (sum of all round scores)`);
       } else if (gameStats.totalScore > 0 && gameStats.totalScore > playerData.personalBest.totalScore) {
         // Fallback to provided score if we couldn't calculate the sum
         playerData.personalBest.totalScore = gameStats.totalScore;
-        console.log(`Updated total score to ${gameStats.totalScore} (provided score)`);
       }
       
       // Try to sync round scores from global leaderboard
@@ -710,11 +662,9 @@ export class LeaderboardManager {
               score: score,
               date: entry.date || currentDate
             };
-            console.log(`Synced round ${roundNum} score to ${score} from global leaderboard`);
           }
         }
       } catch (e) {
-        console.error("Error syncing round scores from global leaderboard:", e);
       }
       
       // Update round scores if explicitly provided in gameStats
@@ -732,7 +682,6 @@ export class LeaderboardManager {
               score: score,
               date: currentDate
             };
-            console.log(`Updated round ${roundNum} score to ${score} from provided gameStats`);
           }
         }
       }
@@ -741,14 +690,11 @@ export class LeaderboardManager {
       // Only increment if this is a new game, not just a stats update
       if (gameStats.wins !== undefined) {
         playerData.gamesPlayed++;
-        console.log(`Incremented games played to ${playerData.gamesPlayed}`);
       }
       
       // Update the player data
       await this.updatePlayerData(player, playerData);
-      console.log(`Player data updated successfully`);
     } catch (error) {
-      console.error("Error updating player best:", error);
     }
   }
 }
