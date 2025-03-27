@@ -4,9 +4,9 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     // Tutorial round (Round 1) - Static targets only
     1: {
         duration: 35000,  // 45 seconds - longer tutorial round for learning
-        minBlockCount: 6,  // Increased from 4 to 6 (50% more)
-        maxBlockCount: 17,  // Increased from 6 to 9 (50% more)
-        blockSpawnInterval: 900,  // Increased for smoother spawning
+        minBlockCount: 8,  // Increased by 30% from 6 to 8
+        maxBlockCount: 22,  // Increased by 30% from 17 to 22
+        blockSpawnInterval: 800,  // Decreased for faster spawning
         speedMultiplier: 0.5,
         blockTypes: {
             normal: 0,

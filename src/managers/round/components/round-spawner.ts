@@ -36,8 +36,21 @@ export class RoundSpawner {
       setTimeout(() => this.spawnBlock(config, scaledMinBlocks, scaledMaxBlocks), i * 1000);
     }
 
-    // Regular spawn interval
+    // Adaptive spawn interval based on current block count
     this.blockSpawnTimer = setInterval(() => {
+      const currentBlocks = this.blockManager.getBlockCount();
+      
+      // If blocks are low, schedule next spawn sooner
+      if (currentBlocks < scaledMinBlocks * 0.5) {
+        // Clear current timer and set a faster one just once
+        if (this.blockSpawnTimer) {
+          clearInterval(this.blockSpawnTimer);
+        }
+        this.blockSpawnTimer = setInterval(() => {
+          this.spawnBlock(config, scaledMinBlocks, scaledMaxBlocks);
+        }, config.blockSpawnInterval * 0.6); // 40% faster spawning when low
+      }
+      
       this.spawnBlock(config, scaledMinBlocks, scaledMaxBlocks);
     }, config.blockSpawnInterval);
   }
@@ -63,22 +76,22 @@ export class RoundSpawner {
     // Determine how many blocks to spawn using scaled values
     const blocksNeeded = Math.min(
       scaledMaxBlocks - currentBlocks,
-      // Modified spawn logic for more balanced gameplay:
-      // - If no blocks left (0): spawn only 2 at once instead of 4
-      // - If only 1 block left: spawn only 1 at once instead of 4
-      // - Below minimum: spawn only 1 at once instead of 2
-      // - Below 25% of max: spawn 1 at once instead of 3
-      currentBlocks === 0 ? 2 :
-      currentBlocks === 1 ? 1 :
-      currentBlocks < scaledMinBlocks ? 1 : 
+      // Modified spawn logic for more aggressive repopulation:
+      // - If no blocks left (0): spawn 3 at once 
+      // - If only 1 block left: spawn 2 at once
+      // - Below minimum: spawn 2 at once
+      // - Below 25% of max: spawn 1 at once
+      currentBlocks === 0 ? 3 :
+      currentBlocks === 1 ? 2 :
+      currentBlocks < scaledMinBlocks ? 2 : 
       currentBlocks < (scaledMaxBlocks * 0.25) ? 1 : 1
     );
 
     // Add randomized delay to create more natural, less predictable spawning
     const spawnChance = 1; // 100% chance to spawn each interval
     
-    // Only proceed with spawn if we pass the random check (unless no blocks at all)
-    if (currentBlocks === 0 || Math.random() < spawnChance) {
+    // Always proceed with spawn (100% chance)
+    if (true) {
       // Try to spawn blocks if needed
       for(let i = 0; i < blocksNeeded; i++) {
         // Choose block type first
