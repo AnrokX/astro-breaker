@@ -193,10 +193,7 @@ export class ScoreManager extends Entity {
         // Use the current round number that was passed to handleRoundEnd
         const currentRound = this._currentRound || 1;
         
-        console.log(`Updating leaderboard with round scores for round ${currentRound} (from ScoreManager)`);
-        
-        // Cannot update entity name since it's read-only, just log the current round
-        console.log(`ScoreManager processing round ${currentRound}`);
+        // Cannot update entity name since it's read-only
         
         // Store the current round number in a debug property that can be accessed for troubleshooting
         (this as any)._debugRoundNumber = currentRound;
@@ -214,12 +211,12 @@ export class ScoreManager extends Entity {
                 totalRounds = roundManager.config.totalRounds;
             }
         } catch (e) {
-            console.warn("Could not determine total rounds:", e);
+            // Could not determine total rounds
         }
             
         // Update the leaderboard (this is async and won't block)
         leaderboardManager.updateWithRoundScores(roundScores, currentRound, totalRounds, gameMode)
-            .catch(error => console.error("Error updating leaderboard:", error));
+            .catch(error => {});
     }
 
     return { winnerId, placements };
@@ -474,7 +471,7 @@ export class ScoreManager extends Entity {
   ): number {
     const spawnOrigin = projectile.getSpawnOrigin();
     if (!spawnOrigin) {
-      console.warn('No spawn origin found for projectile, using default score');
+      // No spawn origin found for projectile, using default score
       return ScoreManager.SCORING_CONFIG.MIN_SCORE;
     }
 
