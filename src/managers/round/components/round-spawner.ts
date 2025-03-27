@@ -297,15 +297,67 @@ export class RoundSpawner {
         });
         break;
       case 'verticalWave':
-        // Use wider height range to allow lower positions
-        const waveBaseHeight = this.getRandomY(-2, 6);  // Expanded range for more varied starting heights
-        const waveAmplitude = this.getRandomY(4, 6);   // Moderate amplitude for stable waves
-        const waveFrequency = 0.25; // Fixed frequency that matches block-movement.ts
+        // Ensure vertical wave blocks are spread throughout the play area by using a grid-based approach
+        // Divide the play area into sections and spawn in different sections
+        
+        // Use wider height range for more variety
+        const waveBaseHeight = this.getRandomY(-3, 8);  // Expanded range for more varied starting heights
+        const waveAmplitude = this.getRandomY(4, 7);   // Slightly larger amplitude range
+        
+        // Vary the frequency more to create different timing patterns
+        const waveFrequency = this.getRandomY(0.15, 0.35); // More varied frequency
+        
+        // Get current block count to determine which quadrant to spawn in
+        const existingBlocks = this.world.entityManager.getAllEntities()
+          .filter(entity => entity.name.toLowerCase().includes('block'));
+        
+        // Force block spreading by dividing the play area into quadrants
+        // and choosing the quadrant with the fewest blocks
+        const quadrants = [
+          { minX: -14, maxX: -5, minZ: -14, maxZ: -1 },  // back left
+          { minX: -14, maxX: -5, minZ: 0, maxZ: 14 },    // front left
+          { minX: 4, maxX: 14, minZ: -14, maxZ: -1 },   // back right
+          { minX: 4, maxX: 14, minZ: 0, maxZ: 14 },     // front right
+          { minX: -5, maxX: 4, minZ: -14, maxZ: -5 },   // back middle
+          { minX: -5, maxX: 4, minZ: 5, maxZ: 14 }      // front middle
+        ];
+        
+        // Count blocks in each quadrant
+        const blocksPerQuadrant = quadrants.map(quad => {
+          return existingBlocks.filter(block => 
+            block.position.x >= quad.minX && block.position.x <= quad.maxX &&
+            block.position.z >= quad.minZ && block.position.z <= quad.maxZ
+          ).length;
+        });
+        
+        // Find the quadrant with the fewest blocks
+        let quadrantIndex = 0;
+        let minBlockCount = Number.MAX_VALUE;
+        
+        for (let i = 0; i < blocksPerQuadrant.length; i++) {
+          if (blocksPerQuadrant[i] < minBlockCount) {
+            minBlockCount = blocksPerQuadrant[i];
+            quadrantIndex = i;
+          }
+        }
+        
+        // Add some randomness - 30% chance to just pick a random quadrant
+        if (Math.random() < 0.3) {
+          quadrantIndex = Math.floor(Math.random() * quadrants.length);
+        }
+        
+        // Get the selected quadrant
+        const selectedQuadrant = quadrants[quadrantIndex];
+        
+        // Generate position within the selected quadrant
+        const spreadXPosition = this.getRandomY(selectedQuadrant.minX, selectedQuadrant.maxX);
+        const spreadZPosition = this.getRandomY(selectedQuadrant.minZ, selectedQuadrant.maxZ);
         
         this.blockManager.createVerticalWaveBlock({
           spawnPosition: {
-            ...spawnPosition,
-            y: waveBaseHeight  // Start at more varied heights
+            x: spreadXPosition,
+            y: waveBaseHeight,
+            z: spreadZPosition
           },
           moveSpeed: baseSpeed * 0.5, // Reduced speed for smoother movement
           amplitude: waveAmplitude,
