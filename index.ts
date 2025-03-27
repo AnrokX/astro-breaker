@@ -348,19 +348,14 @@ startServer(world => {
       
       // Handle leaderboard visibility events
       if (data.type === 'closeLeaderboard') {
-        console.log(`Player ${player.id} closed leaderboard UI`);
-        // We no longer use the settings manager for this temporary UI state
       }
       
       // Handle leaderboard toggle settings
       if (data.type === 'toggleLeaderboardSetting' && data.visible !== undefined) {
-        console.log(`Player ${player.id} set leaderboard visibility to: ${data.visible}`);
-        // No longer storing this in settings, handled by UI state
       }
       
       // Handle leaderboard display request
       if (data.type === 'showLeaderboard') {
-        console.log(`Player ${player.id} requested leaderboard display`);
         displayLeaderboardToPlayer(player);
       }
     });
@@ -596,10 +591,8 @@ startServer(world => {
             }
             
             // Display information about multiplayer mode (without UI messages)
-            console.log('Multiplayer Mode activated - waiting for more players');
             
             // Start a new round (it will wait for players in multiplayer mode)
-            console.log('Starting new multiplayer round');
             setTimeout(() => {
               if (roundManager) {
                 roundManager.startRound();
@@ -610,8 +603,6 @@ startServer(world => {
       }
       // Handle resetSettings request
       else if (data && data.type === 'resetSettings') {
-        console.log(`Player ${player.id} requested settings reset`);
-        
         // Define default settings
         const defaultSettings: PlayerSettings = {
           crosshairColor: '#ffff00',
@@ -638,19 +629,14 @@ startServer(world => {
       }
       // Handle leaderboard visibility events
       else if (data && data.type === 'closeLeaderboard') {
-        console.log(`Player ${player.id} closed leaderboard UI`);
-        // We no longer use the settings manager for this temporary UI state
       }
       
       // Handle leaderboard toggle settings
       if (data && data.type === 'toggleLeaderboardSetting' && data.visible !== undefined) {
-        console.log(`Player ${player.id} set leaderboard visibility to: ${data.visible}`);
-        // No longer storing this in settings, handled by UI state
       }
       
       // Handle leaderboard display request
       if (data && data.type === 'showLeaderboard') {
-        console.log(`Player ${player.id} requested leaderboard display`);
         displayLeaderboardToPlayer(player);
       }
     });
@@ -658,7 +644,6 @@ startServer(world => {
     // Start the round or spawn test blocks based on mode
     if (IS_TEST_MODE && testSpawner) {
       testSpawner.spawnTestBlocks();
-      console.log('Test blocks spawned');
     } else if (roundManager && !roundManager.isActive()) {
       roundManager.startRound();
     }
@@ -711,8 +696,6 @@ startServer(world => {
    */
   // Replace direct assignment with proper event listener for player leave
   world.on(PlayerEvent.LEFT_WORLD, ({ player }) => {
-    console.log('Player left the game');
-    
     // Clean up player states
     scoreManager.removePlayer(player.id);
     projectileManager.removePlayer(player.id);

@@ -2277,12 +2277,10 @@ function createParticle() {
 // Listen for projectile count updates and shoot attempts from the game
 // Add UI version marker
 window.UI_VERSION = "UPDATED_LEADERBOARD_v1";
-console.log('UI Loaded with version:', window.UI_VERSION);
 
 hytopia.onData(data => {
   // Debug message handler
   if (data.type === 'debugMessage') {
-    console.log('Debug message received:', data);
     // Add a visual indicator that the UI is loaded with the new version
     const debugElement = document.createElement('div');
     debugElement.style.position = 'fixed';
@@ -2314,7 +2312,6 @@ hytopia.onData(data => {
     hideScoreboard();
     showWaitingForPlayers(data.data);
   } else if (data.type === 'updateLeaderboard') {
-    console.log('Leaderboard update received - UI VERSION:', 'UPDATED_LEADERBOARD_v1');
     updateLeaderboard(data);
   } else if (data.type === 'showCombo') {
     showComboNotification(data.data);
@@ -2329,10 +2326,8 @@ hytopia.onData(data => {
     showGameEnd(data.data);
   } else if (data.type === 'showModeSelection') {
     hideScoreboard();
-    console.log('Received showModeSelection event from server, showing game mode selection UI');
     showGameModeSelection();
   } else if (data.type === 'hideGameModeSelection') {
-    console.log('Received hideGameModeSelection event from server, hiding game mode selection UI');
     hideGameModeSelection();
   } else if (data.type === 'systemMessage') {
     // Display system message
@@ -2716,13 +2711,6 @@ function updateLeaderboard(data) {
   const leaderboardElement = document.querySelector('.leaderboard');
   const leaderboardData = data.leaderboard || data;
   const currentPlayerId = data.currentPlayerId;
-  
-  // Debug message to console to show leaderboard update
-  console.log('Updating leaderboard with:', { 
-    playerCount: leaderboardData.length, 
-    currentPlayerId,
-    timestamp: data.timestamp || 'none'
-  });
   
   // Initialize leaderboard state on first load
   if (!leaderboardInitialized) {
@@ -3242,7 +3230,6 @@ function showGameEnd(data) {
 
 // Game Mode Selection Functionality
 function showGameModeSelection() {
-  console.log('Showing game mode selection');
   const modal = document.getElementById('game-mode-selection');
   if (modal) {
     // Note: We now can directly control pointer lock from UI code with hytopia.lockPointer()
@@ -3257,7 +3244,6 @@ function showGameModeSelection() {
       lockButton.onclick = function() {
         if (window.hytopia && window.hytopia.lockPointer) {
           window.hytopia.lockPointer(true);
-          console.log('Pointer locked');
         }
       };
     }
@@ -3267,7 +3253,6 @@ function showGameModeSelection() {
 }
 
 function hideGameModeSelection() {
-  console.log('Hiding game mode selection');
   const modal = document.getElementById('game-mode-selection');
   if (modal) {
     modal.style.display = 'none';
@@ -3280,7 +3265,6 @@ function hideGameModeSelection() {
 
 // Set up event listeners for game mode buttons - ONCE when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Setting up game mode buttons...');
   const soloButton = document.getElementById('solo-mode');
   const dismissButton = document.getElementById('dismiss-mode-selection');
   const pointerLockButton = document.getElementById('toggle-pointer-lock');
@@ -3290,27 +3274,19 @@ document.addEventListener('DOMContentLoaded', () => {
     pointerLockButton.addEventListener('click', function() {
       if (window.hytopia && window.hytopia.lockPointer) {
         window.hytopia.lockPointer(true);
-        console.log('Pointer locked via button');
       }
     });
   }
   
   if (dismissButton) {
-    console.log('Dismiss button found, adding click handler');
     dismissButton.addEventListener('click', function() {
-      console.log('Dismiss button clicked');
       // Just hide the selection UI
       hideGameModeSelection();
     });
-  } else {
-    console.log('Dismiss button not found!');
   }
   
   if (soloButton) {
-    console.log('Solo button found, adding click handler');
     soloButton.addEventListener('click', function() {
-      console.log('Solo mode clicked');
-      
       // Add flash effect
       soloButton.classList.add('button-flash');
       setTimeout(() => {
@@ -3326,39 +3302,18 @@ document.addEventListener('DOMContentLoaded', () => {
         mode: 'solo'
       });
     });
-  } else {
-    console.log('Solo button not found!');
   }
-  
-  // For debugging - manually show the game mode selection (comment out for production)
-  // setTimeout(() => {
-  //   console.log('DEBUG: Manually showing game mode selection');
-  //   showGameModeSelection();
-  // }, 2000);
 });
-
-// Comment out the duplicate handler
-/*
-// Listen for showModeSelection event from the game
-hytopia.onData(data => {
-  if (data.type === 'showModeSelection') {
-    showGameModeSelection();
-  }
-  // ... existing data handlers
-});
-*/
 
 // Global keyboard shortcuts for mode selection
 document.addEventListener('keydown', (e) => {
   // Process "Ctrl+1" key press to activate solo mode
   if (e.key === '1' && e.ctrlKey) {
-    console.log('🎮 KEY PRESSED: "Ctrl+1" - Activating solo mode');
     e.preventDefault(); // Prevent any default behavior
     
     // Check if there's more than one player present
     const playerCount = document.querySelectorAll('.round-end-placement').length;
     if (playerCount > 1) {
-      console.log('Multiple players present, ignoring solo mode key press');
       return false; // Ignore the key press completely if multiple players
     }
     
@@ -3377,8 +3332,7 @@ document.addEventListener('keydown', (e) => {
       hideGameModeSelection();
     }
     
-    // Send the data to start solo mode - make this message stand out in logs
-    console.log('🚀 SENDING SOLO MODE REQUEST TO SERVER');
+    // Send the data to start solo mode
     hytopia.sendData({ 
       type: 'modeSelection',
       mode: 'solo'
@@ -3389,7 +3343,6 @@ document.addEventListener('keydown', (e) => {
   
   // Process "Ctrl+2" key press to dismiss the mode selection UI
   else if (e.key === '2' && e.ctrlKey) {
-    console.log('🎮 KEY PRESSED: "Ctrl+2" - Dismissing mode selection');
     e.preventDefault(); // Prevent any default behavior
     
     // Add flash effect to the dismiss button if visible
