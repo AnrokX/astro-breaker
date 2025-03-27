@@ -61,7 +61,9 @@ export class DefaultBlockMovement implements BlockMovementBehavior {
       ? this.bounceEscapeDirection
       : block.getDirection();
     
-    const speed = block.getMoveSpeed() * deltaSeconds;
+    // Reduced speed for normal blocks to give them more time to detect boundaries
+    const speedMultiplier = 0.85; // 15% speed reduction for better boundary detection
+    const speed = block.getMoveSpeed() * deltaSeconds * speedMultiplier;
     
     // Calculate new position with normalized movement
     let newPosition = {

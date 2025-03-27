@@ -37,7 +37,7 @@ export const MOVING_BLOCK_CONFIG = {
       Z_MIN: -9,
       Z_MAX: -8
     },
-    PLATFORM_SAFETY_MARGIN: 8, // Increased margin for better spacing
+    PLATFORM_SAFETY_MARGIN: 10, // Increased margin to keep blocks further from platforms
     MIN_DISTANCE_BETWEEN_TARGETS: 7  // Increased minimum distance between targets
   },
   PENDULUM_TARGET: {
@@ -239,7 +239,11 @@ export class MovingBlockEntity extends Entity {
     if (!this.movementBounds) return true;
 
     // Use a larger epsilon for boundary checks to prevent jittering
-    const epsilon = 0.1; // Increased from 0.05 to 0.1 for more robust boundary detection
+    // For normal blocks (default behavior), use a much larger epsilon to keep them further from edges
+    const isDefaultMovement = this.movementBehavior instanceof DefaultBlockMovement;
+    
+    // Use a larger epsilon (buffer) for normal blocks to keep them away from boundaries
+    const epsilon = isDefaultMovement ? 1.5 : 0.1; // Much larger buffer for normal blocks
     
     // Check each axis independently and apply epsilon consistently
     const withinX = position.x >= (this.movementBounds.min.x + epsilon) && 
@@ -253,6 +257,23 @@ export class MovingBlockEntity extends Entity {
     const needsXCheck = Math.abs(this.movementBounds.max.x - this.movementBounds.min.x) > epsilon * 2;
     const needsYCheck = Math.abs(this.movementBounds.max.y - this.movementBounds.min.y) > epsilon * 2;
     const needsZCheck = Math.abs(this.movementBounds.max.z - this.movementBounds.min.z) > epsilon * 2;
+
+    // Additional platform safety check for normal blocks
+    if (isDefaultMovement) {
+      // Get platform edge positions from config
+      const rightPlatformX = MOVING_BLOCK_CONFIG.PLATFORM_SAFETY.RIGHT_PLATFORM_EDGE.X;
+      const leftPlatformX = MOVING_BLOCK_CONFIG.PLATFORM_SAFETY.LEFT_PLATFORM_EDGE.X;
+      const platformMargin = MOVING_BLOCK_CONFIG.PLATFORM_SAFETY.PLATFORM_SAFETY_MARGIN;
+      
+      // Check if we're getting close to either platform
+      const distanceToRightPlatform = Math.abs(position.x - rightPlatformX);
+      const distanceToLeftPlatform = Math.abs(position.x - leftPlatformX);
+      
+      // If we're within the enhanced safety margin, trigger a bounds violation
+      if (distanceToRightPlatform < platformMargin * 1.5 || distanceToLeftPlatform < platformMargin * 1.5) {
+        return false;
+      }
+    }
 
     return (!needsXCheck || withinX) && 
            (!needsYCheck || withinY) && 

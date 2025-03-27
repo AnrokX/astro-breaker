@@ -198,7 +198,8 @@ export class RoundSpawner {
   }
 
   private isPositionSafe(position: Vector3Like): boolean {
-    const safetyMargin = MOVING_BLOCK_CONFIG.PLATFORM_SAFETY.PLATFORM_SAFETY_MARGIN;
+    // Use the safety margin from config with a slight increase for spawn positions
+    const safetyMargin = MOVING_BLOCK_CONFIG.PLATFORM_SAFETY.PLATFORM_SAFETY_MARGIN * 1.2; // 20% larger margin for spawning
     const minSpacing = 2;
     
     // Check distance from platforms
@@ -210,8 +211,14 @@ export class RoundSpawner {
     const isInLeftPlatformZRange = position.z >= MOVING_BLOCK_CONFIG.PLATFORM_SAFETY.LEFT_PLATFORM_EDGE.Z_MIN - safetyMargin && 
                                  position.z <= MOVING_BLOCK_CONFIG.PLATFORM_SAFETY.LEFT_PLATFORM_EDGE.Z_MAX + safetyMargin;
     
+    // Check if the block is close to either platform in the X axis and in the Z range of the platforms
     const isSafeFromRightPlatform = rightPlatformDistance >= safetyMargin || !isInRightPlatformZRange;
     const isSafeFromLeftPlatform = leftPlatformDistance >= safetyMargin || !isInLeftPlatformZRange;
+    
+    // Additional check: Avoid spawning blocks directly between platforms in the middle of the game
+    const isInMiddleZone = position.z >= -5 && position.z <= 5;
+    const isCloseToMidpoint = Math.abs(position.x) < 3; // Avoid spawning near the midpoint between platforms
+    const isBlockingCentralArea = isInMiddleZone && isCloseToMidpoint;
     
     // Check distance from all existing blocks
     const existingBlocks = this.world.entityManager.getAllEntities()
@@ -224,8 +231,8 @@ export class RoundSpawner {
       return Math.sqrt(dx * dx + dy * dy + dz * dz) < minSpacing;
     });
 
-    // Return true if position is safe from both platforms and other blocks
-    return !isTooCloseToBlocks && isSafeFromRightPlatform && isSafeFromLeftPlatform;
+    // Return true if position is safe from platforms, not blocking central area, and not too close to other blocks
+    return !isTooCloseToBlocks && isSafeFromRightPlatform && isSafeFromLeftPlatform && !isBlockingCentralArea;
   }
 
   private spawnBlockByType(blockType: string, spawnPosition: Vector3Like, baseSpeed: number): void {
@@ -238,7 +245,26 @@ export class RoundSpawner {
         });
         break;
       case 'normal':
-        this.blockManager.createZAxisBlock(spawnPosition);
+        // Add extra safety buffer specifically for normal blocks
+        const normalBlockSafetyBuffer = 5; // Additional buffer just for normal blocks
+        const normalSpawnPosition = {
+          x: Math.max(
+            Math.min(
+              spawnPosition.x,
+              MOVING_BLOCK_CONFIG.MOVEMENT_BOUNDS.max.x - normalBlockSafetyBuffer
+            ),
+            MOVING_BLOCK_CONFIG.MOVEMENT_BOUNDS.min.x + normalBlockSafetyBuffer
+          ),
+          y: spawnPosition.y,
+          z: Math.max(
+            Math.min(
+              spawnPosition.z,
+              MOVING_BLOCK_CONFIG.MOVEMENT_BOUNDS.max.z - normalBlockSafetyBuffer
+            ),
+            MOVING_BLOCK_CONFIG.MOVEMENT_BOUNDS.min.z + normalBlockSafetyBuffer
+          ),
+        };
+        this.blockManager.createZAxisBlock(normalSpawnPosition);
         break;
       case 'sineWave':
         // For sine wave blocks, we need to account for the amplitude in spawn position
