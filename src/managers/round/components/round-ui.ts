@@ -105,8 +105,8 @@ export class RoundUI {
   public displayGameEnd(winner: GameEndStanding, standings: GameEndStanding[], 
                         totalRounds: number, completedRounds: number, 
                         nextGameIn: number = 10000): void {
-    // Capture final round scores before sending game end data
-    this.roundTotalScoreManager.endRound();
+    // We don't need to call endRound() here as it's already called in displayRoundEnd() 
+    // for the final round, calling it again would double-count the last round's score
     
     // Send game end message to all players with current player ID for highlighting
     this.world.entityManager.getAllPlayerEntities().forEach(playerEntity => {
