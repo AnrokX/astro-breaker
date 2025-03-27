@@ -189,7 +189,6 @@ startServer(world => {
     });
 
     world.chatManager.registerCommand('testhelp', (player) => {
-      console.log('Executing testhelp command');
       world.chatManager.sendPlayerMessage(player, 'Test Mode Commands:', 'FFFF00');
       world.chatManager.sendPlayerMessage(player, 'spawn1 - Spawn static target', 'FFFF00');
       world.chatManager.sendPlayerMessage(player, 'spawn2 - Spawn sine wave block', 'FFFF00');
@@ -224,7 +223,6 @@ startServer(world => {
           z: spawnPos.z
         };
         entity.setPosition(respawnPos);
-        console.log(`Player ${entity.player.id} fell and respawned at their initial position`);
       }
     }
   }
@@ -238,7 +236,6 @@ startServer(world => {
 
   // Replace direct assignment with proper event listener for player join
   world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
-    console.log('New player joined the game');
     
     // Initialize player states
     scoreManager.initializePlayer(player.id);
@@ -263,7 +260,7 @@ startServer(world => {
           audioManager.setBgmVolume(settings.bgmVolume);
         }
       })
-      .catch(error => console.error("Error initializing player settings:", error));
+      .catch(error => {});
     
     // Initialize player in LeaderboardManager
     const leaderboardManager = LeaderboardManager.getInstance(world);
@@ -273,16 +270,14 @@ startServer(world => {
         playerData.gamesPlayed++;
         return leaderboardManager.updatePlayerData(player, playerData);
       })
-      .catch(error => console.error("Error updating player leaderboard data:", error));
+      .catch(error => {});
     
     // Load the UI first with explicit cache-busting
-    console.log("Loading UI with cache busting...");
     const timestamp = Date.now();
     player.ui.load(`ui/index.html?v=${timestamp}`);
     
     // Add a delayed UI update to ensure it's fully loaded
     setTimeout(() => {
-      console.log("Sending debug message to UI...");
       player.ui.sendData({
         type: 'debugMessage',
         message: 'UI loaded with version check',
@@ -313,18 +308,13 @@ startServer(world => {
 
     // Register UI event handlers directly on the player's UI
     player.ui.on(PlayerUIEvent.DATA, ({ data }) => {
-      console.log(`[Player ${player.id}] UI event received:`, data);
-      
       // Special handling for mode selection - with safety checks
       if (data.type === 'modeSelection' && roundManager) {
-        console.log(`[Player ${player.id}] MODE SELECTION: ${data.mode}`);
-        
         // Handle solo mode
         if (data.mode === 'solo') {
           // Check if there's more than one player
           const playerCount = world.entityManager.getAllPlayerEntities().length;
           if (playerCount > 1) {
-            console.log(`Solo mode requested but ${playerCount} players present - ignoring request`);
             return;
           }
           
@@ -379,7 +369,6 @@ startServer(world => {
           data: playerData
         });
       } catch (error) {
-        console.error("Error displaying leaderboard:", error);
       }
     }
 
@@ -387,7 +376,6 @@ startServer(world => {
     playerEntity.controller!.on(BaseEntityControllerEvent.TICK_WITH_PLAYER_INPUT, ({ entity, input, deltaTimeMs }) => {
       // Check for 'L' key press
       if (input.l) {
-        console.log('Player pressed L key - toggling leaderboard');
         // Toggle leaderboard display
         player.ui.sendData({
           type: 'toggleLeaderboard'
@@ -484,7 +472,6 @@ startServer(world => {
           // We need to reset the round manager to apply the new game mode
           // First, end any active round
           if (roundManager && roundManager.isActive()) {
-            console.log('Ending current round before mode switch');
             roundManager.endRound();
           }
           
@@ -506,7 +493,6 @@ startServer(world => {
           
           if (gameMode === 'solo') {
             // Use solo mode configuration
-            console.log('Switching to solo mode');
             
             // Create a completely new round manager
             if (roundManager) {
@@ -532,11 +518,9 @@ startServer(world => {
                 // Fallback to direct property update
                 (projectileManager as any).roundManager = roundManager;
               }
-              console.log('Updated projectile manager with new round manager');
             }
             
             // Immediately start a new round in solo mode without showing UI messages
-            // console.log('Starting new solo round');
             // Immediately start the round - no delays
             if (roundManager) {
               // Start the round
@@ -562,7 +546,6 @@ startServer(world => {
             }
           } else {
             // Use multiplayer mode configuration
-            console.log('Switching to multiplayer mode');
             
             // Create a completely new round manager
             if (roundManager) {
@@ -587,7 +570,6 @@ startServer(world => {
                 // Fallback to direct property update
                 (projectileManager as any).roundManager = roundManager;
               }
-              console.log('Updated projectile manager with new round manager');
             }
             
             // Display information about multiplayer mode (without UI messages)
@@ -684,10 +666,8 @@ startServer(world => {
         
         }
       }).catch(error => {
-        console.error("Error creating leaderboard marker:", error);
       });
     } catch (error) {
-      console.error("Error setting up leaderboard:", error);
     }
   });
 
