@@ -5,7 +5,7 @@
       "name": "block-breaking-game",
       "dependencies": {
         "@hytopia.com/assets": "latest",
-        "hytopia": "^0.3.14",
+        "hytopia": "^0.3.18",
       },
       "devDependencies": {
         "@types/jest": "^29.5.14",
@@ -470,7 +470,7 @@
 
     "human-signals": ["human-signals@2.1.0", "", {}, "sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw=="],
 
-    "hytopia": ["hytopia@0.3.14", "", { "dependencies": { "@gltf-transform/cli": "4.1.1" }, "bin": { "hytopia": "bin/scripts.js" } }, "sha512-sxT5tPw0r0TcmH/HApRXrDiRlzx4fjFBo5BuZPgTy7TJENAn/DHO0eVWhG9S7T0Z2+Wz6FTFqEOmWaXSpI1oMQ=="],
+    "hytopia": ["hytopia@0.3.18", "", { "dependencies": { "@gltf-transform/cli": "4.1.1" }, "bin": { "hytopia": "bin/scripts.js" } }, "sha512-6mNfsBIsfYaarmJ0WHfvErGyebGCFYeXxvio/B+LvGErByCe7Og2E6S0/ByktXCbULQleYmIUfo89IlY+D9C4Q=="],
 
     "import-local": ["import-local@3.2.0", "", { "dependencies": { "pkg-dir": "^4.2.0", "resolve-cwd": "^3.0.0" }, "bin": { "import-local-fixture": "fixtures/cli.js" } }, "sha512-2SPlun1JUPWoM6t3F0dw0FkCF/jWY8kttcY4f599GLTSjh2OCuuhdTkJQsEcZzBqbXZGKMK2OqW1oZsjtf/gQA=="],
 
