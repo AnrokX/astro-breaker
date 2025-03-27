@@ -75,7 +75,7 @@ export class RoundSpawner {
     );
 
     // Add randomized delay to create more natural, less predictable spawning
-    const spawnChance = 0.7; // 70% chance to spawn each interval
+    const spawnChance = 1; // 100% chance to spawn each interval
     
     // Only proceed with spawn if we pass the random check (unless no blocks at all)
     if (currentBlocks === 0 || Math.random() < spawnChance) {

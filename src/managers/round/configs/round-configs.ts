@@ -79,7 +79,7 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
 
     // Round 5 - 100% Parabolic
     5: {
-        duration: 20000,  // 20 seconds - short and intense final round
+        duration: 30000,  // 30 seconds - short and intense final round
         minBlockCount: 2,  // Base value maintained
         maxBlockCount: 7,  // Increased from 3 to 4 (40% more)
         blockSpawnInterval: 1200,  // Adjusted for better control
