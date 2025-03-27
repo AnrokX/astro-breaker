@@ -3,7 +3,7 @@ import { DESTRUCTION_PARTICLE_CONFIG } from '../config/particle-config';
 
 export class BlockParticleEffects {
   private activeParticles: Set<Entity> = new Set(); // Use Set for faster lookups/removal
-  private particlePool: Entity[] = [];
+  private particlePools: Map<string, Entity[]> = new Map(); // Separate pool for each texture
   private static instance: BlockParticleEffects; // Singleton pattern
   private spatialGrid: Map<string, Set<Entity>> = new Map();
   private static readonly FRAME_BUDGET_MS = 16; // 60fps target
@@ -63,7 +63,15 @@ export class BlockParticleEffects {
   }
 
   private getParticleFromPool(world: World, blockTextureUri: string): Entity {
-    let particle = this.particlePool.pop();
+    // Get or create a texture-specific pool
+    let pool = this.particlePools.get(blockTextureUri);
+    if (!pool) {
+      pool = [];
+      this.particlePools.set(blockTextureUri, pool);
+    }
+    
+    // Try to get a particle from the texture-specific pool
+    let particle = pool.pop();
     
     if (!particle) {
       // Create new particle if pool is empty
@@ -102,6 +110,11 @@ export class BlockParticleEffects {
         }
       }
     }
+    
+    // Make sure the particle is despawned before reusing it
+    if (particle.isSpawned) {
+      particle.despawn();
+    }
 
     // Track spawn time
     this.particleSpawnTimes.set(particle, Date.now());
@@ -114,8 +127,20 @@ export class BlockParticleEffects {
     }
     this.activeParticles.delete(particle);
     this.particleSpawnTimes.delete(particle);
-    if (this.particlePool.length < DESTRUCTION_PARTICLE_CONFIG.POOLING.POOL_SIZE) {
-      this.particlePool.push(particle);
+    
+    // Get the correct pool based on the particle's texture
+    const texture = particle.blockTextureUri;
+    if (texture) {
+      let pool = this.particlePools.get(texture);
+      if (!pool) {
+        pool = [];
+        this.particlePools.set(texture, pool);
+      }
+      
+      // Add to the texture-specific pool if it's not too big
+      if (pool.length < DESTRUCTION_PARTICLE_CONFIG.POOLING.POOL_SIZE / 5) { // Divide by 5 to account for multiple textures
+        pool.push(particle);
+      }
     }
   }
 
@@ -248,7 +273,10 @@ export class BlockParticleEffects {
       }
     });
     this.activeParticles.clear();
-    this.particlePool = [];
+    
+    // Clear all particle pools
+    this.particlePools.clear();
+    
     this.spatialGrid.clear();
     this.particleSpawnTimes.clear();
     
