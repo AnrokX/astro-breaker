@@ -6,7 +6,7 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
         duration: 35000,  // 45 seconds - longer tutorial round for learning
         minBlockCount: 8,  // Increased by 30% from 6 to 8
         maxBlockCount: 22,  // Increased by 30% from 17 to 22
-        blockSpawnInterval: 800,  // Decreased for faster spawning
+        blockSpawnInterval: 1000,  // Decreased for faster spawning
         speedMultiplier: 0.5,
         blockTypes: {
             normal: 0,
@@ -23,9 +23,9 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     // Round 2 - 100% Normal Blocks
     2: {
         duration: 35000,  // 35 seconds - comfortable intro to moving blocks
-        minBlockCount: 3,  // Increased from 2 to 3 (30% more)
-        maxBlockCount: 10,  // Increased from 4 to 5 (30% more)
-        blockSpawnInterval: 700,  // Adjusted for smoother spawning
+        minBlockCount: 2,  // Reduced by 20% from 3 to 2
+        maxBlockCount: 8,  // Reduced by 20% from 10 to 8
+        blockSpawnInterval: 800,  // Slightly slower spawning for fewer blocks
         speedMultiplier: 0.6,
         blockTypes: {
             normal: 1.0,    // 100% normal blocks
@@ -42,9 +42,9 @@ export const ROUND_CONFIGS: Record<number, RoundConfig> = {
     // Round 3 - 100% Sine Wave
     3: {
         duration: 30000,  // 30 seconds - standard duration
-        minBlockCount: 2,  // Base value maintained
-        maxBlockCount: 10,  // Increased from 3 to 4 (30% more)
-        blockSpawnInterval: 1400,  // Maintained for sine wave control
+        minBlockCount: 3,  // Increased by 35% from 2 to 3
+        maxBlockCount: 14,  // Increased by 35% from 10 to 14
+        blockSpawnInterval: 1200,  // Slightly faster spawning for more blocks
         speedMultiplier: 0.65,
         blockTypes: {
             normal: 0,
