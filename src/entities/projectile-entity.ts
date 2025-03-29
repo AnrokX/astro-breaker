@@ -36,7 +36,7 @@ export class ProjectileEntity extends Entity {
 
     // Trajectory preview constants
     private static readonly PREVIEW = {
-        MARKER_URI: 'models/projectiles/energy-orb-projectile.gltf',
+        MARKER_URI: 'models/projectiles/bomb.gltf',
         MARKER_SCALE: 0.3,
         MARKER_OPACITY: 0.7
     } as const;

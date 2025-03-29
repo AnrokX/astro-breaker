@@ -174,12 +174,7 @@ dist
 # Finder (MacOS) folder config
 .DS_Store    
 
-# Project assets
-assets/blocks/
-assets/maps/
-assets/map.json
-assets/skyboxes/
-assets/models/
+
 
 # Third-party models - removed from project
 assets/models/projectiles/bomb.gltf
