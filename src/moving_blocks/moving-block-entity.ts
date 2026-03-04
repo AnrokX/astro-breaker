@@ -334,15 +334,18 @@ export class MovingBlockEntity extends Entity {
             .find(p => p.player.id === this.playerId)?.player;
 
           if (player) {
+            // Copy position before despawn resets it
+            const hitPosition = { x: this.position.x, y: this.position.y, z: this.position.z };
+
             // Show block destroyed notification with the score
             const sceneUIManager = SceneUIManager.getInstance(this.world);
-            sceneUIManager.showBlockDestroyedNotification(this.position, score, player);
-          }
-          
-          // Create destruction effect before despawning
-          if (this.blockTextureUri) {
-            const particleEffects = BlockParticleEffects.getInstance(this.world);
-            particleEffects.createDestructionEffect(this.world, this.position, this.blockTextureUri);
+            sceneUIManager.showBlockDestroyedNotification(hitPosition, score, player);
+
+            // Create destruction effect before despawning
+            if (this.blockTextureUri) {
+              const particleEffects = BlockParticleEffects.getInstance(this.world);
+              particleEffects.createDestructionEffect(this.world, hitPosition, this.blockTextureUri);
+            }
           }
           
           // Broadcast updated scores
@@ -383,10 +386,13 @@ export class MovingBlockEntity extends Entity {
     if (this.health <= 0) {
       // Calculate score before showing notification
       const score = this.calculateScore();
-      
+
+      // Copy position before despawn resets it
+      const hitPosition = { x: this.position.x, y: this.position.y, z: this.position.z };
+
       // Show block destroyed notification with appropriate score
-      sceneUIManager.showBlockDestroyedNotification(this.position, score, player);
-      
+      sceneUIManager.showBlockDestroyedNotification(hitPosition, score, player);
+
       // Create destruction effect before despawning
       this.createDestructionEffect();
       
