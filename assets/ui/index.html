@@ -2420,7 +2420,10 @@ hytopia.onData(data => {
   } else if (data.type === 'waitingForPlayers') {
     hideScoreboard();
     showWaitingForPlayers(data.data);
-    // Show start button again for next game
+    // Unlock pointer and show start button again for next game
+    if (window.hytopia && window.hytopia.lockPointer) {
+      window.hytopia.lockPointer(false);
+    }
     const startBtn2 = document.getElementById('start-button-container');
     if (startBtn2) startBtn2.classList.remove('hidden');
   } else if (data.type === 'updateLeaderboard') {
@@ -2440,6 +2443,10 @@ hytopia.onData(data => {
     showGameEnd(data.data);
   } else if (data.type === 'showModeSelection') {
     hideScoreboard();
+    // Unlock pointer so the button is clickable
+    if (window.hytopia && window.hytopia.lockPointer) {
+      window.hytopia.lockPointer(false);
+    }
     // Show the big start button
     const startBtn = document.getElementById('start-button-container');
     if (startBtn) startBtn.classList.remove('hidden');
