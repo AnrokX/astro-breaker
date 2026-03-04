@@ -1,6 +1,8 @@
 // LeaderboardManager handles persistence of game scores and leaderboard data
 
 import { World, Player, PersistenceManager } from 'hytopia';
+// NOTE: PersistenceManager is still used for global data (getGlobalData/setGlobalData).
+// Player data now uses player.getPersistedData()/setPersistedData() (synchronous).
 import { GlobalLeaderboard, PlayerPersistentData } from '../types';
 
 export class LeaderboardManager {
@@ -81,43 +83,37 @@ export class LeaderboardManager {
     }
   }
   
-  public async getPlayerData(player: Player): Promise<PlayerPersistentData> {
+  public getPlayerData(player: Player): PlayerPersistentData {
+    const defaultData: PlayerPersistentData = {
+      personalBest: {
+        totalScore: 0,
+        roundScores: {}
+      },
+      gamesPlayed: 0
+    };
+
     try {
-      const defaultData: PlayerPersistentData = {
-        personalBest: { 
-          totalScore: 0, 
-          roundScores: {}
-        },
-        gamesPlayed: 0
-      };
-      
-      const data = await PersistenceManager.instance.getPlayerData(player);
-      
-      // If we have data, use it, otherwise use default
+      const data = player.getPersistedData();
+
       if (data) {
         try {
-          // Try to parse it as PlayerPersistentData
           const rawData = data as Record<string, unknown>;
           const personalBestRaw = rawData.personalBest as Record<string, unknown> || {};
-          // Convert old format to new format if needed
           let roundScores: {[roundNumber: number]: {score: number, date: string}} = {};
-          
-          // Try to get round scores from new format first
+
           if (personalBestRaw.roundScores) {
             try {
               roundScores = personalBestRaw.roundScores as {[roundNumber: number]: {score: number, date: string}};
             } catch (e) {
             }
-          } 
-          // If no round scores in new format, try to migrate from old format
+          }
           else if (personalBestRaw.highestRoundScore) {
-            // Add a single entry for round 1 (assuming it was from round 1)
             roundScores[1] = {
               score: Number(personalBestRaw.highestRoundScore) || 0,
               date: String(personalBestRaw.highestRoundScoreDate) || new Date().toISOString()
             };
           }
-          
+
           return {
             personalBest: {
               totalScore: Number(personalBestRaw.totalScore) || 0,
@@ -129,26 +125,18 @@ export class LeaderboardManager {
           return defaultData;
         }
       }
-      
+
       return defaultData;
     } catch (error) {
-      return {
-        personalBest: { 
-          totalScore: 0, 
-          roundScores: {}
-        },
-        gamesPlayed: 0
-      };
+      return defaultData;
     }
   }
   
-  public async updatePlayerData(player: Player, updatedData: PlayerPersistentData): Promise<void> {
+  public updatePlayerData(player: Player, updatedData: PlayerPersistentData): void {
     try {
-      // Data validation
       if (updatedData.gamesPlayed < 0) updatedData.gamesPlayed = 0;
       if (updatedData.personalBest.totalScore < 0) updatedData.personalBest.totalScore = 0;
-      
-      // Validate round scores
+
       if (updatedData.personalBest.roundScores) {
         for (const roundNum in updatedData.personalBest.roundScores) {
           if (updatedData.personalBest.roundScores[roundNum].score < 0) {
@@ -156,14 +144,13 @@ export class LeaderboardManager {
           }
         }
       }
-      
-      // Convert to Record<string, unknown> for Hytopia's API
+
       const dataToSave: Record<string, unknown> = {
         personalBest: updatedData.personalBest,
         gamesPlayed: updatedData.gamesPlayed
       };
-      
-      await PersistenceManager.instance.setPlayerData(player, dataToSave);
+
+      player.setPersistedData(dataToSave);
     } catch (error) {
     }
   }
@@ -295,30 +282,26 @@ export class LeaderboardManager {
   }
 
   // Helper method to update a player's personal best
-  public async updatePlayerPersonalBest(
+  public updatePlayerPersonalBest(
     player: Player,
     totalScore: number,
     roundNumber: number,
     roundScore: number
-  ): Promise<void> {
+  ): void {
     try {
-      const playerData = await this.getPlayerData(player);
+      const playerData = this.getPlayerData(player);
       const currentDate = new Date().toISOString();
-      
-      // Create a copy of the existing personal best
+
       const newPersonalBest = { ...playerData.personalBest };
-      
-      // Ensure roundScores object exists
+
       if (!newPersonalBest.roundScores) {
         newPersonalBest.roundScores = {};
       }
-      
-      // Only update total score if the new score is better
+
       if (totalScore > playerData.personalBest.totalScore) {
         newPersonalBest.totalScore = totalScore;
       }
-      
-      // Update round score if it's a new high score for this round
+
       const currentRoundBest = playerData.personalBest.roundScores[roundNumber]?.score || 0;
       if (roundScore > currentRoundBest) {
         newPersonalBest.roundScores[roundNumber] = {
@@ -326,20 +309,19 @@ export class LeaderboardManager {
           date: currentDate
         };
       }
-      
-      // Update the player data
+
       playerData.personalBest = newPersonalBest;
-      await this.updatePlayerData(player, playerData);
+      this.updatePlayerData(player, playerData);
     } catch (error) {
     }
   }
 
   // Helper method to increment games played counter
-  public async incrementGamesPlayed(player: Player): Promise<void> {
+  public incrementGamesPlayed(player: Player): void {
     try {
-      const playerData = await this.getPlayerData(player);
+      const playerData = this.getPlayerData(player);
       playerData.gamesPlayed++;
-      await this.updatePlayerData(player, playerData);
+      this.updatePlayerData(player, playerData);
     } catch (error) {
     }
   }
@@ -587,7 +569,7 @@ export class LeaderboardManager {
           const sumOfRoundScores = playerRoundScores.reduce((sum, score) => sum + score, 0);
           
           // Use the sum rather than the passed in totalScore
-          await this.updatePlayerBest(playerEntity.player, {
+          this.updatePlayerBest(playerEntity.player, {
             totalScore: sumOfRoundScores > 0 ? sumOfRoundScores : playerData.totalScore
           });
         }
@@ -597,86 +579,71 @@ export class LeaderboardManager {
   }
   
   // Helper method to update a player's personal best
-  private async updatePlayerBest(player: Player, gameStats: {
+  private updatePlayerBest(player: Player, gameStats: {
     totalScore: number;
     roundScores?: {[roundNumber: number]: number};
     wins?: number;
-  }): Promise<void> {
+  }): void {
     try {
-      // Data validation
       if (gameStats.totalScore < 0) gameStats.totalScore = 0;
-      
-      // Get existing player data
-      const playerData = await this.getPlayerData(player);
+
+      const playerData = this.getPlayerData(player);
       const currentDate = new Date().toISOString();
-      
-      // Ensure roundScores object exists
+
       if (!playerData.personalBest.roundScores) {
         playerData.personalBest.roundScores = {};
       }
-      
-      // Calculate sum of all round scores from global leaderboard
-      let sumOfRoundScores = gameStats.totalScore; // Default to provided score
-      
+
+      let sumOfRoundScores = gameStats.totalScore;
+
       try {
-        // Get the global leaderboard to access all round scores
-        const leaderboard = await this.getGlobalLeaderboard();
-        
-        // Find all round scores for this player
-        const playerRoundScores = leaderboard.roundHighScores
-          .filter(entry => entry.playerId === player.id)
-          .map(entry => entry.roundScore);
-        
-        // Calculate sum of all round scores
-        if (playerRoundScores.length > 0) {
-          sumOfRoundScores = playerRoundScores.reduce((sum, score) => sum + score, 0);
-        }
-      } catch (e) {
-      }
-      
-      // Update total score with the calculated sum
-      if (sumOfRoundScores > 0) {
-        // Always update with the sum of round scores, as this is the new behavior
-        playerData.personalBest.totalScore = sumOfRoundScores;
-      } else if (gameStats.totalScore > 0 && gameStats.totalScore > playerData.personalBest.totalScore) {
-        // Fallback to provided score if we couldn't calculate the sum
-        playerData.personalBest.totalScore = gameStats.totalScore;
-      }
-      
-      // Try to sync round scores from global leaderboard
-      try {
-        const leaderboard = await this.getGlobalLeaderboard();
-        const playerRoundEntries = leaderboard.roundHighScores.filter(entry => entry.playerId === player.id);
-        
-        // Update personal best round scores from global leaderboard entries
-        for (const entry of playerRoundEntries) {
-          const roundNum = entry.roundNumber;
-          const score = entry.roundScore;
-          
-          // Get current best for this round
-          const currentBest = playerData.personalBest.roundScores[roundNum]?.score || 0;
-          
-          // Only update if global score is better than personal best
-          if (score > currentBest) {
-            playerData.personalBest.roundScores[roundNum] = {
-              score: score,
-              date: entry.date || currentDate
-            };
+        const leaderboard = this.leaderboardCache;
+        if (leaderboard) {
+          const playerRoundScores = leaderboard.roundHighScores
+            .filter(entry => entry.playerId === player.id)
+            .map(entry => entry.roundScore);
+
+          if (playerRoundScores.length > 0) {
+            sumOfRoundScores = playerRoundScores.reduce((sum, score) => sum + score, 0);
           }
         }
       } catch (e) {
       }
-      
-      // Update round scores if explicitly provided in gameStats
+
+      if (sumOfRoundScores > 0) {
+        playerData.personalBest.totalScore = sumOfRoundScores;
+      } else if (gameStats.totalScore > 0 && gameStats.totalScore > playerData.personalBest.totalScore) {
+        playerData.personalBest.totalScore = gameStats.totalScore;
+      }
+
+      try {
+        const leaderboard = this.leaderboardCache;
+        if (leaderboard) {
+          const playerRoundEntries = leaderboard.roundHighScores.filter(entry => entry.playerId === player.id);
+
+          for (const entry of playerRoundEntries) {
+            const roundNum = entry.roundNumber;
+            const score = entry.roundScore;
+            const currentBest = playerData.personalBest.roundScores[roundNum]?.score || 0;
+
+            if (score > currentBest) {
+              playerData.personalBest.roundScores[roundNum] = {
+                score: score,
+                date: entry.date || currentDate
+              };
+            }
+          }
+        }
+      } catch (e) {
+      }
+
       if (gameStats.roundScores) {
         for (const [roundNumber, score] of Object.entries(gameStats.roundScores)) {
           const roundNum = parseInt(roundNumber);
           if (isNaN(roundNum) || score <= 0) continue;
-          
-          // Get current best for this round
+
           const currentBest = playerData.personalBest.roundScores[roundNum]?.score || 0;
-          
-          // Only update if new score is better
+
           if (score > currentBest) {
             playerData.personalBest.roundScores[roundNum] = {
               score: score,
@@ -685,15 +652,12 @@ export class LeaderboardManager {
           }
         }
       }
-      
-      // Update games played (increment by 1 to avoid double-counting)
-      // Only increment if this is a new game, not just a stats update
+
       if (gameStats.wins !== undefined) {
         playerData.gamesPlayed++;
       }
-      
-      // Update the player data
-      await this.updatePlayerData(player, playerData);
+
+      this.updatePlayerData(player, playerData);
     } catch (error) {
     }
   }

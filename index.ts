@@ -1,14 +1,15 @@
 import {
   startServer,
   Audio,
-  PlayerEntity,
+  DefaultPlayerEntity,
+  DefaultPlayerEntityController,
   PlayerCameraMode,
   PlayerUI,
   Vector3Like,
   PlayerEvent,
   BaseEntityControllerEvent,
   PlayerUIEvent,
-  Player
+  Player,
 } from 'hytopia';
 
 import worldMap from './assets/map.json';
@@ -248,29 +249,23 @@ startServer(world => {
       }
     });
     
-    // Initialize player settings with persistence (async)
-    settingsManager.initializePlayer(player.id, player)
-      .then(() => {
-        // Send the loaded settings to the UI
-        settingsManager.sendSettingsToUI(player);
-        
-        // Apply initial BGM volume setting
-        const settings = settingsManager.getPlayerSettings(player.id);
-        if (settings) {
-          audioManager.setBgmVolume(settings.bgmVolume);
-        }
-      })
-      .catch(error => {});
+    // Initialize player settings with persistence
+    settingsManager.initializePlayer(player.id, player);
+    settingsManager.sendSettingsToUI(player);
+
+    // Apply initial BGM volume setting
+    const settings = settingsManager.getPlayerSettings(player.id);
+    if (settings) {
+      audioManager.setBgmVolume(settings.bgmVolume);
+    }
     
     // Initialize player in LeaderboardManager
     const leaderboardManager = LeaderboardManager.getInstance(world);
-    leaderboardManager.getPlayerData(player)
-      .then(playerData => {
-        // Update games played count (this happens asynchronously)
-        playerData.gamesPlayed++;
-        return leaderboardManager.updatePlayerData(player, playerData);
-      })
-      .catch(error => {});
+    try {
+      const playerData = leaderboardManager.getPlayerData(player);
+      playerData.gamesPlayed++;
+      leaderboardManager.updatePlayerData(player, playerData);
+    } catch (error) {}
     
     // Load the UI first with explicit cache-busting
     const timestamp = Date.now();
@@ -295,55 +290,18 @@ startServer(world => {
     // Store the spawn position for this player
     playerSpawnPositions.set(player.id, spawnPos);
 
-    const playerEntity = new PlayerEntity({
+    const playerEntity = new DefaultPlayerEntity({
       player,
       name: 'Player',
       modelUri: 'models/players/player.gltf',
-      modelLoopedAnimations: ['idle'],
       modelScale: 0.5,
     });
 
     // Spawn the entity at the position
     playerEntity.spawn(world, spawnPos);
 
-    // Register UI event handlers directly on the player's UI
+    // Register UI event handlers for leaderboard
     player.ui.on(PlayerUIEvent.DATA, ({ data }) => {
-      // Special handling for mode selection - with safety checks
-      if (data.type === 'modeSelection' && roundManager) {
-        // Handle solo mode
-        if (data.mode === 'solo') {
-          // Check if there's more than one player
-          const playerCount = world.entityManager.getAllPlayerEntities().length;
-          if (playerCount > 1) {
-            return;
-          }
-          
-          // Ensure the player's pointer is locked
-          player.ui.lockPointer(true);
-          
-          // Call the round manager to start solo mode
-          roundManager!.handleModeSelection('solo');
-          
-          // Force the round to start immediately
-          setTimeout(() => {
-            roundManager!.actuallyStartRound();
-            
-            // Update projectile manager
-            if (projectileManager) {
-              (projectileManager as any).forceEnableShooting = true;
-            }
-          }, 300);
-        }
-      }
-      
-      // Handle leaderboard visibility events
-      if (data.type === 'closeLeaderboard') {
-      }
-      
-      // Handle leaderboard toggle settings
-      if (data.type === 'toggleLeaderboardSetting' && data.visible !== undefined) {
-      }
-      
       // Handle leaderboard display request
       if (data.type === 'showLeaderboard') {
         displayLeaderboardToPlayer(player);
@@ -355,14 +313,14 @@ startServer(world => {
       try {
         const leaderboardManager = LeaderboardManager.getInstance(world);
         const leaderboardData = await leaderboardManager.getGlobalLeaderboard();
-        const playerData = await leaderboardManager.getPlayerData(player);
-        
+        const playerData = leaderboardManager.getPlayerData(player);
+
         // Send global leaderboard data
         player.ui.sendData({
           type: 'displayLeaderboard',
           data: leaderboardData
         });
-        
+
         // Send personal stats data
         player.ui.sendData({
           type: 'personalStats',
@@ -372,38 +330,17 @@ startServer(world => {
       }
     }
 
-    // Add key binding for leaderboard toggle using 'L' key
-    playerEntity.controller!.on(BaseEntityControllerEvent.TICK_WITH_PLAYER_INPUT, ({ entity, input, deltaTimeMs }) => {
-      // Check for 'L' key press
-      if (input.l) {
-        // Toggle leaderboard display
-        player.ui.sendData({
-          type: 'toggleLeaderboard'
-        });
-        
-        // Also automatically load the data when toggled
-        displayLeaderboardToPlayer(player);
-        
-        // Consume the input to prevent repeated toggling
-        input.l = false;
-      }
-    });
-    
-    // Projectile count no longer needed as projectiles are unlimited
+    // Leaderboard toggle handled client-side via L key → sends 'showLeaderboard' event
     
     // Configure first-person camera after spawning
     player.camera.setMode(PlayerCameraMode.FIRST_PERSON);
     
-    // Hide only the local player's model from their own view
-    // This won't affect how other players see them
-    player.camera.setModelHiddenNodes([
-      'Armature',      // Main skeleton
-      'Mesh',          // Main mesh
-      'Body_mesh',     // Body mesh if separated
-      'Character',     // Common root node name
-      'Skeleton',      // Alternative skeleton name
-      'Root'           // Root node
-    ]);
+    // Hide the local player's model from their own view (first-person)
+    ['root', 'head-geo', 'torso-geo', 'neck-geo', 'arm-left-geo', 'arm-right-geo',
+     'hand-left-geo', 'hand-right-geo', 'leg-left-geo', 'leg-right-geo',
+     'foot-left-geo', 'foot-right-geo'].forEach(node =>
+      player.camera.modelHiddenNodes.add(node)
+    );
     
     // Set camera to eye level and slightly forward
     player.camera.setOffset({

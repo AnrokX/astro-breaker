@@ -88,6 +88,14 @@ export class SceneUIManager {
     // Load the scene UI for the world
     notification.load(this.world);
 
+    // Force position update — works around SDK bug where static-position
+    // SceneUIs don't sync their initial position to the CSS2DObject
+    notification.setPosition({
+      x: worldPosition.x,
+      y: worldPosition.y + verticalOffset,
+      z: worldPosition.z
+    });
+
     // Automatically remove the notification after the animation completes
     setTimeout(() => {
       notification.unload();

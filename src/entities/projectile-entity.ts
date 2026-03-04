@@ -30,7 +30,7 @@ export class ProjectileEntity extends Entity {
         MIN_SPAWN_DISTANCE: 1.0,
         MAX_DOWN_ANGLE: -0.85,
         SPEED_LOSS_PER_BOUNCE: 0.35,
-        SPAWN_HEIGHT_OFFSET: -1.2,
+        SPAWN_HEIGHT_OFFSET: -0.55,
         SPAWN_FORWARD_OFFSET: -0.5,
     } as const;
 

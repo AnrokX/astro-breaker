@@ -10,7 +10,15 @@
       overflow: hidden;
       background-color: transparent;
     }
-    
+
+    /* All interactive elements must be clickable (zoo-game pattern) */
+    button {
+      touch-action: manipulation;
+      pointer-events: auto !important;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     /* More styles... */
   </style>
 </head>
@@ -1934,6 +1942,106 @@
       50% { transform: scale(1.15); color: #ffcc00; text-shadow: 0 0 12px rgba(255, 204, 0, 0.8); }
       100% { transform: scale(1); }
     }
+
+    /* Big START button — full-screen overlay like zoo-game modals */
+    .start-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      pointer-events: auto !important;
+    }
+
+    .start-overlay.hidden {
+      display: none;
+    }
+
+    .start-button-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      pointer-events: auto !important;
+    }
+
+    .start-button {
+      font-family: var(--title-font);
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      color: #ffffff;
+      background: linear-gradient(to bottom, #4a00e0, #8e2de2);
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      border-radius: 1rem;
+      padding: clamp(1.25rem, 3vw, 2rem) clamp(3rem, 8vw, 6rem);
+      text-transform: uppercase;
+      letter-spacing: 0.25rem;
+      box-shadow: 0 0 2rem rgba(142, 45, 226, 0.6), 0 0 4rem rgba(74, 0, 224, 0.3);
+      animation: startPulse 2s infinite;
+      outline: none;
+      font-weight: 700;
+    }
+
+    .start-button:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 3rem rgba(142, 45, 226, 0.8), 0 0 5rem rgba(74, 0, 224, 0.5);
+    }
+
+    .start-button:active {
+      transform: scale(0.96);
+    }
+
+    .start-hint {
+      font-family: var(--display-font);
+      font-size: clamp(1rem, 2vw, 1.5rem);
+      color: rgba(255, 255, 255, 0.6);
+      letter-spacing: 0.15rem;
+    }
+
+    @keyframes startPulse {
+      0%, 100% { box-shadow: 0 0 2rem rgba(142, 45, 226, 0.6), 0 0 4rem rgba(74, 0, 224, 0.3); }
+      50% { box-shadow: 0 0 3rem rgba(142, 45, 226, 0.9), 0 0 6rem rgba(74, 0, 224, 0.5); border-color: #fff; }
+    }
+
+    /* Mobile fire button - hidden by default, shown on mobile */
+    .mobile-fire-btn {
+      display: none;
+      position: fixed;
+      bottom: clamp(2rem, 5vh, 4rem);
+      right: clamp(1.5rem, 4vw, 3rem);
+      width: clamp(4.5rem, 12vw, 6rem);
+      height: clamp(4.5rem, 12vw, 6rem);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 23, 23, 0.9), rgba(139, 0, 0, 0.9));
+      border: 3px solid rgba(255, 255, 255, 0.6);
+      color: #fff;
+      font-family: var(--title-font);
+      font-size: clamp(0.75rem, 2vw, 1rem);
+      letter-spacing: 0.1rem;
+      z-index: 1500;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
+      box-shadow: 0 0 1.5rem rgba(255, 0, 13, 0.5);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body.mobile .mobile-fire-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-fire-btn.active {
+      transform: scale(0.9);
+      background: radial-gradient(circle, rgba(255, 80, 80, 1), rgba(200, 0, 0, 1));
+      box-shadow: 0 0 2.5rem rgba(255, 0, 13, 0.8);
+    }
   </style>
 <!-- Scene UI Templates -->
 
@@ -2180,7 +2288,7 @@
 <div class="help-menu">
     <div class="help-header">
         <span class="help-title">GAME GUIDE</span>
-        <span class="help-key">[Ctrl+H]</span>
+        <span class="help-key">[H]</span>
     </div>
     <div class="help-content">
         <div class="help-section scoring">
@@ -2207,19 +2315,23 @@
         <div class="help-section controls">
             <h3>🎮 CONTROLS</h3>
             <div class="control-item">
-                <span class="key">[ESC]</span>
-                <span class="action">Show Cursor</span>
+                <span class="key">[Enter]</span>
+                <span class="action">Start Solo</span>
             </div>
             <div class="control-item">
-                <span class="key">[Ctrl+P]</span>
+                <span class="key">[ESC]</span>
+                <span class="action">Close Menus</span>
+            </div>
+            <div class="control-item">
+                <span class="key">[P]</span>
                 <span class="action">Settings Menu</span>
             </div>
             <div class="control-item">
-                <span class="key">[Ctrl+H]</span>
+                <span class="key">[H]</span>
                 <span class="action">Help Guide</span>
             </div>
             <div class="control-item">
-                <span class="key">[Ctrl+L]</span>
+                <span class="key">[L]</span>
                 <span class="action">Stellar Records</span>
             </div>
             <div class="control-item">
@@ -2230,15 +2342,29 @@
     </div>
 </div>
 
+<!-- Big START button — overlay like zoo-game modals -->
+<div id="start-overlay" class="start-overlay hidden">
+  <div class="start-button-container">
+    <button class="start-button" onclick="startSoloMode()">START</button>
+    <div class="start-hint">or press Enter</div>
+  </div>
+</div>
+
+<!-- Mobile fire button -->
+<div id="mobile-fire-btn" class="mobile-fire-btn">FIRE</div>
+
 <div class="hotkey-hints">
-    <div class="hotkey-hint">[Ctrl+H] Game Guide</div>
-    <div class="hotkey-hint">[Ctrl+P] Settings</div>
-    <div class="hotkey-hint">[ESC] Show Cursor</div>
-    <div class="hotkey-hint">[Ctrl+L] Stellar Records</div>
+    <div class="hotkey-hint">[H] Guide</div>
+    <div class="hotkey-hint">[P] Settings</div>
+    <div class="hotkey-hint">[L] Records</div>
+    <div class="hotkey-hint">[ESC] Close</div>
     <div class="hotkey-hint">[T] Chat</div>
 </div>
 
 <script>
+// Track whether a game round is currently active
+let isGameRunning = false;
+
 // Removed projectile count variable - projectiles are now unlimited
 let particles = [];
 
@@ -2300,6 +2426,9 @@ hytopia.onData(data => {
     showScoreboard();
     updateScoreboard(data.scores);
   } else if (data.type === 'roundUpdate') {
+    isGameRunning = true;
+    const startBtn = document.getElementById('start-overlay');
+    if (startBtn) startBtn.classList.add('hidden');
     showScoreboard();
     updateRoundInfo(data.data);
   } else if (data.type === 'roundEnd') {
@@ -2309,8 +2438,15 @@ hytopia.onData(data => {
       timerInterval = null;
     }
   } else if (data.type === 'waitingForPlayers') {
+    isGameRunning = false;
     hideScoreboard();
     showWaitingForPlayers(data.data);
+    // Unlock pointer and show start button for next game
+    if (window.hytopia && window.hytopia.lockPointer) {
+      window.hytopia.lockPointer(false);
+    }
+    const startBtn2 = document.getElementById('start-overlay');
+    if (startBtn2) startBtn2.classList.remove('hidden');
   } else if (data.type === 'updateLeaderboard') {
     updateLeaderboard(data);
   } else if (data.type === 'showCombo') {
@@ -2322,11 +2458,21 @@ hytopia.onData(data => {
       clearTimeout(window.comboTimeout);
     }
   } else if (data.type === 'gameEnd') {
+    isGameRunning = false;
     hideScoreboard();
+    const startBtn3 = document.getElementById('start-overlay');
+    if (startBtn3) startBtn3.classList.add('hidden');
     showGameEnd(data.data);
   } else if (data.type === 'showModeSelection') {
+    // Only show start button if no game is running
+    if (isGameRunning) return;
     hideScoreboard();
-    showGameModeSelection();
+    // Unlock pointer so the button is clickable
+    if (window.hytopia && window.hytopia.lockPointer) {
+      window.hytopia.lockPointer(false);
+    }
+    const startBtn = document.getElementById('start-overlay');
+    if (startBtn) startBtn.classList.remove('hidden');
   } else if (data.type === 'hideGameModeSelection') {
     hideGameModeSelection();
   } else if (data.type === 'systemMessage') {
@@ -2801,68 +2947,161 @@ function updateLeaderboard(data) {
 }
 
 
-// Settings menu functionality
+// Modal management - centralized open/close with pointer lock
 let isSettingsOpen = false;
+let isLeaderboardOpen = false;
+
+function closeAllModals() {
+  if (isSettingsOpen) toggleSettings(false);
+  if (isHelpOpen) toggleHelp(false);
+  if (isLeaderboardOpen) toggleLeaderboardPanel(false);
+  const modeSelection = document.getElementById('game-mode-selection');
+  if (modeSelection && modeSelection.style.display === 'block') {
+    hideGameModeSelection();
+  }
+}
+
+function openModal() {
+  if (window.hytopia && window.hytopia.lockPointer) {
+    window.hytopia.lockPointer(false);
+  }
+}
+
+function closeModalAndLockPointer() {
+  if (window.hytopia && window.hytopia.lockPointer) {
+    setTimeout(() => window.hytopia.lockPointer(true), 100);
+  }
+}
 
 function toggleSettings(show) {
   const menu = document.querySelector('.settings-menu');
   const overlay = document.querySelector('.settings-overlay');
-  isSettingsOpen = show;
-  
-  if (show) {
+
+  if (show && !isSettingsOpen) {
+    closeAllModals();
+    openModal();
     menu.classList.add('visible');
     overlay.classList.add('visible');
-    
-    // Request current settings when opening menu
-    hytopia.sendData({ 
-      type: 'requestSettings'
-    });
-  } else {
+    isSettingsOpen = true;
+    hytopia.sendData({ type: 'requestSettings' });
+  } else if (!show && isSettingsOpen) {
     menu.classList.remove('visible');
     overlay.classList.remove('visible');
+    isSettingsOpen = false;
+    closeModalAndLockPointer();
   }
 }
 
-// Listen for Escape key - work with cursor state
+function toggleLeaderboardPanel(show) {
+  const overlay = document.getElementById('leaderboard-overlay');
+  if (!overlay) return;
+
+  if (show && !isLeaderboardOpen) {
+    closeAllModals();
+    openModal();
+    overlay.style.display = 'flex';
+    isLeaderboardOpen = true;
+    hytopia.sendData({ type: 'showLeaderboard' });
+  } else if (!show && isLeaderboardOpen) {
+    overlay.style.display = 'none';
+    isLeaderboardOpen = false;
+    hytopia.sendData({ type: 'closeLeaderboard' });
+    closeModalAndLockPointer();
+  }
+}
+window.toggleLeaderboardPanel = toggleLeaderboardPanel;
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabName);
+  });
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  const target = document.getElementById(tabName + '-tab');
+  if (target) target.classList.add('active');
+}
+window.switchTab = switchTab;
+
+function startSoloMode() {
+  // Don't start if game is already running
+  if (isGameRunning) return;
+  isGameRunning = true;
+  // Hide mode selection if showing
+  const modeSelection = document.getElementById('game-mode-selection');
+  if (modeSelection && modeSelection.style.display === 'block') {
+    hideGameModeSelection();
+  }
+  // Hide the big start button
+  const startBtn = document.getElementById('start-overlay');
+  if (startBtn) startBtn.classList.add('hidden');
+  // Lock pointer and tell server to start solo
+  if (window.hytopia && window.hytopia.lockPointer) {
+    window.hytopia.lockPointer(true);
+  }
+  hytopia.sendData({ type: 'modeSelection', mode: 'solo' });
+}
+window.startSoloMode = startSoloMode;
+
+// Unified keyboard handler - simple letter keys, no Ctrl required
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && e.ctrlKey) {
-    // If settings are open, close them
-    if (isSettingsOpen) {
-      toggleSettings(false);
-      e.preventDefault(); // Prevent the default escape behavior
+  // Ignore when typing in input fields
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  // Ignore when Ctrl/Alt/Meta is held
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+  const key = e.key.toLowerCase();
+
+  // Escape closes any open modal
+  if (e.key === 'Escape') {
+    if (isSettingsOpen || isHelpOpen || isLeaderboardOpen) {
+      closeAllModals();
+      closeModalAndLockPointer();
+      e.preventDefault();
+      return;
+    }
+  }
+
+  // P - toggle settings
+  if (key === 'p') {
+    e.preventDefault();
+    toggleSettings(!isSettingsOpen);
+    return;
+  }
+
+  // H - toggle help
+  if (key === 'h') {
+    e.preventDefault();
+    if (isHelpOpen) {
+      toggleHelp(false);
+      closeModalAndLockPointer();
     } else {
-      // If cursor becomes visible (handled by game), show settings
-      setTimeout(() => {
-        const cursorStyle = window.getComputedStyle(document.body).cursor;
-        if (cursorStyle === 'default' || cursorStyle === 'auto') {
-          toggleSettings(true);
-        }
-      }, 50); // Small delay to ensure cursor state has updated
+      closeAllModals();
+      toggleHelp(true);
     }
-  } else if (e.key === 'Escape' && !e.ctrlKey) {
-    // Regular ESC behavior without Ctrl
-    if (isSettingsOpen) {
-      toggleSettings(false);
-      e.preventDefault(); // Prevent the default escape behavior
+    return;
+  }
+
+  // L - toggle leaderboard
+  if (key === 'l') {
+    e.preventDefault();
+    toggleLeaderboardPanel(!isLeaderboardOpen);
+    return;
+  }
+
+  // Enter - start solo mode (only when start button is visible)
+  if (e.key === 'Enter' && !isGameRunning) {
+    const startBtnContainer = document.getElementById('start-overlay');
+    if (startBtnContainer && !startBtnContainer.classList.contains('hidden')) {
+      e.preventDefault();
+      startSoloMode();
+      return;
     }
   }
 });
 
-// Multiple hotkeys for settings
-document.addEventListener('keydown', (e) => {
-  if ((e.key === 'Tab' || e.key.toLowerCase() === 'p') && e.ctrlKey) { // Added Ctrl requirement
-    e.preventDefault(); // Prevent default behavior
-    const cursorStyle = window.getComputedStyle(document.body).cursor;
-    if (cursorStyle === 'default' || cursorStyle === 'auto') {
-      toggleSettings(!isSettingsOpen);
-    }
-  }
-});
-
-// Resume button - close settings and hide cursor
+// Resume button - close settings and re-lock pointer
 document.getElementById('resume-button').addEventListener('click', () => {
   toggleSettings(false);
-  hytopia.sendData({ type: 'hideCursor' }); // Tell game to hide cursor again
 });
 
 // Handle settings changes
@@ -2999,15 +3238,7 @@ document.getElementById('dot-size-slider').addEventListener('input', updateCross
 document.getElementById('show-ring').addEventListener('change', updateCrosshairVisibility);
 document.getElementById('show-dot').addEventListener('change', updateCrosshairVisibility);
 
-// Add this to your existing script section
 let isHelpOpen = false;
-
-document.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'h' && e.ctrlKey) {
-        e.preventDefault();
-        toggleHelp(!isHelpOpen);
-    }
-});
 
 function toggleHelp(show) {
     const menu = document.querySelector('.help-menu');
@@ -3228,27 +3459,12 @@ function showGameEnd(data) {
 
 // Block destroyed notifications are now handled through SceneUI
 
-// Game Mode Selection Functionality
+// Game Mode Selection Functionality (rarely used now with auto-start)
 function showGameModeSelection() {
   const modal = document.getElementById('game-mode-selection');
   if (modal) {
-    // Note: We now can directly control pointer lock from UI code with hytopia.lockPointer()
-    if (window.hytopia && window.hytopia.lockPointer) {
-      window.hytopia.lockPointer(false); // Unlock pointer for UI interaction
-    }
+    openModal();
     modal.style.display = 'block';
-    
-    // Setup pointer lock toggle button
-    const lockButton = document.getElementById('toggle-pointer-lock');
-    if (lockButton) {
-      lockButton.onclick = function() {
-        if (window.hytopia && window.hytopia.lockPointer) {
-          window.hytopia.lockPointer(true);
-        }
-      };
-    }
-  } else {
-    console.error('Game mode selection modal not found!');
   }
 }
 
@@ -3256,47 +3472,17 @@ function hideGameModeSelection() {
   const modal = document.getElementById('game-mode-selection');
   if (modal) {
     modal.style.display = 'none';
-    // Note: We can't directly control pointer lock from UI code
-    // The game will automatically relock the pointer as needed
-  } else {
-    console.error('Game mode selection modal not found!');
+    closeModalAndLockPointer();
   }
 }
 
-// Set up event listeners for game mode buttons - ONCE when DOM is loaded
+// Set up event listeners for game mode buttons
 document.addEventListener('DOMContentLoaded', () => {
   const soloButton = document.getElementById('solo-mode');
-  const dismissButton = document.getElementById('dismiss-mode-selection');
-  const pointerLockButton = document.getElementById('toggle-pointer-lock');
-  
-  // Set up pointer lock button
-  if (pointerLockButton) {
-    pointerLockButton.addEventListener('click', function() {
-      if (window.hytopia && window.hytopia.lockPointer) {
-        window.hytopia.lockPointer(true);
-      }
-    });
-  }
-  
-  if (dismissButton) {
-    dismissButton.addEventListener('click', function() {
-      // Just hide the selection UI
-      hideGameModeSelection();
-    });
-  }
-  
+
   if (soloButton) {
     soloButton.addEventListener('click', function() {
-      // Add flash effect
-      soloButton.classList.add('button-flash');
-      setTimeout(() => {
-        soloButton.classList.remove('button-flash');
-      }, 200);
-      
-      // Hide selection UI first
       hideGameModeSelection();
-      
-      // Then send message to game that solo mode was selected
       hytopia.sendData({ 
         type: 'modeSelection',
         mode: 'solo'
@@ -3305,64 +3491,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Global keyboard shortcuts for mode selection
-document.addEventListener('keydown', (e) => {
-  // Process "Ctrl+1" key press to activate solo mode
-  if (e.key === '1' && e.ctrlKey) {
-    e.preventDefault(); // Prevent any default behavior
-    
-    // Check if there's more than one player present
-    const playerCount = document.querySelectorAll('.round-end-placement').length;
-    if (playerCount > 1) {
-      return false; // Ignore the key press completely if multiple players
-    }
-    
-    // Add flash effect to the button if visible
-    const soloButton = document.getElementById('solo-mode');
-    if (soloButton) {
-      soloButton.classList.add('button-flash');
-      setTimeout(() => {
-        soloButton.classList.remove('button-flash');
-      }, 200);
-    }
-    
-    // Hide the selection UI if it's visible
-    const modeSelectionElement = document.getElementById('game-mode-selection');
-    if (modeSelectionElement && modeSelectionElement.style.display === 'block') {
-      hideGameModeSelection();
-    }
-    
-    // Send the data to start solo mode
-    hytopia.sendData({ 
-      type: 'modeSelection',
-      mode: 'solo'
-    });
-    
-    return false; // Prevent default and stop propagation
-  }
-  
-  // Process "Ctrl+2" key press to dismiss the mode selection UI
-  else if (e.key === '2' && e.ctrlKey) {
-    e.preventDefault(); // Prevent any default behavior
-    
-    // Add flash effect to the dismiss button if visible
-    const dismissButton = document.getElementById('dismiss-mode-selection');
-    if (dismissButton) {
-      dismissButton.style.opacity = '1';
-      setTimeout(() => {
-        dismissButton.style.opacity = '0.7';
-      }, 200);
-    }
-    
-    // Hide the selection UI if it's visible
-    const modeSelectionElement = document.getElementById('game-mode-selection');
-    if (modeSelectionElement && modeSelectionElement.style.display === 'block') {
-      hideGameModeSelection();
-    }
-    
-    return false; // Prevent default and stop propagation
-  }
-});
+// Mode selection keyboard shortcuts removed - game auto-starts solo
 
 // Display a system message for brief periods
 function showSystemMessage(message, color = 'FFFFFF') {
@@ -3464,37 +3593,54 @@ function hideScoreboard() {
   }
 }
 
-// Add reset settings button handler
+// Reset settings button handler
 document.getElementById('reset-settings-button').addEventListener('click', () => {
   if (confirm('Are you sure you want to reset all settings to default values?')) {
-    hytopia.sendData({ 
-      type: 'resetSettings'
-    });
-    
-    // Also close the settings menu
+    hytopia.sendData({ type: 'resetSettings' });
     toggleSettings(false);
-    hytopia.sendData({ type: 'hideCursor' }); // Tell game to hide cursor again
   }
 });
+
+// Mobile fire button
+(function() {
+  const fireBtn = document.getElementById('mobile-fire-btn');
+  if (!fireBtn) return;
+
+  fireBtn.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    this.classList.add('active');
+    if (window.hytopia && window.hytopia.pressInput) {
+      window.hytopia.pressInput('ml', true);
+    }
+  }, { passive: false });
+
+  fireBtn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    this.classList.remove('active');
+    if (window.hytopia && window.hytopia.pressInput) {
+      window.hytopia.pressInput('ml', false);
+    }
+  }, { passive: false });
+
+  fireBtn.addEventListener('touchcancel', function(e) {
+    this.classList.remove('active');
+    if (window.hytopia && window.hytopia.pressInput) {
+      window.hytopia.pressInput('ml', false);
+    }
+  });
+})();
 </script>
 
-<!-- Game Mode Selection Modal -->
-<div id="game-mode-selection">
+<!-- Game Mode Selection Modal (hidden by default, auto-start handles solo) -->
+<div id="game-mode-selection" style="display:none;">
   <h2>WAITING FOR ANOTHER PLAYER</h2>
   <div class="mode-buttons">
     <button id="solo-mode" style="display: flex; flex-direction: column; align-items: center; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 30px 50px; min-width: 350px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);">
       <div class="button-main-text" style="font-size: 42px; font-weight: bold; color: #ffffff; margin-bottom: 15px;">START SOLO</div>
-      <div style="font-family: var(--text-font); font-size: 24px; color: #ffffff; opacity: 0.8;">PRESS CTRL+1 TO START</div>
-      <div id="dismiss-mode-selection" style="font-family: var(--text-font); font-size: 18px; color: #ffffff; opacity: 0.7; cursor: pointer; margin-top: 15px;">PRESS CTRL+2 TO DISMISS</div>
     </button>
   </div>
-  
-  <!-- Pointer Lock Controls -->
-  <div style="margin-top: 20px; text-align: center;">
-    <button id="toggle-pointer-lock" style="padding: 10px 20px; background: #424242; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 16px;">
-      Lock Mouse Pointer
-    </button>
-  </div>
+  <div id="dismiss-mode-selection" style="display:none;"></div>
+  <div id="toggle-pointer-lock" style="display:none;"></div>
 </div>
 
 <div class="game-end-overlay">
@@ -3530,16 +3676,18 @@ function modeMultiplayer() {
 </script>
 -->
 
-<div id="leaderboard-panel" class="game-panel" style="display: none;">
+<div id="leaderboard-overlay" class="leaderboard-overlay" style="display: none;"
+  onclick="if(event.target===this) toggleLeaderboardPanel(false);">
+<div id="leaderboard-panel" class="game-panel">
   <div class="panel-header">
     <h2>Stellar Records</h2>
-    <button id="close-leaderboard" class="close-button">×</button>
+    <button id="close-leaderboard" class="close-button" onclick="toggleLeaderboardPanel(false)">×</button>
   </div>
-  
+
   <div class="tab-container">
-    <button class="tab-button active" data-tab="all-time">All-Time High Scores</button>
-    <button class="tab-button" data-tab="round">Best Round Scores</button>
-    <button class="tab-button" data-tab="personal">Personal Bests</button>
+    <button class="tab-button active" data-tab="all-time" onclick="switchTab('all-time')">All-Time High Scores</button>
+    <button class="tab-button" data-tab="round" onclick="switchTab('round')">Best Round Scores</button>
+    <button class="tab-button" data-tab="personal" onclick="switchTab('personal')">Personal Bests</button>
   </div>
   
   <div id="all-time-tab" class="tab-content active">
@@ -3609,16 +3757,29 @@ function modeMultiplayer() {
     <!-- Leaderboard settings section removed -->
   </div>
 </div>
+</div><!-- close leaderboard-overlay -->
 
 <!-- Removed in-world leaderboard marker -->
 
 <style>
-  /* Leaderboard styling */
+  /* Leaderboard overlay (full-screen backdrop) */
+  .leaderboard-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2001;
+    pointer-events: auto;
+  }
+
+  /* Leaderboard panel */
   .game-panel {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
     background: rgba(0, 0, 0, 0.85);
     border: 2px solid var(--matrix-green);
     border-radius: 8px;
@@ -3626,10 +3787,10 @@ function modeMultiplayer() {
     color: white;
     width: 80%;
     max-width: 600px;
-    max-height: 80%;
+    max-height: 80vh;
     overflow-y: auto;
-    z-index: 1000;
     box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+    pointer-events: auto;
   }
   
   .panel-header {
@@ -3664,6 +3825,7 @@ function modeMultiplayer() {
     justify-content: center;
     border-radius: 20px;
     transition: all 0.2s ease;
+    pointer-events: auto;
   }
   
   .close-button:hover {
@@ -3687,6 +3849,7 @@ function modeMultiplayer() {
     font-size: 16px;
     transition: all 0.2s ease;
     border-bottom: 2px solid transparent;
+    pointer-events: auto;
   }
   
   .tab-button.active {
@@ -4000,8 +4163,7 @@ function modeMultiplayer() {
     // Remove this log statement
     
     if (data.type === 'toggleLeaderboard') {
-      const panel = document.getElementById('leaderboard-panel');
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      toggleLeaderboardPanel(!isLeaderboardOpen);
     }
     else if (data.type === 'displayLeaderboard') {
       displayLeaderboardData(data.data);
@@ -4057,24 +4219,7 @@ function modeMultiplayer() {
     }, duration);
   }
 
-  // Send data to the server when closing the leaderboard
-  document.getElementById('close-leaderboard').addEventListener('click', () => {
-    document.getElementById('leaderboard-panel').style.display = 'none';
-    hytopia.sendData({ type: 'closeLeaderboard' });
-  });
-
-  // Tab switching functionality
-  document.querySelectorAll('.tab-button').forEach(button => {
-    button.addEventListener('click', () => {
-      // Switch active tab
-      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-      button.classList.add('active');
-      
-      // Show corresponding content
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(`${button.dataset.tab}-tab`).classList.add('active');
-    });
-  });
+  // Close button and tab switching now use onclick handlers in HTML
 
   // Leaderboard visibility setting removed
 
@@ -4082,8 +4227,11 @@ function modeMultiplayer() {
   // Removed leaderboard marker template registration
 
   function displayLeaderboardData(data) {
-    const panel = document.getElementById('leaderboard-panel');
-    panel.style.display = 'block';
+    const overlay = document.getElementById('leaderboard-overlay');
+    if (overlay && overlay.style.display !== 'flex') {
+      overlay.style.display = 'flex';
+      isLeaderboardOpen = true;
+    }
     
     // Store leaderboard data globally for access by other functions
     window.leaderboardData = data;
@@ -4428,43 +4576,13 @@ function modeMultiplayer() {
   }
 </script>
 
-<!-- Add keyboard shortcut for leaderboard -->
+<!-- Leaderboard toggle from server -->
 <script>
-document.addEventListener('keydown', (e) => {
-  if (e.key.toLowerCase() === 'l' && e.ctrlKey) {
-    console.log('Leaderboard toggled via Ctrl+L key');
-    e.preventDefault(); // Prevent default behavior
-    
-    const panel = document.getElementById('leaderboard-panel');
-    const newVisibility = panel.style.display === 'none' ? 'block' : 'none';
-    panel.style.display = newVisibility;
-    
-    // If showing the leaderboard, request data
-    if (newVisibility === 'block') {
-      hytopia.sendData({ type: 'showLeaderboard' });
-    } else {
-      // If hiding, notify server
-      hytopia.sendData({ type: 'closeLeaderboard' });
-    }
-  }
-});
-</script>
-
-<!-- Process specific event types -->
-<script>
-  // Handle data from the server
   hytopia.onData(data => {
     if (data.type === 'toggleLeaderboard') {
-      const panel = document.getElementById('leaderboard-panel');
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      toggleLeaderboardPanel(!isLeaderboardOpen);
     }
-    // ... rest of the handler code ...
   });
-</script>
-
-<!-- Add event handlers for buttons -->
-<script>
-  // Remove the button to run leaderboard tests event handler
 </script>
 </body>
 </html>
