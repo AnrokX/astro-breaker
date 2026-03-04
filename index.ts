@@ -1,7 +1,8 @@
 import {
   startServer,
   Audio,
-  PlayerEntity,
+  DefaultPlayerEntity,
+  DefaultPlayerEntityController,
   PlayerCameraMode,
   PlayerUI,
   Vector3Like,
@@ -290,12 +291,13 @@ startServer(world => {
     // Store the spawn position for this player
     playerSpawnPositions.set(player.id, spawnPos);
 
-    const playerEntity = new PlayerEntity({
+    const playerEntity = new DefaultPlayerEntity({
       player,
       name: 'Player',
       modelUri: 'models/players/player.gltf',
       modelAnimations: [
-        { name: 'idle', loopMode: EntityModelAnimationLoopMode.LOOP, startOnSpawn: true },
+        { name: 'idle_lower', loopMode: EntityModelAnimationLoopMode.LOOP, play: true },
+        { name: 'idle_upper', loopMode: EntityModelAnimationLoopMode.LOOP, play: true },
       ],
       modelScale: 0.5,
     });
