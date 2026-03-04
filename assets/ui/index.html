@@ -10,7 +10,15 @@
       overflow: hidden;
       background-color: transparent;
     }
-    
+
+    /* All interactive elements must be clickable (zoo-game pattern) */
+    button {
+      touch-action: manipulation;
+      pointer-events: auto !important;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     /* More styles... */
   </style>
 </head>
@@ -1935,22 +1943,31 @@
       100% { transform: scale(1); }
     }
 
-    /* Big START button */
-    .start-button-container {
+    /* Big START button — full-screen overlay like zoo-game modals */
+    .start-overlay {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1500;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      pointer-events: auto !important;
+    }
+
+    .start-overlay.hidden {
+      display: none;
+    }
+
+    .start-button-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 1rem;
-      pointer-events: auto;
-    }
-
-    .start-button-container.hidden {
-      display: none;
+      pointer-events: auto !important;
     }
 
     .start-button {
@@ -1961,14 +1978,12 @@
       border: 3px solid rgba(255, 255, 255, 0.8);
       border-radius: 1rem;
       padding: clamp(1.25rem, 3vw, 2rem) clamp(3rem, 8vw, 6rem);
-      cursor: pointer;
       text-transform: uppercase;
       letter-spacing: 0.25rem;
       box-shadow: 0 0 2rem rgba(142, 45, 226, 0.6), 0 0 4rem rgba(74, 0, 224, 0.3);
       animation: startPulse 2s infinite;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-      pointer-events: auto;
+      outline: none;
+      font-weight: 700;
     }
 
     .start-button:hover {
@@ -2327,10 +2342,12 @@
     </div>
 </div>
 
-<!-- Big START button -->
-<div id="start-button-container" class="start-button-container hidden">
-  <button class="start-button" onclick="startSoloMode()">START</button>
-  <div class="start-hint">or press Enter</div>
+<!-- Big START button — overlay like zoo-game modals -->
+<div id="start-overlay" class="start-overlay hidden">
+  <div class="start-button-container">
+    <button class="start-button" onclick="startSoloMode()">START</button>
+    <div class="start-hint">or press Enter</div>
+  </div>
 </div>
 
 <!-- Mobile fire button -->
@@ -2410,7 +2427,7 @@ hytopia.onData(data => {
     updateScoreboard(data.scores);
   } else if (data.type === 'roundUpdate') {
     isGameRunning = true;
-    const startBtn = document.getElementById('start-button-container');
+    const startBtn = document.getElementById('start-overlay');
     if (startBtn) startBtn.classList.add('hidden');
     showScoreboard();
     updateRoundInfo(data.data);
@@ -2428,7 +2445,7 @@ hytopia.onData(data => {
     if (window.hytopia && window.hytopia.lockPointer) {
       window.hytopia.lockPointer(false);
     }
-    const startBtn2 = document.getElementById('start-button-container');
+    const startBtn2 = document.getElementById('start-overlay');
     if (startBtn2) startBtn2.classList.remove('hidden');
   } else if (data.type === 'updateLeaderboard') {
     updateLeaderboard(data);
@@ -2443,7 +2460,7 @@ hytopia.onData(data => {
   } else if (data.type === 'gameEnd') {
     isGameRunning = false;
     hideScoreboard();
-    const startBtn3 = document.getElementById('start-button-container');
+    const startBtn3 = document.getElementById('start-overlay');
     if (startBtn3) startBtn3.classList.add('hidden');
     showGameEnd(data.data);
   } else if (data.type === 'showModeSelection') {
@@ -2454,7 +2471,7 @@ hytopia.onData(data => {
     if (window.hytopia && window.hytopia.lockPointer) {
       window.hytopia.lockPointer(false);
     }
-    const startBtn = document.getElementById('start-button-container');
+    const startBtn = document.getElementById('start-overlay');
     if (startBtn) startBtn.classList.remove('hidden');
   } else if (data.type === 'hideGameModeSelection') {
     hideGameModeSelection();
@@ -3014,7 +3031,7 @@ function startSoloMode() {
     hideGameModeSelection();
   }
   // Hide the big start button
-  const startBtn = document.getElementById('start-button-container');
+  const startBtn = document.getElementById('start-overlay');
   if (startBtn) startBtn.classList.add('hidden');
   // Lock pointer and tell server to start solo
   if (window.hytopia && window.hytopia.lockPointer) {
@@ -3073,7 +3090,7 @@ document.addEventListener('keydown', (e) => {
 
   // Enter - start solo mode (only when start button is visible)
   if (e.key === 'Enter' && !isGameRunning) {
-    const startBtnContainer = document.getElementById('start-button-container');
+    const startBtnContainer = document.getElementById('start-overlay');
     if (startBtnContainer && !startBtnContainer.classList.contains('hidden')) {
       e.preventDefault();
       startSoloMode();
