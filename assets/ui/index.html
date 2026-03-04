@@ -1934,6 +1934,99 @@
       50% { transform: scale(1.15); color: #ffcc00; text-shadow: 0 0 12px rgba(255, 204, 0, 0.8); }
       100% { transform: scale(1); }
     }
+
+    /* Big START button */
+    .start-button-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1500;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      pointer-events: auto;
+    }
+
+    .start-button-container.hidden {
+      display: none;
+    }
+
+    .start-button {
+      font-family: var(--title-font);
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      color: #ffffff;
+      background: linear-gradient(to bottom, #4a00e0, #8e2de2);
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      border-radius: 1rem;
+      padding: clamp(1.25rem, 3vw, 2rem) clamp(3rem, 8vw, 6rem);
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.25rem;
+      box-shadow: 0 0 2rem rgba(142, 45, 226, 0.6), 0 0 4rem rgba(74, 0, 224, 0.3);
+      animation: startPulse 2s infinite;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
+    }
+
+    .start-button:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 3rem rgba(142, 45, 226, 0.8), 0 0 5rem rgba(74, 0, 224, 0.5);
+    }
+
+    .start-button:active {
+      transform: scale(0.96);
+    }
+
+    .start-hint {
+      font-family: var(--display-font);
+      font-size: clamp(1rem, 2vw, 1.5rem);
+      color: rgba(255, 255, 255, 0.6);
+      letter-spacing: 0.15rem;
+    }
+
+    @keyframes startPulse {
+      0%, 100% { box-shadow: 0 0 2rem rgba(142, 45, 226, 0.6), 0 0 4rem rgba(74, 0, 224, 0.3); }
+      50% { box-shadow: 0 0 3rem rgba(142, 45, 226, 0.9), 0 0 6rem rgba(74, 0, 224, 0.5); border-color: #fff; }
+    }
+
+    /* Mobile fire button - hidden by default, shown on mobile */
+    .mobile-fire-btn {
+      display: none;
+      position: fixed;
+      bottom: clamp(2rem, 5vh, 4rem);
+      right: clamp(1.5rem, 4vw, 3rem);
+      width: clamp(4.5rem, 12vw, 6rem);
+      height: clamp(4.5rem, 12vw, 6rem);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 23, 23, 0.9), rgba(139, 0, 0, 0.9));
+      border: 3px solid rgba(255, 255, 255, 0.6);
+      color: #fff;
+      font-family: var(--title-font);
+      font-size: clamp(0.75rem, 2vw, 1rem);
+      letter-spacing: 0.1rem;
+      z-index: 1500;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
+      box-shadow: 0 0 1.5rem rgba(255, 0, 13, 0.5);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body.mobile .mobile-fire-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-fire-btn.active {
+      transform: scale(0.9);
+      background: radial-gradient(circle, rgba(255, 80, 80, 1), rgba(200, 0, 0, 1));
+      box-shadow: 0 0 2.5rem rgba(255, 0, 13, 0.8);
+    }
   </style>
 <!-- Scene UI Templates -->
 
@@ -2234,8 +2327,16 @@
     </div>
 </div>
 
+<!-- Big START button -->
+<div id="start-button-container" class="start-button-container">
+  <button class="start-button" onclick="startSoloMode()">START</button>
+  <div class="start-hint">or press Enter</div>
+</div>
+
+<!-- Mobile fire button -->
+<div id="mobile-fire-btn" class="mobile-fire-btn">FIRE</div>
+
 <div class="hotkey-hints">
-    <div class="hotkey-hint">[Enter] Start</div>
     <div class="hotkey-hint">[H] Guide</div>
     <div class="hotkey-hint">[P] Settings</div>
     <div class="hotkey-hint">[L] Records</div>
@@ -2305,6 +2406,9 @@ hytopia.onData(data => {
     showScoreboard();
     updateScoreboard(data.scores);
   } else if (data.type === 'roundUpdate') {
+    // Hide start button when round begins
+    const startBtn = document.getElementById('start-button-container');
+    if (startBtn) startBtn.classList.add('hidden');
     showScoreboard();
     updateRoundInfo(data.data);
   } else if (data.type === 'roundEnd') {
@@ -2316,6 +2420,9 @@ hytopia.onData(data => {
   } else if (data.type === 'waitingForPlayers') {
     hideScoreboard();
     showWaitingForPlayers(data.data);
+    // Show start button again for next game
+    const startBtn2 = document.getElementById('start-button-container');
+    if (startBtn2) startBtn2.classList.remove('hidden');
   } else if (data.type === 'updateLeaderboard') {
     updateLeaderboard(data);
   } else if (data.type === 'showCombo') {
@@ -2328,10 +2435,14 @@ hytopia.onData(data => {
     }
   } else if (data.type === 'gameEnd') {
     hideScoreboard();
+    const startBtn3 = document.getElementById('start-button-container');
+    if (startBtn3) startBtn3.classList.add('hidden');
     showGameEnd(data.data);
   } else if (data.type === 'showModeSelection') {
     hideScoreboard();
-    startSoloMode();
+    // Show the big start button
+    const startBtn = document.getElementById('start-button-container');
+    if (startBtn) startBtn.classList.remove('hidden');
   } else if (data.type === 'hideGameModeSelection') {
     hideGameModeSelection();
   } else if (data.type === 'systemMessage') {
@@ -2886,6 +2997,9 @@ function startSoloMode() {
   if (modeSelection && modeSelection.style.display === 'block') {
     hideGameModeSelection();
   }
+  // Hide the big start button
+  const startBtn = document.getElementById('start-button-container');
+  if (startBtn) startBtn.classList.add('hidden');
   // Lock pointer and tell server to start solo
   if (window.hytopia && window.hytopia.lockPointer) {
     window.hytopia.lockPointer(true);
@@ -3450,6 +3564,35 @@ document.getElementById('reset-settings-button').addEventListener('click', () =>
     toggleSettings(false);
   }
 });
+
+// Mobile fire button
+(function() {
+  const fireBtn = document.getElementById('mobile-fire-btn');
+  if (!fireBtn) return;
+
+  fireBtn.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    this.classList.add('active');
+    if (window.hytopia && window.hytopia.pressInput) {
+      window.hytopia.pressInput('ml', true);
+    }
+  }, { passive: false });
+
+  fireBtn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    this.classList.remove('active');
+    if (window.hytopia && window.hytopia.pressInput) {
+      window.hytopia.pressInput('ml', false);
+    }
+  }, { passive: false });
+
+  fireBtn.addEventListener('touchcancel', function(e) {
+    this.classList.remove('active');
+    if (window.hytopia && window.hytopia.pressInput) {
+      window.hytopia.pressInput('ml', false);
+    }
+  });
+})();
 </script>
 
 <!-- Game Mode Selection Modal (hidden by default, auto-start handles solo) -->

@@ -52,23 +52,18 @@ export class PlayerTracker {
     }, 1000);
   }
 
-  // Auto-start solo mode when first player joins
+  // Show start UI when first player joins
   private checkForFirstPlayer(): void {
     const currentPlayerCount = this.getPlayerCount();
 
-    // If this is the first player joining, auto-start solo mode
+    // If this is the first player joining, show the start button
     if (currentPlayerCount === 1 && this.previousPlayerCount === 0 && !this.hasShownModeSelection) {
       const player = this.world.entityManager.getAllPlayerEntities()[0]?.player;
       if (player) {
-        // Lock pointer immediately for gameplay
-        player.ui.lockPointer(true);
-
         this.hasShownModeSelection = true;
 
-        // Notify round manager to handle solo auto-start
-        if (this.onAutoSoloStart) {
-          this.onAutoSoloStart();
-        }
+        // Send showModeSelection to client so the big START button appears
+        player.ui.sendData({ type: 'showModeSelection' });
       }
     }
 
