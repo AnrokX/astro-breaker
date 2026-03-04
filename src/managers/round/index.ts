@@ -192,11 +192,6 @@ export class RoundManager {
           isSoloMode
         );
         
-        // Register auto-solo callback before starting to wait
-        this.playerTracker.setAutoSoloCallback(() => {
-          this.handleModeSelection('solo');
-        });
-
         // Start waiting for players with a callback for when we have enough
         this.playerTracker.startWaitingForPlayers(() => {
           this.startCountdown();

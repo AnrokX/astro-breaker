@@ -2328,7 +2328,7 @@
 </div>
 
 <!-- Big START button -->
-<div id="start-button-container" class="start-button-container">
+<div id="start-button-container" class="start-button-container hidden">
   <button class="start-button" onclick="startSoloMode()">START</button>
   <div class="start-hint">or press Enter</div>
 </div>
@@ -2345,6 +2345,9 @@
 </div>
 
 <script>
+// Track whether a game round is currently active
+let isGameRunning = false;
+
 // Removed projectile count variable - projectiles are now unlimited
 let particles = [];
 
@@ -2406,7 +2409,7 @@ hytopia.onData(data => {
     showScoreboard();
     updateScoreboard(data.scores);
   } else if (data.type === 'roundUpdate') {
-    // Hide start button when round begins
+    isGameRunning = true;
     const startBtn = document.getElementById('start-button-container');
     if (startBtn) startBtn.classList.add('hidden');
     showScoreboard();
@@ -2418,9 +2421,10 @@ hytopia.onData(data => {
       timerInterval = null;
     }
   } else if (data.type === 'waitingForPlayers') {
+    isGameRunning = false;
     hideScoreboard();
     showWaitingForPlayers(data.data);
-    // Unlock pointer and show start button again for next game
+    // Unlock pointer and show start button for next game
     if (window.hytopia && window.hytopia.lockPointer) {
       window.hytopia.lockPointer(false);
     }
@@ -2437,17 +2441,19 @@ hytopia.onData(data => {
       clearTimeout(window.comboTimeout);
     }
   } else if (data.type === 'gameEnd') {
+    isGameRunning = false;
     hideScoreboard();
     const startBtn3 = document.getElementById('start-button-container');
     if (startBtn3) startBtn3.classList.add('hidden');
     showGameEnd(data.data);
   } else if (data.type === 'showModeSelection') {
+    // Only show start button if no game is running
+    if (isGameRunning) return;
     hideScoreboard();
     // Unlock pointer so the button is clickable
     if (window.hytopia && window.hytopia.lockPointer) {
       window.hytopia.lockPointer(false);
     }
-    // Show the big start button
     const startBtn = document.getElementById('start-button-container');
     if (startBtn) startBtn.classList.remove('hidden');
   } else if (data.type === 'hideGameModeSelection') {
@@ -2999,6 +3005,9 @@ function switchTab(tabName) {
 window.switchTab = switchTab;
 
 function startSoloMode() {
+  // Don't start if game is already running
+  if (isGameRunning) return;
+  isGameRunning = true;
   // Hide mode selection if showing
   const modeSelection = document.getElementById('game-mode-selection');
   if (modeSelection && modeSelection.style.display === 'block') {
@@ -3062,11 +3071,14 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // Enter - start solo mode
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    startSoloMode();
-    return;
+  // Enter - start solo mode (only when start button is visible)
+  if (e.key === 'Enter' && !isGameRunning) {
+    const startBtnContainer = document.getElementById('start-button-container');
+    if (startBtnContainer && !startBtnContainer.classList.contains('hidden')) {
+      e.preventDefault();
+      startSoloMode();
+      return;
+    }
   }
 });
 

@@ -300,44 +300,8 @@ startServer(world => {
     // Spawn the entity at the position
     playerEntity.spawn(world, spawnPos);
 
-    // Register UI event handlers directly on the player's UI
+    // Register UI event handlers for leaderboard
     player.ui.on(PlayerUIEvent.DATA, ({ data }) => {
-      // Special handling for mode selection - with safety checks
-      if (data.type === 'modeSelection' && roundManager) {
-        // Handle solo mode
-        if (data.mode === 'solo') {
-          // Check if there's more than one player
-          const playerCount = world.entityManager.getAllPlayerEntities().length;
-          if (playerCount > 1) {
-            return;
-          }
-          
-          // Ensure the player's pointer is locked
-          player.ui.lockPointer(true);
-          
-          // Call the round manager to start solo mode
-          roundManager!.handleModeSelection('solo');
-          
-          // Force the round to start immediately
-          setTimeout(() => {
-            roundManager!.actuallyStartRound();
-            
-            // Update projectile manager
-            if (projectileManager) {
-              (projectileManager as any).forceEnableShooting = true;
-            }
-          }, 300);
-        }
-      }
-      
-      // Handle leaderboard visibility events
-      if (data.type === 'closeLeaderboard') {
-      }
-      
-      // Handle leaderboard toggle settings
-      if (data.type === 'toggleLeaderboardSetting' && data.visible !== undefined) {
-      }
-      
       // Handle leaderboard display request
       if (data.type === 'showLeaderboard') {
         displayLeaderboardToPlayer(player);
