@@ -2207,8 +2207,12 @@
         <div class="help-section controls">
             <h3>🎮 CONTROLS</h3>
             <div class="control-item">
+                <span class="key">[Enter]</span>
+                <span class="action">Start Solo</span>
+            </div>
+            <div class="control-item">
                 <span class="key">[ESC]</span>
-                <span class="action">Show Cursor</span>
+                <span class="action">Close Menus</span>
             </div>
             <div class="control-item">
                 <span class="key">[P]</span>
@@ -2231,6 +2235,7 @@
 </div>
 
 <div class="hotkey-hints">
+    <div class="hotkey-hint">[Enter] Start</div>
     <div class="hotkey-hint">[H] Guide</div>
     <div class="hotkey-hint">[P] Settings</div>
     <div class="hotkey-hint">[L] Records</div>
@@ -2326,7 +2331,7 @@ hytopia.onData(data => {
     showGameEnd(data.data);
   } else if (data.type === 'showModeSelection') {
     hideScoreboard();
-    showGameModeSelection();
+    startSoloMode();
   } else if (data.type === 'hideGameModeSelection') {
     hideGameModeSelection();
   } else if (data.type === 'systemMessage') {
@@ -2847,22 +2852,47 @@ function toggleSettings(show) {
 }
 
 function toggleLeaderboardPanel(show) {
-  const panel = document.getElementById('leaderboard-panel');
-  if (!panel) return;
+  const overlay = document.getElementById('leaderboard-overlay');
+  if (!overlay) return;
 
   if (show && !isLeaderboardOpen) {
     closeAllModals();
     openModal();
-    panel.style.display = 'block';
+    overlay.style.display = 'flex';
     isLeaderboardOpen = true;
     hytopia.sendData({ type: 'showLeaderboard' });
   } else if (!show && isLeaderboardOpen) {
-    panel.style.display = 'none';
+    overlay.style.display = 'none';
     isLeaderboardOpen = false;
     hytopia.sendData({ type: 'closeLeaderboard' });
     closeModalAndLockPointer();
   }
 }
+window.toggleLeaderboardPanel = toggleLeaderboardPanel;
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabName);
+  });
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  const target = document.getElementById(tabName + '-tab');
+  if (target) target.classList.add('active');
+}
+window.switchTab = switchTab;
+
+function startSoloMode() {
+  // Hide mode selection if showing
+  const modeSelection = document.getElementById('game-mode-selection');
+  if (modeSelection && modeSelection.style.display === 'block') {
+    hideGameModeSelection();
+  }
+  // Lock pointer and tell server to start solo
+  if (window.hytopia && window.hytopia.lockPointer) {
+    window.hytopia.lockPointer(true);
+  }
+  hytopia.sendData({ type: 'modeSelection', mode: 'solo' });
+}
+window.startSoloMode = startSoloMode;
 
 // Unified keyboard handler - simple letter keys, no Ctrl required
 document.addEventListener('keydown', (e) => {
@@ -2908,6 +2938,13 @@ document.addEventListener('keydown', (e) => {
   if (key === 'l') {
     e.preventDefault();
     toggleLeaderboardPanel(!isLeaderboardOpen);
+    return;
+  }
+
+  // Enter - start solo mode
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    startSoloMode();
     return;
   }
 });
@@ -3460,16 +3497,18 @@ function modeMultiplayer() {
 </script>
 -->
 
-<div id="leaderboard-panel" class="game-panel" style="display: none;">
+<div id="leaderboard-overlay" class="leaderboard-overlay" style="display: none;"
+  onclick="if(event.target===this) toggleLeaderboardPanel(false);">
+<div id="leaderboard-panel" class="game-panel">
   <div class="panel-header">
     <h2>Stellar Records</h2>
-    <button id="close-leaderboard" class="close-button">×</button>
+    <button id="close-leaderboard" class="close-button" onclick="toggleLeaderboardPanel(false)">×</button>
   </div>
-  
+
   <div class="tab-container">
-    <button class="tab-button active" data-tab="all-time">All-Time High Scores</button>
-    <button class="tab-button" data-tab="round">Best Round Scores</button>
-    <button class="tab-button" data-tab="personal">Personal Bests</button>
+    <button class="tab-button active" data-tab="all-time" onclick="switchTab('all-time')">All-Time High Scores</button>
+    <button class="tab-button" data-tab="round" onclick="switchTab('round')">Best Round Scores</button>
+    <button class="tab-button" data-tab="personal" onclick="switchTab('personal')">Personal Bests</button>
   </div>
   
   <div id="all-time-tab" class="tab-content active">
@@ -3539,16 +3578,29 @@ function modeMultiplayer() {
     <!-- Leaderboard settings section removed -->
   </div>
 </div>
+</div><!-- close leaderboard-overlay -->
 
 <!-- Removed in-world leaderboard marker -->
 
 <style>
-  /* Leaderboard styling */
+  /* Leaderboard overlay (full-screen backdrop) */
+  .leaderboard-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2001;
+    pointer-events: auto;
+  }
+
+  /* Leaderboard panel */
   .game-panel {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
     background: rgba(0, 0, 0, 0.85);
     border: 2px solid var(--matrix-green);
     border-radius: 8px;
@@ -3556,10 +3608,10 @@ function modeMultiplayer() {
     color: white;
     width: 80%;
     max-width: 600px;
-    max-height: 80%;
+    max-height: 80vh;
     overflow-y: auto;
-    z-index: 1000;
     box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+    pointer-events: auto;
   }
   
   .panel-header {
@@ -3594,6 +3646,7 @@ function modeMultiplayer() {
     justify-content: center;
     border-radius: 20px;
     transition: all 0.2s ease;
+    pointer-events: auto;
   }
   
   .close-button:hover {
@@ -3617,6 +3670,7 @@ function modeMultiplayer() {
     font-size: 16px;
     transition: all 0.2s ease;
     border-bottom: 2px solid transparent;
+    pointer-events: auto;
   }
   
   .tab-button.active {
@@ -3986,23 +4040,7 @@ function modeMultiplayer() {
     }, duration);
   }
 
-  // Close leaderboard button
-  document.getElementById('close-leaderboard').addEventListener('click', () => {
-    toggleLeaderboardPanel(false);
-  });
-
-  // Tab switching functionality
-  document.querySelectorAll('.tab-button').forEach(button => {
-    button.addEventListener('click', () => {
-      // Switch active tab
-      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-      button.classList.add('active');
-      
-      // Show corresponding content
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(`${button.dataset.tab}-tab`).classList.add('active');
-    });
-  });
+  // Close button and tab switching now use onclick handlers in HTML
 
   // Leaderboard visibility setting removed
 
@@ -4010,9 +4048,9 @@ function modeMultiplayer() {
   // Removed leaderboard marker template registration
 
   function displayLeaderboardData(data) {
-    const panel = document.getElementById('leaderboard-panel');
-    if (panel.style.display !== 'block') {
-      panel.style.display = 'block';
+    const overlay = document.getElementById('leaderboard-overlay');
+    if (overlay && overlay.style.display !== 'flex') {
+      overlay.style.display = 'flex';
       isLeaderboardOpen = true;
     }
     
