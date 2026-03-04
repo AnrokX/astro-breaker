@@ -1,6 +1,5 @@
 // Mock Hytopia classes for testing
 export class World {
-  // Basic properties required by the interface
   id = 'test-world';
   ambientLightColor = { r: 1, g: 1, b: 1 };
   ambientLightIntensity = 1;
@@ -9,14 +8,17 @@ export class World {
   directionalLightDirection = { x: 0, y: -1, z: 0 };
   directionalLightPosition = { x: 0, y: 10, z: 0 };
   skyboxUri = 'skybox/default';
+  skyboxIntensity = 1;
   isDebugEnabled = false;
   name = 'TestWorld';
-  
-  // Additional required properties to match interface
+  tag = '';
+
   fogColor = { r: 1, g: 1, b: 1 };
   fogDensity = 0.01;
   fogEnable = false;
   fogEndDistance = 1000;
+  fogFar = 1000;
+  fogNear = 0;
   fogStartDistance = 0;
   gravity = { x: 0, y: -9.8, z: 0 };
   blockRegistry = { getBlockById: jest.fn() };
@@ -26,8 +28,7 @@ export class World {
   projectSettings = { settings: { gameId: 'test-game' }};
   voxelMeshRegistry = { getMeshForBlock: jest.fn() };
   audioManager = { play: jest.fn() };
-  
-  // Additional properties needed by recent tests
+
   chunkLattice = { getChunkAt: jest.fn() };
   lightManager = { addLight: jest.fn() };
   loop = { on: jest.fn() };
@@ -37,6 +38,7 @@ export class World {
   voxelMeshes = { debug: false };
   networkManager = { sendNetworkMessage: jest.fn() };
   particleManager = { createParticleSystem: jest.fn() };
+  particleEmitterManager = { createEmitter: jest.fn() };
   instanceManager = { createInstancedMesh: jest.fn() };
   inputManager = { registerKeybinding: jest.fn() };
   ragdollManager = { createRagdoll: jest.fn() };
@@ -47,11 +49,23 @@ export class World {
   navMeshManager = { buildNavMesh: jest.fn() };
   soundManager = { playSound: jest.fn() };
 
-  // Methods required by the interface
-  enablePhysics = jest.fn();
+  // New properties added in 0.15.x
+  worldManager = { getDefaultWorld: jest.fn(), getAllWorlds: jest.fn() };
+  setAmbientLightColor = jest.fn();
+  setAmbientLightIntensity = jest.fn();
+  setDirectionalLightColor = jest.fn();
+  setDirectionalLightIntensity = jest.fn();
+  setDirectionalLightDirection = jest.fn();
+  setDirectionalLightPosition = jest.fn();
+  setFogColor = jest.fn();
+  setFogFar = jest.fn();
+  setFogNear = jest.fn();
+  setSkyboxIntensity = jest.fn();
+  setSkyboxUri = jest.fn();
   setGravity = jest.fn();
-  
-  // Managers
+  enablePhysics = jest.fn();
+  despawnAll = jest.fn();
+
   entityManager = {
     getAllEntities: jest.fn().mockReturnValue([]),
     getAllPlayerEntities: jest.fn().mockReturnValue([]),
@@ -62,29 +76,40 @@ export class World {
     despawnEntity: jest.fn(),
     getEntityByName: jest.fn()
   };
-  
+
   simulation = {
     enableDebugRendering: jest.fn(),
     raycast: jest.fn().mockReturnValue(null),
     enableDebugRaycasting: jest.fn(),
     isDebugRaycastingEnabled: false,
-    // For testing
     addTestBlock: jest.fn()
   };
-  
+
   chatManager = {
     registerCommand: jest.fn(),
     sendPlayerMessage: jest.fn(),
     sendGlobalMessage: jest.fn(),
     onMessage: jest.fn()
   };
-  
-  // Event methods
+
   on = jest.fn();
   off = jest.fn();
   emit = jest.fn();
-  
-  // Timer and map methods
+  start = jest.fn();
+  stop = jest.fn();
+  _finalListeners = new Map();
+  emitWithGlobal = jest.fn();
+  emitWithWorld = jest.fn();
+  final = jest.fn();
+  hasListeners = jest.fn().mockReturnValue(false);
+  offAll = jest.fn();
+  once = jest.fn();
+  onceOn = jest.fn();
+  removeAllListeners = jest.fn();
+  listenerCount = jest.fn().mockReturnValue(0);
+  listeners = jest.fn().mockReturnValue([]);
+  rawListeners = jest.fn().mockReturnValue([]);
+
   loadMap = jest.fn();
   setInterval = jest.fn().mockReturnValue(123);
   clearInterval = jest.fn();
@@ -124,15 +149,18 @@ export class PlayerEntity extends Entity {
       setMode: jest.fn(),
       setOffset: jest.fn(),
       setFov: jest.fn(),
-      setModelHiddenNodes: jest.fn()
+      modelHiddenNodes: new Set<string>(),
+      modelShownNodes: new Set<string>(),
     },
     ui: {
       load: jest.fn(),
       sendData: jest.fn(),
       on: jest.fn()
-    }
+    },
+    getPersistedData: jest.fn().mockReturnValue(undefined),
+    setPersistedData: jest.fn(),
   };
-  
+
   controller = {
     on: jest.fn()
   };
@@ -171,4 +199,17 @@ export interface RaycastOptions {
   maxDistance?: number;
   layerMask?: number;
   ignoreEntities?: boolean;
+}
+
+export enum EntityModelAnimationLoopMode {
+  LOOP = 'loop',
+  ONCE = 'once',
+  NONE = 'none',
+}
+
+export class PersistenceManager {
+  static instance = {
+    getGlobalData: jest.fn().mockResolvedValue(undefined),
+    setGlobalData: jest.fn().mockResolvedValue(undefined),
+  };
 }

@@ -8,7 +8,8 @@ import {
   PlayerEvent,
   BaseEntityControllerEvent,
   PlayerUIEvent,
-  Player
+  Player,
+  EntityModelAnimationLoopMode,
 } from 'hytopia';
 
 import worldMap from './assets/map.json';
@@ -248,29 +249,23 @@ startServer(world => {
       }
     });
     
-    // Initialize player settings with persistence (async)
-    settingsManager.initializePlayer(player.id, player)
-      .then(() => {
-        // Send the loaded settings to the UI
-        settingsManager.sendSettingsToUI(player);
-        
-        // Apply initial BGM volume setting
-        const settings = settingsManager.getPlayerSettings(player.id);
-        if (settings) {
-          audioManager.setBgmVolume(settings.bgmVolume);
-        }
-      })
-      .catch(error => {});
+    // Initialize player settings with persistence
+    settingsManager.initializePlayer(player.id, player);
+    settingsManager.sendSettingsToUI(player);
+
+    // Apply initial BGM volume setting
+    const settings = settingsManager.getPlayerSettings(player.id);
+    if (settings) {
+      audioManager.setBgmVolume(settings.bgmVolume);
+    }
     
     // Initialize player in LeaderboardManager
     const leaderboardManager = LeaderboardManager.getInstance(world);
-    leaderboardManager.getPlayerData(player)
-      .then(playerData => {
-        // Update games played count (this happens asynchronously)
-        playerData.gamesPlayed++;
-        return leaderboardManager.updatePlayerData(player, playerData);
-      })
-      .catch(error => {});
+    try {
+      const playerData = leaderboardManager.getPlayerData(player);
+      playerData.gamesPlayed++;
+      leaderboardManager.updatePlayerData(player, playerData);
+    } catch (error) {}
     
     // Load the UI first with explicit cache-busting
     const timestamp = Date.now();
@@ -299,7 +294,9 @@ startServer(world => {
       player,
       name: 'Player',
       modelUri: 'models/players/player.gltf',
-      modelLoopedAnimations: ['idle'],
+      modelAnimations: [
+        { name: 'idle', loopMode: EntityModelAnimationLoopMode.LOOP, startOnSpawn: true },
+      ],
       modelScale: 0.5,
     });
 
@@ -355,14 +352,14 @@ startServer(world => {
       try {
         const leaderboardManager = LeaderboardManager.getInstance(world);
         const leaderboardData = await leaderboardManager.getGlobalLeaderboard();
-        const playerData = await leaderboardManager.getPlayerData(player);
-        
+        const playerData = leaderboardManager.getPlayerData(player);
+
         // Send global leaderboard data
         player.ui.sendData({
           type: 'displayLeaderboard',
           data: leaderboardData
         });
-        
+
         // Send personal stats data
         player.ui.sendData({
           type: 'personalStats',
@@ -396,14 +393,9 @@ startServer(world => {
     
     // Hide only the local player's model from their own view
     // This won't affect how other players see them
-    player.camera.setModelHiddenNodes([
-      'Armature',      // Main skeleton
-      'Mesh',          // Main mesh
-      'Body_mesh',     // Body mesh if separated
-      'Character',     // Common root node name
-      'Skeleton',      // Alternative skeleton name
-      'Root'           // Root node
-    ]);
+    ['Armature', 'Mesh', 'Body_mesh', 'Character', 'Skeleton', 'Root'].forEach(node =>
+      player.camera.modelHiddenNodes.add(node)
+    );
     
     // Set camera to eye level and slightly forward
     player.camera.setOffset({
