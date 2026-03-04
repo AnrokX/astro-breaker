@@ -6,6 +6,7 @@ export class PlayerTracker {
   private checkPlayersInterval: NodeJS.Timeout | null = null;
   private hasShownModeSelection: boolean = false;
   private previousPlayerCount: number = 0;
+  private onAutoSoloStart?: () => void;
 
   constructor(
     private world: World,
@@ -51,44 +52,31 @@ export class PlayerTracker {
     }, 1000);
   }
 
-  // Method to check if the first player has joined and show the mode selection
+  // Auto-start solo mode when first player joins
   private checkForFirstPlayer(): void {
     const currentPlayerCount = this.getPlayerCount();
-    
-    // If this is the first player joining and we haven't shown the selection yet
+
+    // If this is the first player joining, auto-start solo mode
     if (currentPlayerCount === 1 && this.previousPlayerCount === 0 && !this.hasShownModeSelection) {
-      // Show the waiting for another player UI with solo option
       const player = this.world.entityManager.getAllPlayerEntities()[0]?.player;
       if (player) {
-        // Show waiting UI with solo option
-        
-        // Unlock the pointer first to allow interaction with the UI
-        player.ui.lockPointer(false);
-        
-        // Then show the waiting UI with solo option
-        player.ui.sendData({
-          type: 'showModeSelection'
-        });
-        
+        // Lock pointer immediately for gameplay
+        player.ui.lockPointer(true);
+
         this.hasShownModeSelection = true;
+
+        // Notify round manager to handle solo auto-start
+        if (this.onAutoSoloStart) {
+          this.onAutoSoloStart();
+        }
       }
     }
-    
-    // If a second player joins and the UI is showing, hide it
-    if (currentPlayerCount === 2 && this.previousPlayerCount === 1 && this.hasShownModeSelection) {
-      // Hide the waiting UI since another player joined
-      const firstPlayer = this.world.entityManager.getAllPlayerEntities()[0]?.player;
-      if (firstPlayer) {
-        // Hide waiting UI since second player joined
-        
-        // Send message to hide the UI
-        firstPlayer.ui.sendData({
-          type: 'hideGameModeSelection'
-        });
-      }
-    }
-    
+
     this.previousPlayerCount = currentPlayerCount;
+  }
+
+  public setAutoSoloCallback(callback: () => void): void {
+    this.onAutoSoloStart = callback;
   }
 
   // Allow setting the game mode based on player selection

@@ -366,24 +366,7 @@ startServer(world => {
       }
     }
 
-    // Add key binding for leaderboard toggle using 'L' key
-    playerEntity.controller!.on(BaseEntityControllerEvent.TICK_WITH_PLAYER_INPUT, ({ entity, input, deltaTimeMs }) => {
-      // Check for 'L' key press
-      if (input.l) {
-        // Toggle leaderboard display
-        player.ui.sendData({
-          type: 'toggleLeaderboard'
-        });
-        
-        // Also automatically load the data when toggled
-        displayLeaderboardToPlayer(player);
-        
-        // Consume the input to prevent repeated toggling
-        input.l = false;
-      }
-    });
-    
-    // Projectile count no longer needed as projectiles are unlimited
+    // Leaderboard toggle handled client-side via L key → sends 'showLeaderboard' event
     
     // Configure first-person camera after spawning
     player.camera.setMode(PlayerCameraMode.FIRST_PERSON);

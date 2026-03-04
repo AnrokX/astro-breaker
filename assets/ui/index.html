@@ -2180,7 +2180,7 @@
 <div class="help-menu">
     <div class="help-header">
         <span class="help-title">GAME GUIDE</span>
-        <span class="help-key">[Ctrl+H]</span>
+        <span class="help-key">[H]</span>
     </div>
     <div class="help-content">
         <div class="help-section scoring">
@@ -2211,15 +2211,15 @@
                 <span class="action">Show Cursor</span>
             </div>
             <div class="control-item">
-                <span class="key">[Ctrl+P]</span>
+                <span class="key">[P]</span>
                 <span class="action">Settings Menu</span>
             </div>
             <div class="control-item">
-                <span class="key">[Ctrl+H]</span>
+                <span class="key">[H]</span>
                 <span class="action">Help Guide</span>
             </div>
             <div class="control-item">
-                <span class="key">[Ctrl+L]</span>
+                <span class="key">[L]</span>
                 <span class="action">Stellar Records</span>
             </div>
             <div class="control-item">
@@ -2231,10 +2231,10 @@
 </div>
 
 <div class="hotkey-hints">
-    <div class="hotkey-hint">[Ctrl+H] Game Guide</div>
-    <div class="hotkey-hint">[Ctrl+P] Settings</div>
-    <div class="hotkey-hint">[ESC] Show Cursor</div>
-    <div class="hotkey-hint">[Ctrl+L] Stellar Records</div>
+    <div class="hotkey-hint">[H] Guide</div>
+    <div class="hotkey-hint">[P] Settings</div>
+    <div class="hotkey-hint">[L] Records</div>
+    <div class="hotkey-hint">[ESC] Close</div>
     <div class="hotkey-hint">[T] Chat</div>
 </div>
 
@@ -2801,68 +2801,120 @@ function updateLeaderboard(data) {
 }
 
 
-// Settings menu functionality
+// Modal management - centralized open/close with pointer lock
 let isSettingsOpen = false;
+let isLeaderboardOpen = false;
+
+function closeAllModals() {
+  if (isSettingsOpen) toggleSettings(false);
+  if (isHelpOpen) toggleHelp(false);
+  if (isLeaderboardOpen) toggleLeaderboardPanel(false);
+  const modeSelection = document.getElementById('game-mode-selection');
+  if (modeSelection && modeSelection.style.display === 'block') {
+    hideGameModeSelection();
+  }
+}
+
+function openModal() {
+  if (window.hytopia && window.hytopia.lockPointer) {
+    window.hytopia.lockPointer(false);
+  }
+}
+
+function closeModalAndLockPointer() {
+  if (window.hytopia && window.hytopia.lockPointer) {
+    setTimeout(() => window.hytopia.lockPointer(true), 100);
+  }
+}
 
 function toggleSettings(show) {
   const menu = document.querySelector('.settings-menu');
   const overlay = document.querySelector('.settings-overlay');
-  isSettingsOpen = show;
-  
-  if (show) {
+
+  if (show && !isSettingsOpen) {
+    closeAllModals();
+    openModal();
     menu.classList.add('visible');
     overlay.classList.add('visible');
-    
-    // Request current settings when opening menu
-    hytopia.sendData({ 
-      type: 'requestSettings'
-    });
-  } else {
+    isSettingsOpen = true;
+    hytopia.sendData({ type: 'requestSettings' });
+  } else if (!show && isSettingsOpen) {
     menu.classList.remove('visible');
     overlay.classList.remove('visible');
+    isSettingsOpen = false;
+    closeModalAndLockPointer();
   }
 }
 
-// Listen for Escape key - work with cursor state
+function toggleLeaderboardPanel(show) {
+  const panel = document.getElementById('leaderboard-panel');
+  if (!panel) return;
+
+  if (show && !isLeaderboardOpen) {
+    closeAllModals();
+    openModal();
+    panel.style.display = 'block';
+    isLeaderboardOpen = true;
+    hytopia.sendData({ type: 'showLeaderboard' });
+  } else if (!show && isLeaderboardOpen) {
+    panel.style.display = 'none';
+    isLeaderboardOpen = false;
+    hytopia.sendData({ type: 'closeLeaderboard' });
+    closeModalAndLockPointer();
+  }
+}
+
+// Unified keyboard handler - simple letter keys, no Ctrl required
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && e.ctrlKey) {
-    // If settings are open, close them
-    if (isSettingsOpen) {
-      toggleSettings(false);
-      e.preventDefault(); // Prevent the default escape behavior
+  // Ignore when typing in input fields
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  // Ignore when Ctrl/Alt/Meta is held
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+  const key = e.key.toLowerCase();
+
+  // Escape closes any open modal
+  if (e.key === 'Escape') {
+    if (isSettingsOpen || isHelpOpen || isLeaderboardOpen) {
+      closeAllModals();
+      closeModalAndLockPointer();
+      e.preventDefault();
+      return;
+    }
+  }
+
+  // P - toggle settings
+  if (key === 'p') {
+    e.preventDefault();
+    toggleSettings(!isSettingsOpen);
+    return;
+  }
+
+  // H - toggle help
+  if (key === 'h') {
+    e.preventDefault();
+    if (isHelpOpen) {
+      toggleHelp(false);
+      closeModalAndLockPointer();
     } else {
-      // If cursor becomes visible (handled by game), show settings
-      setTimeout(() => {
-        const cursorStyle = window.getComputedStyle(document.body).cursor;
-        if (cursorStyle === 'default' || cursorStyle === 'auto') {
-          toggleSettings(true);
-        }
-      }, 50); // Small delay to ensure cursor state has updated
+      closeAllModals();
+      toggleHelp(true);
     }
-  } else if (e.key === 'Escape' && !e.ctrlKey) {
-    // Regular ESC behavior without Ctrl
-    if (isSettingsOpen) {
-      toggleSettings(false);
-      e.preventDefault(); // Prevent the default escape behavior
-    }
+    return;
+  }
+
+  // L - toggle leaderboard
+  if (key === 'l') {
+    e.preventDefault();
+    toggleLeaderboardPanel(!isLeaderboardOpen);
+    return;
   }
 });
 
-// Multiple hotkeys for settings
-document.addEventListener('keydown', (e) => {
-  if ((e.key === 'Tab' || e.key.toLowerCase() === 'p') && e.ctrlKey) { // Added Ctrl requirement
-    e.preventDefault(); // Prevent default behavior
-    const cursorStyle = window.getComputedStyle(document.body).cursor;
-    if (cursorStyle === 'default' || cursorStyle === 'auto') {
-      toggleSettings(!isSettingsOpen);
-    }
-  }
-});
-
-// Resume button - close settings and hide cursor
+// Resume button - close settings and re-lock pointer
 document.getElementById('resume-button').addEventListener('click', () => {
   toggleSettings(false);
-  hytopia.sendData({ type: 'hideCursor' }); // Tell game to hide cursor again
 });
 
 // Handle settings changes
@@ -2999,15 +3051,7 @@ document.getElementById('dot-size-slider').addEventListener('input', updateCross
 document.getElementById('show-ring').addEventListener('change', updateCrosshairVisibility);
 document.getElementById('show-dot').addEventListener('change', updateCrosshairVisibility);
 
-// Add this to your existing script section
 let isHelpOpen = false;
-
-document.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'h' && e.ctrlKey) {
-        e.preventDefault();
-        toggleHelp(!isHelpOpen);
-    }
-});
 
 function toggleHelp(show) {
     const menu = document.querySelector('.help-menu');
@@ -3228,27 +3272,12 @@ function showGameEnd(data) {
 
 // Block destroyed notifications are now handled through SceneUI
 
-// Game Mode Selection Functionality
+// Game Mode Selection Functionality (rarely used now with auto-start)
 function showGameModeSelection() {
   const modal = document.getElementById('game-mode-selection');
   if (modal) {
-    // Note: We now can directly control pointer lock from UI code with hytopia.lockPointer()
-    if (window.hytopia && window.hytopia.lockPointer) {
-      window.hytopia.lockPointer(false); // Unlock pointer for UI interaction
-    }
+    openModal();
     modal.style.display = 'block';
-    
-    // Setup pointer lock toggle button
-    const lockButton = document.getElementById('toggle-pointer-lock');
-    if (lockButton) {
-      lockButton.onclick = function() {
-        if (window.hytopia && window.hytopia.lockPointer) {
-          window.hytopia.lockPointer(true);
-        }
-      };
-    }
-  } else {
-    console.error('Game mode selection modal not found!');
   }
 }
 
@@ -3256,47 +3285,17 @@ function hideGameModeSelection() {
   const modal = document.getElementById('game-mode-selection');
   if (modal) {
     modal.style.display = 'none';
-    // Note: We can't directly control pointer lock from UI code
-    // The game will automatically relock the pointer as needed
-  } else {
-    console.error('Game mode selection modal not found!');
+    closeModalAndLockPointer();
   }
 }
 
-// Set up event listeners for game mode buttons - ONCE when DOM is loaded
+// Set up event listeners for game mode buttons
 document.addEventListener('DOMContentLoaded', () => {
   const soloButton = document.getElementById('solo-mode');
-  const dismissButton = document.getElementById('dismiss-mode-selection');
-  const pointerLockButton = document.getElementById('toggle-pointer-lock');
-  
-  // Set up pointer lock button
-  if (pointerLockButton) {
-    pointerLockButton.addEventListener('click', function() {
-      if (window.hytopia && window.hytopia.lockPointer) {
-        window.hytopia.lockPointer(true);
-      }
-    });
-  }
-  
-  if (dismissButton) {
-    dismissButton.addEventListener('click', function() {
-      // Just hide the selection UI
-      hideGameModeSelection();
-    });
-  }
-  
+
   if (soloButton) {
     soloButton.addEventListener('click', function() {
-      // Add flash effect
-      soloButton.classList.add('button-flash');
-      setTimeout(() => {
-        soloButton.classList.remove('button-flash');
-      }, 200);
-      
-      // Hide selection UI first
       hideGameModeSelection();
-      
-      // Then send message to game that solo mode was selected
       hytopia.sendData({ 
         type: 'modeSelection',
         mode: 'solo'
@@ -3305,64 +3304,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Global keyboard shortcuts for mode selection
-document.addEventListener('keydown', (e) => {
-  // Process "Ctrl+1" key press to activate solo mode
-  if (e.key === '1' && e.ctrlKey) {
-    e.preventDefault(); // Prevent any default behavior
-    
-    // Check if there's more than one player present
-    const playerCount = document.querySelectorAll('.round-end-placement').length;
-    if (playerCount > 1) {
-      return false; // Ignore the key press completely if multiple players
-    }
-    
-    // Add flash effect to the button if visible
-    const soloButton = document.getElementById('solo-mode');
-    if (soloButton) {
-      soloButton.classList.add('button-flash');
-      setTimeout(() => {
-        soloButton.classList.remove('button-flash');
-      }, 200);
-    }
-    
-    // Hide the selection UI if it's visible
-    const modeSelectionElement = document.getElementById('game-mode-selection');
-    if (modeSelectionElement && modeSelectionElement.style.display === 'block') {
-      hideGameModeSelection();
-    }
-    
-    // Send the data to start solo mode
-    hytopia.sendData({ 
-      type: 'modeSelection',
-      mode: 'solo'
-    });
-    
-    return false; // Prevent default and stop propagation
-  }
-  
-  // Process "Ctrl+2" key press to dismiss the mode selection UI
-  else if (e.key === '2' && e.ctrlKey) {
-    e.preventDefault(); // Prevent any default behavior
-    
-    // Add flash effect to the dismiss button if visible
-    const dismissButton = document.getElementById('dismiss-mode-selection');
-    if (dismissButton) {
-      dismissButton.style.opacity = '1';
-      setTimeout(() => {
-        dismissButton.style.opacity = '0.7';
-      }, 200);
-    }
-    
-    // Hide the selection UI if it's visible
-    const modeSelectionElement = document.getElementById('game-mode-selection');
-    if (modeSelectionElement && modeSelectionElement.style.display === 'block') {
-      hideGameModeSelection();
-    }
-    
-    return false; // Prevent default and stop propagation
-  }
-});
+// Mode selection keyboard shortcuts removed - game auto-starts solo
 
 // Display a system message for brief periods
 function showSystemMessage(message, color = 'FFFFFF') {
@@ -3464,37 +3406,25 @@ function hideScoreboard() {
   }
 }
 
-// Add reset settings button handler
+// Reset settings button handler
 document.getElementById('reset-settings-button').addEventListener('click', () => {
   if (confirm('Are you sure you want to reset all settings to default values?')) {
-    hytopia.sendData({ 
-      type: 'resetSettings'
-    });
-    
-    // Also close the settings menu
+    hytopia.sendData({ type: 'resetSettings' });
     toggleSettings(false);
-    hytopia.sendData({ type: 'hideCursor' }); // Tell game to hide cursor again
   }
 });
 </script>
 
-<!-- Game Mode Selection Modal -->
-<div id="game-mode-selection">
+<!-- Game Mode Selection Modal (hidden by default, auto-start handles solo) -->
+<div id="game-mode-selection" style="display:none;">
   <h2>WAITING FOR ANOTHER PLAYER</h2>
   <div class="mode-buttons">
     <button id="solo-mode" style="display: flex; flex-direction: column; align-items: center; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 30px 50px; min-width: 350px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);">
       <div class="button-main-text" style="font-size: 42px; font-weight: bold; color: #ffffff; margin-bottom: 15px;">START SOLO</div>
-      <div style="font-family: var(--text-font); font-size: 24px; color: #ffffff; opacity: 0.8;">PRESS CTRL+1 TO START</div>
-      <div id="dismiss-mode-selection" style="font-family: var(--text-font); font-size: 18px; color: #ffffff; opacity: 0.7; cursor: pointer; margin-top: 15px;">PRESS CTRL+2 TO DISMISS</div>
     </button>
   </div>
-  
-  <!-- Pointer Lock Controls -->
-  <div style="margin-top: 20px; text-align: center;">
-    <button id="toggle-pointer-lock" style="padding: 10px 20px; background: #424242; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 16px;">
-      Lock Mouse Pointer
-    </button>
-  </div>
+  <div id="dismiss-mode-selection" style="display:none;"></div>
+  <div id="toggle-pointer-lock" style="display:none;"></div>
 </div>
 
 <div class="game-end-overlay">
@@ -4000,8 +3930,7 @@ function modeMultiplayer() {
     // Remove this log statement
     
     if (data.type === 'toggleLeaderboard') {
-      const panel = document.getElementById('leaderboard-panel');
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      toggleLeaderboardPanel(!isLeaderboardOpen);
     }
     else if (data.type === 'displayLeaderboard') {
       displayLeaderboardData(data.data);
@@ -4057,10 +3986,9 @@ function modeMultiplayer() {
     }, duration);
   }
 
-  // Send data to the server when closing the leaderboard
+  // Close leaderboard button
   document.getElementById('close-leaderboard').addEventListener('click', () => {
-    document.getElementById('leaderboard-panel').style.display = 'none';
-    hytopia.sendData({ type: 'closeLeaderboard' });
+    toggleLeaderboardPanel(false);
   });
 
   // Tab switching functionality
@@ -4083,7 +4011,10 @@ function modeMultiplayer() {
 
   function displayLeaderboardData(data) {
     const panel = document.getElementById('leaderboard-panel');
-    panel.style.display = 'block';
+    if (panel.style.display !== 'block') {
+      panel.style.display = 'block';
+      isLeaderboardOpen = true;
+    }
     
     // Store leaderboard data globally for access by other functions
     window.leaderboardData = data;
@@ -4428,43 +4359,13 @@ function modeMultiplayer() {
   }
 </script>
 
-<!-- Add keyboard shortcut for leaderboard -->
+<!-- Leaderboard toggle from server -->
 <script>
-document.addEventListener('keydown', (e) => {
-  if (e.key.toLowerCase() === 'l' && e.ctrlKey) {
-    console.log('Leaderboard toggled via Ctrl+L key');
-    e.preventDefault(); // Prevent default behavior
-    
-    const panel = document.getElementById('leaderboard-panel');
-    const newVisibility = panel.style.display === 'none' ? 'block' : 'none';
-    panel.style.display = newVisibility;
-    
-    // If showing the leaderboard, request data
-    if (newVisibility === 'block') {
-      hytopia.sendData({ type: 'showLeaderboard' });
-    } else {
-      // If hiding, notify server
-      hytopia.sendData({ type: 'closeLeaderboard' });
-    }
-  }
-});
-</script>
-
-<!-- Process specific event types -->
-<script>
-  // Handle data from the server
   hytopia.onData(data => {
     if (data.type === 'toggleLeaderboard') {
-      const panel = document.getElementById('leaderboard-panel');
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      toggleLeaderboardPanel(!isLeaderboardOpen);
     }
-    // ... rest of the handler code ...
   });
-</script>
-
-<!-- Add event handlers for buttons -->
-<script>
-  // Remove the button to run leaderboard tests event handler
 </script>
 </body>
 </html>
