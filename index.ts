@@ -10,7 +10,6 @@ import {
   BaseEntityControllerEvent,
   PlayerUIEvent,
   Player,
-  EntityModelAnimationLoopMode,
 } from 'hytopia';
 
 import worldMap from './assets/map.json';
@@ -295,10 +294,6 @@ startServer(world => {
       player,
       name: 'Player',
       modelUri: 'models/players/player.gltf',
-      modelAnimations: [
-        { name: 'idle_lower', loopMode: EntityModelAnimationLoopMode.LOOP, play: true },
-        { name: 'idle_upper', loopMode: EntityModelAnimationLoopMode.LOOP, play: true },
-      ],
       modelScale: 0.5,
     });
 
@@ -393,9 +388,10 @@ startServer(world => {
     // Configure first-person camera after spawning
     player.camera.setMode(PlayerCameraMode.FIRST_PERSON);
     
-    // Hide only the local player's model from their own view
-    // This won't affect how other players see them
-    ['Armature', 'Mesh', 'Body_mesh', 'Character', 'Skeleton', 'Root'].forEach(node =>
+    // Hide the local player's model from their own view (first-person)
+    ['root', 'head-geo', 'torso-geo', 'neck-geo', 'arm-left-geo', 'arm-right-geo',
+     'hand-left-geo', 'hand-right-geo', 'leg-left-geo', 'leg-right-geo',
+     'foot-left-geo', 'foot-right-geo'].forEach(node =>
       player.camera.modelHiddenNodes.add(node)
     );
     
